@@ -2,14 +2,24 @@ from nose.tools import *
 
 import shutil
 import os
+import tempfile
 
 from biomaj.bank import Bank
 from biomaj.session import Session
 from biomaj.workflow import Workflow
-
+from biomaj.utils import Utils
 from biomaj.download.ftp import FTPDownload
 
 import unittest
+
+class TestBiomajUtils(unittest.TestCase):
+
+  def test_copy(self):
+    from_dir = os.path.dirname(os.path.realpath(__file__))
+    to_dir = tempfile.mkdtemp('biomaj')
+    Utils.copy_files(from_dir, to_dir, ['.*\.py'])
+    self.assertTrue(os.path.exists(to_dir+'/biomaj_tests.py'))
+
 
 class TestBiomajFTPDownload(unittest.TestCase):
 

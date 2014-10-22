@@ -126,7 +126,7 @@ class Workflow:
       #logging.debug(from_dir)
       #logging.debug(to_dir)
       #logging.debug(regexp)
-      #Utils.copy_files(from_dir,to_dir,regexp)
+      #Utils.copy_files(from_dir,to_dir,regexp, True)
       return True
 
   def wf_postprocess(self):

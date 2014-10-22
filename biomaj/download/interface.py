@@ -2,6 +2,10 @@ import os
 import logging
 import datetime
 import time
+import re
+
+import tarfile
+import zipfile
 
 class DownloadInterface:
 
@@ -28,7 +32,6 @@ class DownloadInterface:
           }[date]
 
 
-
   def set_permissions(self, file_path, file_info):
     '''
     Sets file attributes to remote ones
@@ -49,12 +52,16 @@ class DownloadInterface:
   def download(self, local_dir):
     '''
     Download remote files to local_dir
+
+    :return: list of files to download
     '''
     pass
 
   def list(self):
     '''
     List directory
+
+    :return: tuple of file list and dir list
     '''
     pass
 

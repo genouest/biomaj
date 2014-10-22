@@ -50,6 +50,10 @@ class TestBiomajSetup(unittest.TestCase):
                         os.path.join('/tmp/biomaj/config','alu.properties'))
       b = Bank('alu')
       b.delete()
+      data_dir = Bank.config.get('GENERAL','data.dir')
+      lock_file = os.path.join(data_dir,'alu.lock')
+      if os.path.exists(lock_file):
+        os.remove(lock_file)
 
 
   def test_new_bank(self):
@@ -104,5 +108,6 @@ class TestBiomajSetup(unittest.TestCase):
       '''
       b = Bank('alu')
       b.load_session()
-      b.update()
+      res = b.update()
+      self.assertTrue(res)
       self.assertTrue(b.session._session['release'] is not None)

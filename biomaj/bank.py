@@ -58,8 +58,10 @@ class Bank:
     self.config_bank.read([os.path.join(conf_dir,name+'.properties')])
     self.bank = self.banks.find_one({'name': self.name})
     if self.bank is None:
-        self.bank = { 'name' : self.name, 'sessions': [] }
+        self.bank = { 'name' : self.name, 'sessions': [], 'production': [] }
         self.banks.insert(self.bank)
+
+    self.use_last_session = False
 
   def controls(self):
     '''
@@ -92,6 +94,10 @@ class Bank:
     '''
     Save session in database
     '''
+    if self.use_last_session:
+      # Remove last session
+      self.banks.update({'_id': self.bank['_id']}, {'$pull' : { 'sessions.id': self.session._session.id }})
+    # Insert session
     self.banks.update({'_id': self.bank['_id']}, {'$push' : { 'sessions': self.session._session }})
 
   def load_session(self):
@@ -110,6 +116,7 @@ class Bank:
           logging.debug('Start new session')
         else:
           logging.debug('Load previous session '+str(self.session.get('id')))
+          self.use_last_session = True
 
   def update(self):
     '''
@@ -118,12 +125,11 @@ class Bank:
     logging.warning('UPDATE BANK: '+self.name)
     self.controls()
     self.load_session()
-    self.start_update()
+    return self.start_update()
 
   def start_update(self):
     '''
     Start an update workflow
     '''
     workflow = Workflow(self.session, self.options)
-    workflow.start()
-    return
+    return workflow.start(self.name)

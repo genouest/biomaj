@@ -17,7 +17,7 @@ class Session:
   def __init__(self, config, config_bank):
     self.config = config
     self.config_bank = config_bank
-    self._session = { 'id':  time.time(), 'status': {} }
+    self._session = { 'id':  time.time(), 'status': {}, 'files': [] }
     for flow in Workflow.FLOW:
         self._session['status'][flow['name']] = False
 

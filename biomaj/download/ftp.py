@@ -88,6 +88,7 @@ class FTPDownload(DownloadInterface):
       curl.close()
       fp.close()
       self.set_permissions(file_path, rfile)
+    return self.files_to_download
 
   def list(self, directory=''):
     '''

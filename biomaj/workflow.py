@@ -1,4 +1,5 @@
 import logging
+import datetime
 
 class Workflow:
   '''
@@ -8,6 +9,7 @@ class Workflow:
   FLOW_INIT = 'init'
   FLOW_CHECK = 'check'
   FLOW_PREPROCESS = 'preprocess'
+  FLOW_RELEASE = 'release'
   FLOW_DOWNLOAD = 'download'
   FLOW_POSTPROCESS = 'postprocess'
   FLOW_PUBLISH = 'publish'
@@ -17,6 +19,7 @@ class Workflow:
     { 'name': 'init', 'steps': []},
     { 'name': 'check', 'steps': []},
     { 'name': 'preprocess', 'steps': []},
+    { 'name': 'release', 'steps': []},
     { 'name': 'download', 'steps': []},
     { 'name': 'postprocess', 'steps': []},
     { 'name': 'publish', 'steps': []},
@@ -52,6 +55,17 @@ class Workflow:
 
   def wf_preprocess(self):
       logging.debug('Workflow:wf_preprocess')
+      return True
+
+  def wf_release(self):
+      logging.debug('Workflow:wf_release')
+      if self.session.config_bank.get('GENERAL','release.file') == '':
+        now = datetime.datetime.now()
+        self.session._session['release'] = str(now.year)+'-'+str(now.month)+'-'+str(now.day)
+      else:
+        logging.warn('SHOULD GET RELEASE FROM release.file')
+        raise Exception('GET RELEASE NOT YET IMPLEMENTED')
+      logging.info('Session:Release:'+self.session._session['release'])
       return True
 
   def wf_download(self):

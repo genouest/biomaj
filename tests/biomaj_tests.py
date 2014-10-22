@@ -7,9 +7,36 @@ from biomaj.bank import Bank
 from biomaj.session import Session
 from biomaj.workflow import Workflow
 
+from biomaj.download.ftp import FTPDownload
+
 import unittest
 
-class TestBiomaj(unittest.TestCase):
+class TestBiomajFTPDownload(unittest.TestCase):
+
+  def test_ftp_list(self):
+    ftpd = FTPDownload('ftp', 'ftp.ncbi.nih.gov', '/blast/db/FASTA/')
+    (file_list, dir_list) = ftpd.list()
+    ftpd.close()
+    self.assertTrue(len(file_list) > 1)
+
+  def test_download(self):
+    ftpd = FTPDownload('ftp', 'ftp.ncbi.nih.gov', '/blast/db/FASTA/')
+    (file_list, dir_list) = ftpd.list()
+    ftpd.match(['^alu.*\.gz$'], file_list, dir_list)
+    ftpd.download('/tmp')
+    ftpd.close()
+    self.assertTrue(len(ftpd.files_to_download) == 2)
+
+  def test_download_in_subdir(self):
+    ftpd = FTPDownload('ftp', 'ftp.ncbi.nih.gov', '/blast/')
+    (file_list, dir_list) = ftpd.list()
+    ftpd.match(['^/db/FASTA/alu.*\.gz$'], file_list, dir_list)
+    ftpd.download('/tmp')
+    ftpd.close()
+    self.assertTrue(len(ftpd.files_to_download) == 2)
+
+
+class TestBiomajSetup(unittest.TestCase):
 
 
   def setUp(self):
@@ -23,7 +50,6 @@ class TestBiomaj(unittest.TestCase):
                         os.path.join('/tmp/biomaj/config','alu.properties'))
       b = Bank('alu')
       b.delete()
-
 
 
   def test_new_bank(self):
@@ -55,3 +81,28 @@ class TestBiomaj(unittest.TestCase):
       b = Bank('alu')
       b.load_session()
       self.assertTrue(b.session.get_status(Workflow.FLOW_INIT))
+
+  def test_session_reload_over(self):
+      '''
+      Checks a session is not if over
+      '''
+      b = Bank('alu')
+      for i in range(1,5):
+        s = Session(Bank.config, b.config_bank)
+        s._session['status'][Workflow.FLOW_INIT] = True
+        s._session['status'][Workflow.FLOW_OVER] = True
+        b.session = s
+        b.save_session()
+
+      b = Bank('alu')
+      b.load_session()
+      self.assertFalse(b.session.get_status(Workflow.FLOW_INIT))
+
+  def test_get_release(self):
+      '''
+      Get release
+      '''
+      b = Bank('alu')
+      b.load_session()
+      b.update()
+      self.assertTrue(b.session._session['release'] is not None)

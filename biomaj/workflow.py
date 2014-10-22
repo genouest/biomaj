@@ -122,11 +122,12 @@ class Workflow:
                     self.session.config_bank.get('GENERAL','offline.dir.name'))
       regexp = self.session.config_bank.get('GENERAL','local.files').split()
       to_dir = os.path.join(self.session.config.get('GENERAL','data.dir'),
-                    self.session.config_bank.get('GENERAL','dir.version'))
+                    self.session.config_bank.get('GENERAL','dir.version'),
+                    self.session.get_release_directory())
       #logging.debug(from_dir)
       #logging.debug(to_dir)
       #logging.debug(regexp)
-      #Utils.copy_files(from_dir,to_dir,regexp, True)
+      Utils.copy_files(from_dir,to_dir,regexp, True)
       return True
 
   def wf_postprocess(self):

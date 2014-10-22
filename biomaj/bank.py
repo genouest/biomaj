@@ -105,14 +105,14 @@ class Bank:
     Loads last session or, if over or forced, a new session
     '''
     if len(self.bank['sessions']) == 0 or 'fromscratch' in self.options:
-        self.session = Session(Bank.config, self.config_bank)
+        self.session = Session(self.name, Bank.config, self.config_bank)
         logging.debug('Start new session')
     else:
         # Take last session
-        self.session = Session(Bank.config, self.config_bank)
+        self.session = Session(self.name, Bank.config, self.config_bank)
         self.session.load(self.bank['sessions'][len(self.bank['sessions'])-1])
         if self.session.get_status(Workflow.FLOW_OVER):
-          self.session = Session(Bank.config, self.config_bank)
+          self.session = Session(self.name, Bank.config, self.config_bank)
           logging.debug('Start new session')
         else:
           logging.debug('Load previous session '+str(self.session.get('id')))

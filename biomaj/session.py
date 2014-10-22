@@ -14,7 +14,18 @@ class Session:
 
   OVER = 0
 
-  def __init__(self, config, config_bank):
+  def __init__(self, name, config, config_bank):
+    '''
+    Creates a new session
+
+    :param name: Name of the bank
+    :type name: str
+    :param config: global config
+    :type config: ConfigParser
+    :param config_bank: specific bank config
+    :type config_bank: ConfigParser
+    '''
+    self.name = name
     self.config = config
     self.config_bank = config_bank
     self._session = { 'id':  time.time(), 'status': {}, 'files': [] }
@@ -26,6 +37,9 @@ class Session:
     Load an existing session
     '''
     self._session = session
+
+  def get_release_directory(self):
+    return self.name+'-'+self._session['release']
 
   def get(self, attr):
     '''

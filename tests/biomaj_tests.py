@@ -87,7 +87,7 @@ class TestBiomajSetup(unittest.TestCase):
       '''
       b = Bank('alu')
       for i in range(1,5):
-        s = Session(Bank.config, b.config_bank)
+        s = Session('alu', Bank.config, b.config_bank)
         s._session['status'][Workflow.FLOW_INIT] = True
         b.session = s
         b.save_session()
@@ -102,7 +102,7 @@ class TestBiomajSetup(unittest.TestCase):
       '''
       b = Bank('alu')
       for i in range(1,5):
-        s = Session(Bank.config, b.config_bank)
+        s = Session('alu', Bank.config, b.config_bank)
         s._session['status'][Workflow.FLOW_INIT] = True
         s._session['status'][Workflow.FLOW_OVER] = True
         b.session = s

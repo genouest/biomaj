@@ -16,12 +16,19 @@ import unittest
 
 class TestBiomajUtils(unittest.TestCase):
 
-  def test_copy(self):
+  def test_copy_with_regexp(self):
     from_dir = os.path.dirname(os.path.realpath(__file__))
     to_dir = tempfile.mkdtemp('biomaj')
-    Utils.copy_files(from_dir, to_dir, ['.*\.py'])
+    Utils.copy_files_with_regexp(from_dir, to_dir, ['.*\.py'])
     self.assertTrue(os.path.exists(to_dir+'/biomaj_tests.py'))
 
+  def test_copy(self):
+    from_dir = os.path.dirname(os.path.realpath(__file__))
+    local_file = os.path.basename(os.path.realpath(__file__))
+    files_to_copy = [ {'root': from_dir, 'name': local_file}]
+    to_dir = tempfile.mkdtemp('biomaj')
+    Utils.copy_files(files_to_copy, to_dir)
+    self.assertTrue(os.path.exists(to_dir+'/biomaj_tests.py'))
 
 class TestBiomajFTPDownload(unittest.TestCase):
 

@@ -126,7 +126,7 @@ class Workflow:
                     self.session.config.get('dir.version'),
                     self.session.get_release_directory())
 
-      self.session._session['files'] = Utils.copy_files(from_dir,to_dir,regexp, True)
+      self.session._session['files'] = Utils.copy_files_with_regexp(from_dir,to_dir,regexp, True)
       return True
 
   def wf_postprocess(self):

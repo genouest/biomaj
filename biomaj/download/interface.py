@@ -58,7 +58,7 @@ class DownloadInterface:
           new_files_to_download.append(file)
           index += 1
         else:
-          file['name'] = root_dir+file['name']
+          file['root'] = root_dir
           self.files_to_copy.append(file)
 
     else:

@@ -28,9 +28,53 @@ class Utils:
           'Dec' : 12
           }[date]
 
+  @staticmethod
+  def copy_files(files_to_copy, to_dir, move=False):
+    '''
+    Copy or move files to to_dir, keeping directory structure.
+
+    Copy keeps the original file stats.
+    Files should have attributes name and root:
+      - root: root directory
+      - name: relative path of file in root directory
+
+      /root/file/file1 will be copied in to_dir/file/file1
+
+    :param files_to_copy: list of files to copy
+    :type files_to_copy: list
+    :param to_dir: destination directory
+    :type to_dir: str
+    :param move: move instead of copy
+    :type move: bool
+    '''
+
+    for file_to_copy in files_to_copy:
+      from_file = file_to_copy['root'] + '/' + file_to_copy['name']
+      to_file = to_dir + '/' + file_to_copy['name']
+      if not os.path.exists(os.path.dirname(to_file)):
+        os.makedirs(os.path.dirname(to_file))
+      if move:
+        shutil.move(from_file, to_file)
+      else:
+        shutil.copyfile(from_file, to_file)
+        shutil.copystat(from_file, to_file)
 
   @staticmethod
-  def copy_files(from_dir, to_dir, regexps, move=False):
+  def copy_files_with_regexp(from_dir, to_dir, regexps, move=False):
+    '''
+    Copy or move files from from_dir to to_dir matching regexps.
+    Copy keeps the original file stats.
+
+    :param from_dir: origin directory
+    :type from_dir: str
+    :param to_dir: destination directory
+    :type to_dir: str
+    :param regexps: list of regular expressions that files in from_dir should match to be copied
+    :type regexps: list
+    :param move: move instead of copy
+    :type move: bool
+    :return: list of copied files with their size
+    '''
     #os.chdir(from_dir)
     files_to_copy = []
     for root, dirs, files in os.walk(from_dir, topdown=True):

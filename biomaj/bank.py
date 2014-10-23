@@ -1,12 +1,13 @@
 import os
-import ConfigParser
 import logging
 
 from biomaj.mongo_connector import MongoConnector
 
 from biomaj.session import Session
 from biomaj.workflow import Workflow
+from biomaj.config import BiomajConfig
 
+from bson.objectid import ObjectId
 
 class Bank:
   '''
@@ -16,22 +17,6 @@ class Bank:
      - stop_before, stop_after: stop before/after processing a workflow task
 
   '''
-
-  config = None
-
-  @staticmethod
-  def load_config(config_file='global.properties'):
-    '''
-    Loads general config
-
-    :param config_file: global.properties file path
-    :type config_file: str
-    '''
-    if not os.path.exists(config_file) and not os.path.exists(os.path.expanduser('~/.biomaj.cfg')):
-      raise Exception('Missing configuration file')
-    Bank.config = ConfigParser.ConfigParser()
-    Bank.config.read([config_file, os.path.expanduser('~/.biomaj.cfg')])
-
 
   def __init__(self, name, options={}):
     '''
@@ -43,42 +28,44 @@ class Bank:
     :type options: dict
     '''
     logging.debug('Initialize '+name)
-    if Bank.config is None:
+    if BiomajConfig.global_config is None:
       raise Exception('Configuration must be loaded first')
 
+    self.name = name
+
+    self.config = BiomajConfig(self.name)
+
     self.options = options
+
     if MongoConnector.db is None:
-      MongoConnector(Bank.config.get('GENERAL','db.url'),
-                      Bank.config.get('GENERAL','db.name'))
+      MongoConnector(self.config.get('db.url'),
+                      self.config.get('db.name'))
     self.banks = MongoConnector.banks
 
-    self.name = name
-    self.config_bank = ConfigParser.ConfigParser()
-    conf_dir = Bank.config.get('GENERAL', 'conf.dir')
-    self.config_bank.read([os.path.join(conf_dir,name+'.properties')])
     self.bank = self.banks.find_one({'name': self.name})
     if self.bank is None:
         self.bank = { 'name' : self.name, 'sessions': [], 'production': [] }
-        self.banks.insert(self.bank)
+        self.bank['_id'] = self.banks.insert(self.bank)
 
+    self.session = None
     self.use_last_session = False
 
   def controls(self):
     '''
     Initial controls (create directories etc...)
     '''
-    data_dir = Bank.config.get('GENERAL','data.dir')
-    bank_dir = self.config_bank.get('GENERAL','dir.version')
+    data_dir = self.config.get('data.dir')
+    bank_dir = self.config.get('dir.version')
     bank_dir = os.path.join(data_dir,bank_dir)
     if not os.path.exists(bank_dir):
       os.makedirs(bank_dir)
 
-    offline_dir = self.config_bank.get('GENERAL','offline.dir.name')
+    offline_dir = self.config.get('offline.dir.name')
     offline_dir = os.path.join(data_dir,offline_dir)
     if not os.path.exists(offline_dir):
       os.makedirs(offline_dir)
 
-    log_dir = Bank.config.get('GENERAL','log.dir')
+    log_dir = self.config.get('log.dir')
     log_dir = os.path.join(log_dir,self.name)
     if not os.path.exists(log_dir):
       os.makedirs(log_dir)
@@ -96,23 +83,24 @@ class Bank:
     '''
     if self.use_last_session:
       # Remove last session
-      self.banks.update({'_id': self.bank['_id']}, {'$pull' : { 'sessions.id': self.session._session.id }})
+      self.banks.update({'name': self.name}, {'$pull' : { 'sessions.id': self.session._session.id }})
     # Insert session
-    self.banks.update({'_id': self.bank['_id']}, {'$push' : { 'sessions': self.session._session }})
+    self.banks.update({'name': self.name}, {'$push' : { 'sessions': self.session._session }})
 
   def load_session(self):
     '''
     Loads last session or, if over or forced, a new session
     '''
+    logging.error(self.bank)
     if len(self.bank['sessions']) == 0 or 'fromscratch' in self.options:
-        self.session = Session(self.name, Bank.config, self.config_bank)
+        self.session = Session(self.name, self.config)
         logging.debug('Start new session')
     else:
         # Take last session
-        self.session = Session(self.name, Bank.config, self.config_bank)
+        self.session = Session(self.name, self.config)
         self.session.load(self.bank['sessions'][len(self.bank['sessions'])-1])
         if self.session.get_status(Workflow.FLOW_OVER):
-          self.session = Session(self.name, Bank.config, self.config_bank)
+          self.session = Session(self.name, self.config)
           logging.debug('Start new session')
         else:
           logging.debug('Load previous session '+str(self.session.get('id')))
@@ -125,7 +113,9 @@ class Bank:
     logging.warning('UPDATE BANK: '+self.name)
     self.controls()
     self.load_session()
-    return self.start_update()
+    res = self.start_update()
+    self.save_session()
+    return res
 
   def start_update(self):
     '''

@@ -9,6 +9,7 @@ from biomaj.session import Session
 from biomaj.workflow import Workflow
 from biomaj.utils import Utils
 from biomaj.download.ftp import FTPDownload
+from biomaj.config import BiomajConfig
 
 import unittest
 
@@ -51,7 +52,7 @@ class TestBiomajSetup(unittest.TestCase):
 
   def setUp(self):
       curdir = os.path.dirname(os.path.realpath(__file__))
-      Bank.load_config(os.path.join(curdir,'global.properties'))
+      BiomajConfig.load_config(os.path.join(curdir,'global.properties'))
 
       if not os.path.exists(os.path.join('/tmp/biomaj/config','alu.properties')):
         os.makedirs('/tmp/biomaj/config')
@@ -60,7 +61,8 @@ class TestBiomajSetup(unittest.TestCase):
                         os.path.join('/tmp/biomaj/config','alu.properties'))
       b = Bank('alu')
       b.delete()
-      data_dir = Bank.config.get('GENERAL','data.dir')
+      self.config = BiomajConfig('alu')
+      data_dir = self.config.get('data.dir')
       lock_file = os.path.join(data_dir,'alu.lock')
       if os.path.exists(lock_file):
         os.remove(lock_file)
@@ -87,7 +89,7 @@ class TestBiomajSetup(unittest.TestCase):
       '''
       b = Bank('alu')
       for i in range(1,5):
-        s = Session('alu', Bank.config, b.config_bank)
+        s = Session('alu', self.config)
         s._session['status'][Workflow.FLOW_INIT] = True
         b.session = s
         b.save_session()
@@ -98,11 +100,11 @@ class TestBiomajSetup(unittest.TestCase):
 
   def test_session_reload_over(self):
       '''
-      Checks a session is not if over
+      Checks a session if is not over
       '''
       b = Bank('alu')
       for i in range(1,5):
-        s = Session('alu', Bank.config, b.config_bank)
+        s = Session('alu', self.config)
         s._session['status'][Workflow.FLOW_INIT] = True
         s._session['status'][Workflow.FLOW_OVER] = True
         b.session = s

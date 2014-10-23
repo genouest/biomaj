@@ -64,7 +64,7 @@ class Workflow:
 
   def wf_init(self):
       logging.debug('Workflow:wf_init')
-      data_dir = self.session.config.get('GENERAL','data.dir')
+      data_dir = self.session.config.get('data.dir')
       lock_file = os.path.join(data_dir,self.name+'.lock')
       if os.path.exists(lock_file):
         logging.error('Bank '+self.name+' is locked, a process may be in progress, else remove the lock file')
@@ -89,7 +89,7 @@ class Workflow:
 
   def wf_release(self):
       logging.debug('Workflow:wf_release')
-      if self.session.config_bank.get('GENERAL','release.file') == '':
+      if self.session.config.get('release.file') == '':
         now = datetime.datetime.now()
         self.session._session['release'] = str(now.year)+'-'+str(now.month)+'-'+str(now.day)
       else:
@@ -101,6 +101,7 @@ class Workflow:
   def wf_download(self):
       logging.debug('Workflow:wf_download')
       flow = self.get_flow(Workflow.FLOW_DOWNLOAD)
+      logging.warn('SHOULD DOWNLOAD FILES ACCORDING TO PROTOCOL')
       for step in flow['steps']:
         res = getattr(self, 'wf_'+step)()
         if not res:
@@ -110,24 +111,22 @@ class Workflow:
 
   def wf_uncompress(self):
       logging.debug('Workflow:wf_uncompress')
-      if self.session.config_bank.has_option('GENERAL','no.extract') and \
-          self.session.config_bank.get('GENERAL','no.extract') == 'false':
+      no_extract = self.session.config.get('no.extract')
+      if no_extract is not None and no_extract == 'false':
         for file in self.session._session['files']:
           Utils.uncompress(file['name'])
       return True
 
   def wf_copy(self):
       logging.debug('Workflow:wf_copy')
-      from_dir = os.path.join(self.session.config.get('GENERAL','data.dir'),
-                    self.session.config_bank.get('GENERAL','offline.dir.name'))
-      regexp = self.session.config_bank.get('GENERAL','local.files').split()
-      to_dir = os.path.join(self.session.config.get('GENERAL','data.dir'),
-                    self.session.config_bank.get('GENERAL','dir.version'),
+      from_dir = os.path.join(self.session.config.get('data.dir'),
+                    self.session.config.get('offline.dir.name'))
+      regexp = self.session.config.get('local.files').split()
+      to_dir = os.path.join(self.session.config.get('data.dir'),
+                    self.session.config.get('dir.version'),
                     self.session.get_release_directory())
-      #logging.debug(from_dir)
-      #logging.debug(to_dir)
-      #logging.debug(regexp)
-      Utils.copy_files(from_dir,to_dir,regexp, True)
+
+      self.session._session['files'] = Utils.copy_files(from_dir,to_dir,regexp, True)
       return True
 
   def wf_postprocess(self):
@@ -144,7 +143,7 @@ class Workflow:
 
   def wf_end(self):
       logging.debug('Workflow:wf_end')
-      data_dir = self.session.config.get('GENERAL','data.dir')
+      data_dir = self.session.config.get('data.dir')
       lock_file = os.path.join(data_dir,self.name+'.lock')
       os.remove(lock_file)
       return True

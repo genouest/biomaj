@@ -14,20 +14,17 @@ class Session:
 
   OVER = 0
 
-  def __init__(self, name, config, config_bank):
+  def __init__(self, name, config):
     '''
     Creates a new session
 
     :param name: Name of the bank
     :type name: str
-    :param config: global config
-    :type config: ConfigParser
-    :param config_bank: specific bank config
-    :type config_bank: ConfigParser
+    :param config: bank and global config
+    :type config: BiomajConfig
     '''
     self.name = name
     self.config = config
-    self.config_bank = config_bank
     self._session = { 'id':  time.time(), 'status': {}, 'files': [] }
     for flow in Workflow.FLOW:
         self._session['status'][flow['name']] = False

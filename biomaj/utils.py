@@ -81,6 +81,9 @@ class Utils:
       for name in files:
         for reg in regexps:
           file_relative_path = os.path.join(root, name).replace(from_dir,'')
+          if file_relative_path.startswith('/'):
+            file_relative_path = file_relative_path.replace('/', '', 1)
+          logging.error("OSALLOU "+str(reg)+" ?= "+file_relative_path)
           if re.match(reg, file_relative_path):
             files_to_copy.append({'name': file_relative_path})
             continue

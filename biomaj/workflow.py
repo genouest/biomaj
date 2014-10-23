@@ -3,6 +3,7 @@ import datetime
 import os
 
 from biomaj.utils import Utils
+from biomaj.download.ftp import FTPDownload
 
 class Workflow:
   '''
@@ -101,7 +102,28 @@ class Workflow:
   def wf_download(self):
       logging.debug('Workflow:wf_download')
       flow = self.get_flow(Workflow.FLOW_DOWNLOAD)
+      downloader = None
+      cf = self.session.config
+
       logging.warn('SHOULD DOWNLOAD FILES ACCORDING TO PROTOCOL')
+      if cf.get('protocol') == 'ftp':
+        downloader = FTPDownload('ftp', cf.get('server'), cf.get('remote.dir'))
+      if downloader is None:
+        logging.error('Protocol '+cf.get('protocol')+' not supported')
+        return False
+
+      (file_list, dir_list) = downloader.list()
+
+      downloader.match(cf.get('remote.files').split(), file_list, dir_list)
+
+      logging.warn('SHOULD CHECK IF FILE NOT ALREADY PRESENT IN PRODUCTION')
+      logging.warn('SHOULD CHECK IF FILE NOT ALREADY PRESENT IN OFFLINE DIR')
+      #download.download_or_copy([],'')
+      downloaded_files = downloader.download(os.path.join(cf.get('data.dir'),cf.get('offline.dir.name')))
+
+      downloader.close()
+
+
       for step in flow['steps']:
         res = getattr(self, 'wf_'+step)()
         if not res:
@@ -127,6 +149,9 @@ class Workflow:
                     self.session.get_release_directory())
 
       self.session._session['files'] = Utils.copy_files_with_regexp(from_dir,to_dir,regexp, True)
+      if len(self.session._session['files']) == 0:
+        logging.error('Workflow:wf_copy:No file match in offline dir')
+        return False
       return True
 
   def wf_postprocess(self):
@@ -135,6 +160,19 @@ class Workflow:
 
   def wf_publish(self):
       logging.debug('Workflow:wf_publish')
+      current_link = os.path.join(self.session.config.get('data.dir'),
+                                  self.session.config.get('dir.version'),
+                                  'current')
+      prod_dir = os.path.join(self.session.config.get('data.dir'),
+                    self.session.config.get('dir.version'),
+                    self.session.get_release_directory())
+      to_dir = os.path.join(self.session.config.get('data.dir'),
+                    self.session.config.get('dir.version'))
+
+      if os.path.lexists(current_link):
+        os.remove(current_link)
+      os.chdir(to_dir)
+      os.symlink(prod_dir,'current')
       return True
 
   def wf_over(self):

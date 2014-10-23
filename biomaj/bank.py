@@ -86,6 +86,14 @@ class Bank:
       self.banks.update({'name': self.name}, {'$pull' : { 'sessions.id': self.session._session.id }})
     # Insert session
     self.banks.update({'name': self.name}, {'$push' : { 'sessions': self.session._session }})
+    if self.session.get_status(Workflow.FLOW_OVER):
+      logging.debug('SAVE:PUBLISH:'+self.name)
+      if len(self.bank['production']) > 0:
+        self.banks.update({'name': self.name}, {'$pull' : { 'production.release': self.session._session['release'] }})
+      production = { 'release': self.session._session['release'],
+                      'data_dir': self.config.get('data.dir'),
+                      'prod_dir': self.session.get_release_directory()}
+      self.banks.update({'name': self.name}, {'$push' : { 'production': production }})
 
   def load_session(self):
     '''

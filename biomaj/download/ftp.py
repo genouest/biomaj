@@ -63,10 +63,9 @@ class FTPDownload(DownloadInterface):
       else:
         for rfile in file_list:
           if re.match(pattern, rfile['name']):
+            rfile['root'] = self.rootdir
             if prefix != '':
-              rfile['name'] = self.rootdir +'/' + prefix + '/' +rfile['name']
-            else:
-              rfile['name'] = self.rootdir + '/' +rfile['name']
+              rfile['name'] = prefix + '/' +rfile['name']
             self.files_to_download.append(rfile)
             logging.debug('Download:File:MatchRegExp:'+rfile['name'])
     if len(self.files_to_download) == 0:
@@ -90,7 +89,7 @@ class FTPDownload(DownloadInterface):
 
       fp = open(file_path, "wb")
       curl = pycurl.Curl()
-      curl.setopt(pycurl.URL, self.url+rfile['name'])
+      curl.setopt(pycurl.URL, self.url+rfile['root']+'/'+rfile['name'])
       curl.setopt(pycurl.WRITEDATA, fp)
       curl.perform()
       curl.close()

@@ -25,7 +25,7 @@ class Session:
     '''
     self.name = name
     self.config = config
-    self._session = { 'id':  time.time(), 'status': {}, 'files': [] }
+    self._session = { 'id':  time.time(), 'status': {}, 'files': [], 'release': 'none' }
     for flow in Workflow.FLOW:
         self._session['status'][flow['name']] = False
 

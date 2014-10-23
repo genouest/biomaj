@@ -24,7 +24,7 @@ class TestBiomajUtils(unittest.TestCase):
 
   def test_copy(self):
     from_dir = os.path.dirname(os.path.realpath(__file__))
-    local_file = os.path.basename(os.path.realpath(__file__))
+    local_file = 'biomaj_tests.py'
     files_to_copy = [ {'root': from_dir, 'name': local_file}]
     to_dir = tempfile.mkdtemp('biomaj')
     Utils.copy_files(files_to_copy, to_dir)
@@ -41,7 +41,7 @@ class TestBiomajFTPDownload(unittest.TestCase):
   def test_download(self):
     ftpd = FTPDownload('ftp', 'ftp.ncbi.nih.gov', '/blast/db/FASTA/')
     (file_list, dir_list) = ftpd.list()
-    ftpd.match(['^alu.*\.gz$'], file_list, dir_list)
+    ftpd.match([r'^alu.*\.gz$'], file_list, dir_list)
     ftpd.download('/tmp')
     ftpd.close()
     self.assertTrue(len(ftpd.files_to_download) == 2)
@@ -49,7 +49,7 @@ class TestBiomajFTPDownload(unittest.TestCase):
   def test_download_in_subdir(self):
     ftpd = FTPDownload('ftp', 'ftp.ncbi.nih.gov', '/blast/')
     (file_list, dir_list) = ftpd.list()
-    ftpd.match(['^/db/FASTA/alu.*\.gz$'], file_list, dir_list)
+    ftpd.match([r'^/db/FASTA/alu.*\.gz$'], file_list, dir_list)
     ftpd.download('/tmp')
     ftpd.close()
     self.assertTrue(len(ftpd.files_to_download) == 2)
@@ -150,3 +150,4 @@ class TestBiomajSetup(unittest.TestCase):
       res = b.update()
       self.assertTrue(res)
       self.assertTrue(b.session._session['release'] is not None)
+      new_bank = b.banks.find_one({'name': b.name})

@@ -49,7 +49,11 @@ class BiomajConfig:
     Get a property from bank or general configration. Optionally in section.
     '''
     if self.config_bank.has_option(section,prop):
-      return self.config_bank.get(section,prop)
+      val = self.config_bank.get(section,prop)
+      # If regexp, escape backslashes
+      if prop == 'local.files' or prop == 'remote.files':
+        val = val.replace('\\\\','\\')
+      return val
 
     if BiomajConfig.global_config.has_option(section, prop):
       return BiomajConfig.global_config.get(section, prop)

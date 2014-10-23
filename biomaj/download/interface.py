@@ -64,7 +64,7 @@ class DownloadInterface:
     else:
       # Copy everything
       for file in self.files_to_download:
-        file['name'] = root_dir+file['name']
+        file['root'] = root_dir
         self.files_to_copy.apppend(file)
 
     self.files_to_download = new_files_to_download

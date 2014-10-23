@@ -4,6 +4,7 @@ import StringIO
 import re
 import os
 
+from biomaj.utils import Utils
 from biomaj.download.interface import DownloadInterface
 
 class FTPDownload(DownloadInterface):
@@ -30,7 +31,7 @@ class FTPDownload(DownloadInterface):
 
   def match(self, patterns, file_list, dir_list=[], prefix=''):
     '''
-    Find files matching patterns
+    Find files matching patterns. Sets instance variable files_to_download.
 
     :param patterns: regexps to match
     :type patterns: list
@@ -62,7 +63,10 @@ class FTPDownload(DownloadInterface):
       else:
         for rfile in file_list:
           if re.match(pattern, rfile['name']):
-            rfile['name'] = self.rootdir +'/' + prefix + '/' +rfile['name']
+            if prefix != '':
+              rfile['name'] = self.rootdir +'/' + prefix + '/' +rfile['name']
+            else:
+              rfile['name'] = self.rootdir + '/' +rfile['name']
             self.files_to_download.append(rfile)
             logging.debug('Download:File:MatchRegExp:'+rfile['name'])
     if len(self.files_to_download) == 0:
@@ -71,6 +75,10 @@ class FTPDownload(DownloadInterface):
   def download(self, local_dir):
     '''
     Download remote files to local_dir
+
+    :param local_dir: Directory where files should be downloaded
+    :type local_dir: str
+    :return: list of downloaded files
     '''
 
     logging.warn('TODO: parallelize downloads')
@@ -93,6 +101,8 @@ class FTPDownload(DownloadInterface):
   def list(self, directory=''):
     '''
     List FTP directory
+
+    :return: tuple of file and dirs in current directory with details
     '''
     logging.debug('Download:List:'+self.url+self.rootdir+directory)
     self.crl.setopt(pycurl.URL, self.url+self.rootdir+directory)
@@ -119,9 +129,9 @@ class FTPDownload(DownloadInterface):
         rfile['group'] = parts[2]
         rfile['user'] = parts[3]
         rfile['size'] = parts[4]
-        rfile['month'] = parts[5]
+        rfile['month'] = Utils.month_to_num(parts[5])
         rfile['day'] = parts[6]
-        rfile['yearortime'] = parts[7]
+        rfile['year'] = parts[7]
         rfile['name'] = parts[8]
         is_dir = False
         if re.match('^d', rfile['permissions']):

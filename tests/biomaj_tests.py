@@ -3,6 +3,7 @@ from nose.tools import *
 import shutil
 import os
 import tempfile
+import logging
 
 from biomaj.bank import Bank
 from biomaj.session import Session
@@ -46,6 +47,25 @@ class TestBiomajFTPDownload(unittest.TestCase):
     ftpd.close()
     self.assertTrue(len(ftpd.files_to_download) == 2)
 
+  def test_download_or_copy(self):
+    ftpd = FTPDownload('ftp', 'ftp.ncbi.nih.gov', '/blast/')
+    ftpd.files_to_download = [
+          {'name':'/test1', 'year': '2013', 'month': '11', 'day': '10', 'size': 10},
+          {'name':'/test2', 'year': '2013', 'month': '11', 'day': '10', 'size': 10},
+          {'name':'/test/test1', 'year': '2013', 'month': '11', 'day': '10', 'size': 10},
+          {'name':'/test/test11', 'year': '2013', 'month': '11', 'day': '10', 'size': 10}
+          ]
+    available_files = [
+          {'name':'/test1', 'year': '2013', 'month': '11', 'day': '10', 'size': 10},
+          {'name':'/test12', 'year': '2013', 'month': '11', 'day': '10', 'size': 10},
+          {'name':'/test3', 'year': '2013', 'month': '11', 'day': '10', 'size': 10},
+          {'name':'/test/test1', 'year': '2013', 'month': '11', 'day': '10', 'size': 20},
+          {'name':'/test/test11', 'year': '2013', 'month': '11', 'day': '10', 'size': 10}
+          ]
+    ftpd.download_or_copy(available_files,'/biomaj')
+    ftpd.close()
+    self.assertTrue(len(ftpd.files_to_download)==2)
+    self.assertTrue(len(ftpd.files_to_copy)==2)
 
 class TestBiomajSetup(unittest.TestCase):
 

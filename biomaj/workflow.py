@@ -95,11 +95,12 @@ class UpdateWorkflow(Workflow):
             self.wf_over()
             return False
         # Main task is over, execute sub tasks of main
-        for step in flow['steps']:
-          res = getattr(self, 'wf_'+step)()
-          if not res:
-            logging.error('Error during '+flow['name']+' subtask: wf_' + step)
-            return False
+        if not self.skip_all:
+          for step in flow['steps']:
+            res = getattr(self, 'wf_'+step)()
+            if not res:
+              logging.error('Error during '+flow['name']+' subtask: wf_' + step)
+              return False
       if self.options.get_option(Options.STOP_AFTER) == flow['name']:
       #if self.options and 'stop_after' in self.options and self.options['stop_after'] == flow['name']:
         break
@@ -201,6 +202,11 @@ class UpdateWorkflow(Workflow):
       last_production_dir = os.path.join(last_production['data_dir'],cf.get('dir.version'),last_production['release'])
       # Checks if some files can be copied instead of downloaded
       downloader.download_or_copy(last_production_session['sessions'][0]['files'],last_production_dir)
+      if len(downloader.files_to_download) == 0:
+        self.skip_all = True
+        self.session._session['status'][Workflow.FLOW_OVER] = True
+        self.session._session['update'] = False
+        return True
       #release_dir = os.path.join(self.session.config.get('data.dir'),
       #              self.session.config.get('dir.version'),
       #              self.session.get_release_directory())

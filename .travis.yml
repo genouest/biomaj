@@ -16,7 +16,7 @@ install:
   - "pip install python-coveralls"
   - "python setup.py -q install"
 # command to run tests
-script: nosetests --with-coverage --cover-package=biomaj -a '!network'
+script: nosetests --with-coverage --cover-package=biomaj -a '!network' tests/biomaj_tests.py
 after_success:
   - coveralls
 

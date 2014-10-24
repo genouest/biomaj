@@ -12,7 +12,7 @@ config = {
     'version': '3.0.0',
     'install_requires': ['nose', 'pymongo', 'pycurl'],
     'packages': find_packages(),
-    'scripts': ['bin/biomaj.py'],
+#    'scripts': ['bin/biomaj.py'],
     'name': 'biomaj'
 }
 

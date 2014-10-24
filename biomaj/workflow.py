@@ -5,6 +5,7 @@ import os
 from biomaj.utils import Utils
 from biomaj.download.ftp import FTPDownload
 from biomaj.mongo_connector import MongoConnector
+from biomaj.options import Options
 
 class Workflow:
   '''
@@ -36,6 +37,7 @@ class Workflow:
     '''
     self.bank = bank
 
+
   def get_flow(self, task):
     for flow in Workflow.FLOW:
       if flow['name'] == task:
@@ -66,7 +68,7 @@ class UpdateWorkflow(Workflow):
     logging.debug('New workflow')
     self.bank = bank
     self.session = bank.session
-    self.options = bank.options
+    self.options = Options(bank.options)
     self.name = bank.name
     # Skip all remaining tasks, no need to update
     self.skip_all = False
@@ -81,7 +83,8 @@ class UpdateWorkflow(Workflow):
       if self.skip_all:
         continue
 
-      if self.options and 'stop_before' in self.options and self.options['stop_before'] == flow['name']:
+      if self.options.get_option(Options.STOP_BEFORE) == flow['name']:
+      #if self.options and 'stop_before' in self.options and self.options['stop_before'] == flow['name']:
         break
       # Always run INIT
       if flow['name'] == Workflow.FLOW_INIT or not self.session.get_status(flow['name']):
@@ -97,7 +100,8 @@ class UpdateWorkflow(Workflow):
           if not res:
             logging.error('Error during '+flow['name']+' subtask: wf_' + step)
             return False
-      if self.options and 'stop_after' in self.options and self.options['stop_after'] == flow['name']:
+      if self.options.get_option(Options.STOP_AFTER) == flow['name']:
+      #if self.options and 'stop_after' in self.options and self.options['stop_after'] == flow['name']:
         break
     return True
 
@@ -252,6 +256,9 @@ class UpdateWorkflow(Workflow):
     Add *current* symlink to this release
     '''
     logging.debug('Workflow:wf_publish')
+    if self.options.get_option(Options.NO_PUBLISH):
+      logging.debug('Workflow:wf_publish:no')
+      return True
     current_link = os.path.join(self.session.config.get('data.dir'),
                                 self.session.config.get('dir.version'),
                                 'current')

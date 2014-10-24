@@ -1,9 +1,14 @@
 from nose.tools import *
+from nose.plugins.attrib import attr
+
 
 import shutil
 import os
 import tempfile
 import logging
+
+from optparse import OptionParser
+
 
 from biomaj.bank import Bank
 from biomaj.session import Session
@@ -40,6 +45,7 @@ class TestBiomajUtils(unittest.TestCase):
     Utils.copy_files(files_to_copy, to_dir)
     self.assertTrue(os.path.exists(to_dir+'/biomaj_tests.py'))
 
+@attr('network')
 class TestBiomajFTPDownload(unittest.TestCase):
 
   def test_ftp_list(self):
@@ -151,6 +157,7 @@ class TestBiomajSetup(unittest.TestCase):
       b.load_session(UpdateWorkflow.FLOW)
       self.assertFalse(b.session.get_status(Workflow.FLOW_INIT))
 
+  @attr('network')
   def test_get_release(self):
       '''
       Get release
@@ -161,6 +168,7 @@ class TestBiomajSetup(unittest.TestCase):
       self.assertTrue(res)
       self.assertTrue(b.session._session['release'] is not None)
 
+@attr('network')
 class TestBiomajFunctional(unittest.TestCase):
 
 

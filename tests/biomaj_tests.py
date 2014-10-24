@@ -15,6 +15,7 @@ from biomaj.session import Session
 from biomaj.workflow import Workflow, UpdateWorkflow
 from biomaj.utils import Utils
 from biomaj.download.ftp import FTPDownload
+from biomaj.download.copy  import LocalDownload
 from biomaj.config import BiomajConfig
 
 import unittest
@@ -44,6 +45,50 @@ class TestBiomajUtils(unittest.TestCase):
     to_dir = tempfile.mkdtemp('biomaj')
     Utils.copy_files(files_to_copy, to_dir)
     self.assertTrue(os.path.exists(to_dir+'/biomaj_tests.py'))
+
+class TestBiomajLocalDownload(unittest.TestCase):
+  '''
+  Test Local downloader
+  '''
+
+  def setUp(self):
+    self.curdir = os.path.dirname(os.path.realpath(__file__))
+    self.examples = os.path.join(self.curdir,'bank') + '/'
+
+    BiomajConfig.load_config(os.path.join(self.curdir,'global.properties'))
+
+    if not os.path.exists('/tmp/biomaj/config'):
+      os.makedirs('/tmp/biomaj/config')
+    if not os.path.exists(os.path.join('/tmp/biomaj/config','local.properties')):
+      shutil.copyfile(os.path.join(self.curdir,'local.properties'),
+                      os.path.join('/tmp/biomaj/config','local.properties'))
+      flocal = open(os.path.join('/tmp/biomaj/config','local.properties'),'a')
+      flocal.write('\nremote.dir='+self.examples+"\n")
+      flocal.close()
+
+  def test_local_list(self):
+    locald = LocalDownload(self.examples)
+    (file_list, dir_list) = locald.list()
+    locald.close()
+    self.assertTrue(len(file_list) > 1)
+
+  def test_local_download(self):
+    locald = LocalDownload(self.examples)
+    (file_list, dir_list) = locald.list()
+    locald.match([r'^test.*\.gz$'], file_list, dir_list)
+    locald.download('/tmp')
+    locald.close()
+    self.assertTrue(len(locald.files_to_download) == 1)
+
+
+  def test_local_download_in_subdir(self):
+    locald = LocalDownload(self.curdir+'/')
+    (file_list, dir_list) = locald.list()
+    locald.match([r'^/bank/test.*\.gz$'], file_list, dir_list)
+    locald.download('/tmp')
+    locald.close()
+    self.assertTrue(len(locald.files_to_download) == 1)
+
 
 @attr('network')
 class TestBiomajFTPDownload(unittest.TestCase):
@@ -100,9 +145,9 @@ class TestBiomajSetup(unittest.TestCase):
       curdir = os.path.dirname(os.path.realpath(__file__))
       BiomajConfig.load_config(os.path.join(curdir,'global.properties'))
 
-      if not os.path.exists(os.path.join('/tmp/biomaj/config','alu.properties')):
+      if not os.path.exists('/tmp/biomaj/config'):
         os.makedirs('/tmp/biomaj/config')
-
+      if not os.path.exists(os.path.join('/tmp/biomaj/config','alu.properties')):
         shutil.copyfile(os.path.join(curdir,'alu.properties'),
                         os.path.join('/tmp/biomaj/config','alu.properties'))
       b = Bank('alu')
@@ -168,6 +213,7 @@ class TestBiomajSetup(unittest.TestCase):
       b = Bank('alu')
       b.load_session(UpdateWorkflow.FLOW)
       res = b.update()
+      self.assertTrue(b.session.get('update'))
       self.assertTrue(res)
       self.assertTrue(b.session._session['release'] is not None)
 
@@ -194,11 +240,14 @@ class TestBiomajFunctional(unittest.TestCase):
 
   # Should test this on local downloader, changing 1 file to force update,
   # else we would get same bank and there would be no update
-  #def test_reuse_last_production(self):
+  #def test_no_update(self):
   #    '''
-  #    Get release
+  #    Try updating twice, at second time, bank should be update
   #    '''
   #    b = Bank('alu')
   #    b.load_session(UpdateWorkflow.FLOW)
-  #    res = b.update()
   #    b.update()
+  #    self.assertTrue(b.session.get('update'))
+  #    b.update()
+  #    self.assertFalse(b.session.get('update'))
+  #    self.assertFalse(b.session.get_status(Workflow.POSTPROCESS))

@@ -14,7 +14,7 @@ class Session:
 
   OVER = 0
 
-  def __init__(self, name, config):
+  def __init__(self, name, config, flow=Workflow.FLOW):
     '''
     Creates a new session
 
@@ -22,11 +22,14 @@ class Session:
     :type name: str
     :param config: bank and global config
     :type config: BiomajConfig
+    :param flow: Workflow tasks
+    :type flow: dict
     '''
     self.name = name
     self.config = config
+    self.flow = flow
     self._session = { 'id':  time.time(), 'status': {}, 'files': [], 'release': 'none' }
-    for flow in Workflow.FLOW:
+    for flow in self.flow:
         self._session['status'][flow['name']] = False
 
   def load(self, session):
@@ -37,6 +40,15 @@ class Session:
 
   def get_release_directory(self):
     return self.name+'-'+self._session['release']
+
+  def get_full_release_directory(self):
+    release_dir = os.path.join(self.config.get('data.dir'),
+                  self.config.get('dir.version'),
+                  self.get_release_directory())
+    return release_dir
+
+  def get_offline_directory(self):
+    return os.path.join(self.config.get('data.dir'),self.config.get('offline.dir.name'))
 
   def get(self, attr):
     '''

@@ -30,7 +30,7 @@ class DownloadInterface:
     settime = time.mktime(ftime.timetuple())
     os.utime(file_path, (settime, settime))
 
-  def download_or_copy(self, available_files, root_dir):
+  def download_or_copy(self, available_files, root_dir, check_exists=True):
     '''
     If a file to download is available in available_files, copy it instead of downloading it.
 
@@ -40,7 +40,10 @@ class DownloadInterface:
     :type available files: list
     :param root_dir: directory where files are available
     :type root_dir: str
+    :param check_exists: checks if file exists locally
+    :type check_exists: bool
     '''
+
     self.files_to_copy = []
     available_files.sort(key=lambda x: x['name'])
     self.files_to_download.sort(key=lambda x: x['name'])
@@ -51,6 +54,7 @@ class DownloadInterface:
     test2_tuples = set((d['name'], d['year'], d['month'], d['day'], d['size']) for d in available_files)
     new_or_modified_files = [t for t in test1_tuples if t not in test2_tuples]
     index = 0
+
     if len(new_or_modified_files) > 0:
       for file in self.files_to_download:
         if index < len(new_or_modified_files) and \
@@ -58,17 +62,22 @@ class DownloadInterface:
           new_files_to_download.append(file)
           index += 1
         else:
-          file['root'] = root_dir
-          self.files_to_copy.append(file)
+          if not check_exists or os.path.exists(os.path.join(root_dir,file['name'])):
+            file['root'] = root_dir
+            self.files_to_copy.append(file)
+          else:
+            new_files_to_download.append(file)
 
     else:
       # Copy everything
       for file in self.files_to_download:
-        file['root'] = root_dir
-        self.files_to_copy.apppend(file)
+        if not check_exists or os.path.exists(os.path.join(root_dir,file['name'])):
+          file['root'] = root_dir
+          self.files_to_copy.apppend(file)
+        else:
+          new_files_to_download.append(file)
 
     self.files_to_download = new_files_to_download
-
 
   def match(self, patterns = []):
     '''

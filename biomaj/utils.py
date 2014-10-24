@@ -1,10 +1,13 @@
 import tarfile
 import zipfile
+import gzip
+import bz2
 import re
 import glob
 import os
 import logging
 import shutil
+import datetime
 
 class Utils:
   '''
@@ -47,8 +50,11 @@ class Utils:
     :param move: move instead of copy
     :type move: bool
     '''
-
+    nb_files = len(files_to_copy)
+    cur_files = 1
     for file_to_copy in files_to_copy:
+      logging.debug(str(cur_files)+'/'+str(nb_files)+' copy file '+file_to_copy['name'])
+      cur_files += 1
       from_file = file_to_copy['root'] + '/' + file_to_copy['name']
       to_file = to_dir + '/' + file_to_copy['name']
       if not os.path.exists(os.path.dirname(to_file)):
@@ -83,7 +89,6 @@ class Utils:
           file_relative_path = os.path.join(root, name).replace(from_dir,'')
           if file_relative_path.startswith('/'):
             file_relative_path = file_relative_path.replace('/', '', 1)
-          logging.error("OSALLOU "+str(reg)+" ?= "+file_relative_path)
           if re.match(reg, file_relative_path):
             files_to_copy.append({'name': file_relative_path})
             continue
@@ -99,6 +104,10 @@ class Utils:
         shutil.copyfile(from_file, to_file)
         shutil.copystat(from_file, to_file)
       file_to_copy['size'] = os.path.getsize(to_file)
+      f_stat = datetime.datetime.fromtimestamp(os.path.getmtime(to_file))
+      file_to_copy['year'] = str(f_stat.year)
+      file_to_copy['month'] = str(f_stat.month)
+      file_to_copy['day'] = str(f_stat.day)
     return files_to_copy
 
   @staticmethod
@@ -106,9 +115,16 @@ class Utils:
     '''
     Test if file is an archive, and uncompress it
     Remove archive file if specified
+
+    :param file: full path to file to check and uncompress
+    :type file: str
+    :param remove: remove archive if present
+    :type remove: bool
     '''
     is_archive = False
+    logging.error('uncompress '+file)
     if tarfile.is_tarfile(file):
+      logging.error('is tar')
       tfile = tarfile.TarFile(file)
       tfile.extractall(os.path.basename(file))
       tfile.close()
@@ -118,6 +134,20 @@ class Utils:
       zfile.extractall(os.path.basename(file))
       zfile.close()
       is_archive = True
+    elif file.endswith('.gz'):
+      f_in = open(file.replace('.gz',''), 'wb')
+      gz_file = gzip.GzipFile(file)
+      f_in.writelines(gz_file.readlines())
+      f_in.close()
+      gz_file.close()
+      is_archive = True
+    elif file.endswith('.bz2'):
+      f_in = open(file.replace('.bz2',''), 'wb')
+      bz_file = bz2.BZ2File(file)
+      f_in.writelines(bz_file.readlines())
+      f_in.close()
+      bz_file.close()
+      is_archive = True
 
-    if is_archive and remove:
+    if is_archive and remove and os.path.exists(file):
       os.remove(file)

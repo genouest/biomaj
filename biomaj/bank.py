@@ -4,7 +4,7 @@ import logging
 from biomaj.mongo_connector import MongoConnector
 
 from biomaj.session import Session
-from biomaj.workflow import Workflow
+from biomaj.workflow import UpdateWorkflow, Workflow
 from biomaj.config import BiomajConfig
 
 from bson.objectid import ObjectId
@@ -83,7 +83,7 @@ class Bank:
     '''
     if self.use_last_session:
       # Remove last session
-      self.banks.update({'name': self.name}, {'$pull' : { 'sessions.id': self.session._session.id }})
+      self.banks.update({'name': self.name}, {'$pull' : { 'sessions.id': self.session._session['id'] }})
     # Insert session
     self.banks.update({'name': self.name}, {'$push' : { 'sessions': self.session._session }})
     if self.session.get_status(Workflow.FLOW_OVER):
@@ -91,24 +91,29 @@ class Bank:
       if len(self.bank['production']) > 0:
         self.banks.update({'name': self.name}, {'$pull' : { 'production.release': self.session._session['release'] }})
       production = { 'release': self.session._session['release'],
+                      'session': self.session._session['id'],
                       'data_dir': self.config.get('data.dir'),
                       'prod_dir': self.session.get_release_directory()}
       self.banks.update({'name': self.name}, {'$push' : { 'production': production }})
 
-  def load_session(self):
+  def load_session(self, flow=Workflow.FLOW):
     '''
     Loads last session or, if over or forced, a new session
+
+    Creates a new session or load last session if not over
+
+    :param flow: kind of workflow
+    :type flow: Workflow.FLOW
     '''
-    logging.error(self.bank)
     if len(self.bank['sessions']) == 0 or 'fromscratch' in self.options:
-        self.session = Session(self.name, self.config)
+        self.session = Session(self.name, self.config, flow)
         logging.debug('Start new session')
     else:
         # Take last session
-        self.session = Session(self.name, self.config)
+        self.session = Session(self.name, self.config, flow)
         self.session.load(self.bank['sessions'][len(self.bank['sessions'])-1])
         if self.session.get_status(Workflow.FLOW_OVER):
-          self.session = Session(self.name, self.config)
+          self.session = Session(self.name, self.config, flow)
           logging.debug('Start new session')
         else:
           logging.debug('Load previous session '+str(self.session.get('id')))
@@ -120,7 +125,7 @@ class Bank:
     '''
     logging.warning('UPDATE BANK: '+self.name)
     self.controls()
-    self.load_session()
+    self.load_session(UpdateWorkflow.FLOW)
     res = self.start_update()
     self.save_session()
     return res
@@ -129,5 +134,5 @@ class Bank:
     '''
     Start an update workflow
     '''
-    workflow = Workflow(self.session, self.options)
-    return workflow.start(self.name)
+    workflow = UpdateWorkflow(self)
+    return workflow.start()

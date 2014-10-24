@@ -79,14 +79,19 @@ class FTPDownload(DownloadInterface):
     :type local_dir: str
     :return: list of downloaded files
     '''
+    logging.debug('FTP:Download')
 
     logging.warn('TODO: parallelize downloads')
+    nb_files = len(self.files_to_download)
+    cur_files = 1
+
     for rfile in self.files_to_download:
       file_dir = local_dir + os.path.dirname(rfile['name'])
       file_path = file_dir + '/' + os.path.basename(rfile['name'])
       if not os.path.exists(file_dir):
         os.makedirs(file_dir)
-
+      logging.debug(str(cur_files)+'/'+str(nb_files)+' downloading file '+rfile['name'])
+      cur_files += 1
       fp = open(file_path, "wb")
       curl = pycurl.Curl()
       curl.setopt(pycurl.URL, self.url+rfile['root']+'/'+rfile['name'])
@@ -94,6 +99,7 @@ class FTPDownload(DownloadInterface):
       curl.perform()
       curl.close()
       fp.close()
+      logging.debug('downloaded!')
       self.set_permissions(file_path, rfile)
     return self.files_to_download
 

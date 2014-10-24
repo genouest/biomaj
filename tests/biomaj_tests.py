@@ -47,6 +47,9 @@ class TestBiomajUtils(unittest.TestCase):
 
 @attr('network')
 class TestBiomajFTPDownload(unittest.TestCase):
+  '''
+  Test FTP downloader
+  '''
 
   def test_ftp_list(self):
     ftpd = FTPDownload('ftp', 'ftp.ncbi.nih.gov', '/blast/db/FASTA/')

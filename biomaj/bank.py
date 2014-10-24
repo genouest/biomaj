@@ -89,11 +89,23 @@ class Bank:
     if self.session.get_status(Workflow.FLOW_OVER):
       logging.debug('SAVE:PUBLISH:'+self.name)
       if len(self.bank['production']) > 0:
+        # Remove from database
         self.banks.update({'name': self.name}, {'$pull' : { 'production.release': self.session._session['release'] }})
+        # Update local object
+        index = 0
+        for prod in self.bank['production']:
+          if prod['release'] == self.session._session['release']:
+            break;
+          index += 1
+        if index < len(self.bank['production']):
+          self.bank['production'].pop(index)
+
       production = { 'release': self.session._session['release'],
                       'session': self.session._session['id'],
                       'data_dir': self.config.get('data.dir'),
                       'prod_dir': self.session.get_release_directory()}
+
+      self.bank['production'].append(production)
       self.banks.update({'name': self.name}, {'$push' : { 'production': production }})
 
   def load_session(self, flow=Workflow.FLOW):

@@ -20,6 +20,48 @@ class DownloadInterface:
     self.files_to_download = []
     self.files_to_copy = []
 
+  def match(self, patterns, file_list, dir_list=[], prefix=''):
+    '''
+    Find files matching patterns. Sets instance variable files_to_download.
+
+    :param patterns: regexps to match
+    :type patterns: list
+    :param file_list: list of files to match
+    :type file_list: list
+    :param dir_list: sub directories in current dir
+    :type dir_list: list
+    :param prefix: directory prefix
+    :type prefix: str
+    '''
+    logging.debug('Download:File:RegExp:'+str(patterns))
+    self.files_to_download = []
+    for pattern in patterns:
+      subdirs_pattern = pattern.split('/')
+      if len(subdirs_pattern) > 1:
+        # Pattern contains sub directories
+        subdir = subdirs_pattern[0]
+        if subdir == '^':
+          subdirs_pattern = subdirs_pattern[1:]
+          subdir = subdirs_pattern[0]
+        logging.debug('Download:File:Subdir:Check:'+subdir)
+        if re.match(subdirs_pattern[0], subdir):
+          logging.debug('Download:File:Subdir:Match:'+subdir)
+          # subdir match the beginning of the pattern
+          # check match in subdir
+          (subfile_list, subdirs_list) = self.list(prefix+'/'+subdir+'/')
+          self.match(['/'.join(subdirs_pattern[1:])], subfile_list, subdirs_list, prefix+'/'+subdir)
+
+      else:
+        for rfile in file_list:
+          if re.match(pattern, rfile['name']):
+            rfile['root'] = self.rootdir
+            if prefix != '':
+              rfile['name'] = prefix + '/' +rfile['name']
+            self.files_to_download.append(rfile)
+            logging.debug('Download:File:MatchRegExp:'+rfile['name'])
+    if len(self.files_to_download) == 0:
+      raise Exception('no file found matching expressions')
+
 
 
   def set_permissions(self, file_path, file_info):
@@ -78,12 +120,6 @@ class DownloadInterface:
           new_files_to_download.append(file)
 
     self.files_to_download = new_files_to_download
-
-  def match(self, patterns = []):
-    '''
-    Find files matching patterns
-    '''
-    pass
 
 
   def download(self, local_dir):

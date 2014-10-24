@@ -122,7 +122,6 @@ class Utils:
     :type remove: bool
     '''
     is_archive = False
-    logging.error('uncompress '+file)
     if tarfile.is_tarfile(file):
       logging.error('is tar')
       tfile = tarfile.TarFile(file)
@@ -148,6 +147,10 @@ class Utils:
       f_in.close()
       bz_file.close()
       is_archive = True
+
+    if is_archive:
+      logging.debug('Uncompress:uncompress:'+file)
+
 
     if is_archive and remove and os.path.exists(file):
       os.remove(file)

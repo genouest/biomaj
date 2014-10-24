@@ -6,6 +6,7 @@ from biomaj.mongo_connector import MongoConnector
 from biomaj.session import Session
 from biomaj.workflow import UpdateWorkflow, Workflow
 from biomaj.config import BiomajConfig
+from biomaj.options import Options
 
 from bson.objectid import ObjectId
 
@@ -18,14 +19,14 @@ class Bank:
 
   '''
 
-  def __init__(self, name, options={}):
+  def __init__(self, name, options=None):
     '''
     Get a bank from db or creates a new one
 
     :param name: name of the bank, must match its config file
     :type name: str
     :param options: bank options
-    :type options: dict
+    :type options: argparse
     '''
     logging.debug('Initialize '+name)
     if BiomajConfig.global_config is None:
@@ -35,7 +36,7 @@ class Bank:
 
     self.config = BiomajConfig(self.name)
 
-    self.options = options
+    self.options = Options(options)
 
     if MongoConnector.db is None:
       MongoConnector(self.config.get('db.url'),
@@ -106,7 +107,18 @@ class Bank:
                       'prod_dir': self.session.get_release_directory()}
 
       self.bank['production'].append(production)
-      self.banks.update({'name': self.name}, {'$push' : { 'production': production }})
+      if not self.options.get_option(Options.NO_PUBLISH):
+        # IF we want to publish, set as latest
+        self.bank['current'] = self.session._session['id']
+        self.banks.update({'name': self.name},
+                          {
+                          '$push': {'production': production},
+                          '$set': {'latest': self.session._session['id']}
+                          })
+      else:
+        # no publish, latest is not modified
+        self.banks.update({'name': self.name},
+                          {'$push': { 'production': production }})
 
   def load_session(self, flow=Workflow.FLOW):
     '''
@@ -117,7 +129,7 @@ class Bank:
     :param flow: kind of workflow
     :type flow: Workflow.FLOW
     '''
-    if len(self.bank['sessions']) == 0 or 'fromscratch' in self.options:
+    if len(self.bank['sessions']) == 0 or self.options.get_option(Options.FROMSCRATCH):
         self.session = Session(self.name, self.config, flow)
         logging.debug('Start new session')
     else:

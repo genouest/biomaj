@@ -5,18 +5,20 @@ class Options:
   Available options
   '''
 
-  def __init__(self, options={}):
-    if options is None:
-      self.options = {}
-    else:
+  def __init__(self, options=None):
       self.options = options
 
   def get_option(self, option):
     '''
     Gets an option if present, else return None
     '''
-    if option in self.options:
+    if self.options is None:
+      return None
+
+    #if option in self.options:
+    if hasattr(self.options, option):
       return self.options[option]
+
     return None
 
   NO_PUBLISH = 'no_publish'

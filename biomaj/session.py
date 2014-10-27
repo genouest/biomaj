@@ -32,6 +32,8 @@ class Session:
     for flow in self.flow:
         self._session['status'][flow['name']] = False
 
+    self.set('last_modified',self.config.last_modified)
+
   def load(self, session):
     '''
     Load an existing session
@@ -64,6 +66,12 @@ class Session:
     Return an attribute of session
     '''
     return self._session[attr]
+
+  def set(self, attr, value):
+    '''
+    Sets an attribute of session
+    '''
+    self._session[attr] = value
 
   def get_status(self, status):
     '''

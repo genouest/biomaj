@@ -21,7 +21,7 @@ class Options:
 
     return None
 
-  NO_PUBLISH = 'no_publish'
+  PUBLISH = 'publish'
   STOP_BEFORE = 'stop_before'
   STOP_AFTER = 'stop_after'
   FROMSCRATCH = 'fromscratch'

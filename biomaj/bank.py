@@ -107,7 +107,7 @@ class Bank:
                       'prod_dir': self.session.get_release_directory()}
 
       self.bank['production'].append(production)
-      if not self.options.get_option(Options.NO_PUBLISH):
+      if self.options.get_option(Options.PUBLISH):
         # IF we want to publish, set as latest
         self.bank['current'] = self.session._session['id']
         self.banks.update({'name': self.name},

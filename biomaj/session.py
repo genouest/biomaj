@@ -39,15 +39,24 @@ class Session:
     self._session = session
 
   def get_release_directory(self):
+    '''
+    Get release directroy name
+    '''
     return self.name+'-'+self._session['release']
 
   def get_full_release_directory(self):
+    '''
+    Get bank directroy for this release
+    '''
     release_dir = os.path.join(self.config.get('data.dir'),
                   self.config.get('dir.version'),
                   self.get_release_directory())
     return release_dir
 
   def get_offline_directory(self):
+    '''
+    Get bank offline directory
+    '''
     return os.path.join(self.config.get('data.dir'),self.config.get('offline.dir.name'))
 
   def get(self, attr):

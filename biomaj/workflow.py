@@ -1,6 +1,7 @@
 import logging
 import datetime
 import os
+import shutil
 
 from biomaj.utils import Utils
 from biomaj.download.ftp import FTPDownload
@@ -36,42 +37,17 @@ class Workflow:
     :type bank: Bank
     '''
     self.bank = bank
+    self.session = bank.session
+    self.options = Options(bank.options)
+    self.name = bank.name
+    # Skip all remaining tasks, no need to update
+    self.skip_all = False
 
 
   def get_flow(self, task):
     for flow in Workflow.FLOW:
       if flow['name'] == task:
         return flow
-
-class UpdateWorkflow(Workflow):
-
-  FLOW = [
-    { 'name': 'init', 'steps': []},
-    { 'name': 'check', 'steps': []},
-    { 'name': 'depends', 'steps': []},
-    { 'name': 'preprocess', 'steps': []},
-    { 'name': 'release', 'steps': []},
-    { 'name': 'download', 'steps': ['uncompress','copy']},
-    { 'name': 'postprocess', 'steps': []},
-    { 'name': 'publish', 'steps': ['clean_offline', 'delete_old']},
-    { 'name': 'over', 'steps': []}
-  ]
-
-  def __init__(self, bank):
-    '''
-    Instantiate a new workflow
-
-    :param bank: bank on which to apply the workflow
-    :type bank: Bank
-    '''
-    Workflow.__init__(self, bank)
-    logging.debug('New workflow')
-    self.bank = bank
-    self.session = bank.session
-    self.options = Options(bank.options)
-    self.name = bank.name
-    # Skip all remaining tasks, no need to update
-    self.skip_all = False
 
   def start(self):
     '''
@@ -105,6 +81,31 @@ class UpdateWorkflow(Workflow):
       #if self.options and 'stop_after' in self.options and self.options['stop_after'] == flow['name']:
         break
     return True
+
+class UpdateWorkflow(Workflow):
+
+  FLOW = [
+    { 'name': 'init', 'steps': []},
+    { 'name': 'check', 'steps': []},
+    { 'name': 'depends', 'steps': []},
+    { 'name': 'preprocess', 'steps': []},
+    { 'name': 'release', 'steps': []},
+    { 'name': 'download', 'steps': ['uncompress','copy']},
+    { 'name': 'postprocess', 'steps': []},
+    { 'name': 'publish', 'steps': ['clean_offline', 'delete_old']},
+    { 'name': 'over', 'steps': []}
+  ]
+
+  def __init__(self, bank):
+    '''
+    Instantiate a new workflow
+
+    :param bank: bank on which to apply the workflow
+    :type bank: Bank
+    '''
+    Workflow.__init__(self, bank)
+    logging.debug('New workflow')
+
 
   def wf_init(self):
     '''
@@ -261,16 +262,16 @@ class UpdateWorkflow(Workflow):
     '''
     Add *current* symlink to this release
     '''
-    logging.debug('Workflow:wf_publish')
-    if self.options.get_option(Options.NO_PUBLISH):
+
+    if not self.options.get_option(Options.PUBLISH):
       logging.debug('Workflow:wf_publish:no')
       return True
+    logging.debug('Workflow:wf_publish')
     current_link = os.path.join(self.session.config.get('data.dir'),
                                 self.session.config.get('dir.version'),
                                 'current')
-    prod_dir = os.path.join(self.session.config.get('data.dir'),
-                  self.session.config.get('dir.version'),
-                  self.session.get_release_directory())
+    prod_dir = self.session.get_full_release_directory()
+
     to_dir = os.path.join(self.session.config.get('data.dir'),
                   self.session.config.get('dir.version'))
 
@@ -285,6 +286,7 @@ class UpdateWorkflow(Workflow):
     Clean offline directory
     '''
     logging.debug('Workflow:wf_clean_offline')
+    shutil.rmtree(self.session.get_offline_directory())
     return True
 
   def wf_delete_old(self):

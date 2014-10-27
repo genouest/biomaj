@@ -2,7 +2,6 @@
 
 import os,sys
 from optparse import OptionParser
-import logging.config
 
 from biomaj.bank import Bank
 from biomaj.config import BiomajConfig
@@ -19,7 +18,6 @@ def main():
 
   bmaj = None
   if options.config is not None:
-    logging.config.fileConfig(options.config)
     BiomajConfig.load_config(options.config)
 
 

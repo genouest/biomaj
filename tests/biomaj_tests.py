@@ -234,6 +234,18 @@ class TestBiomajFTPDownload(unittest.TestCase):
     self.assertTrue(len(ftpd.files_to_download)==2)
     self.assertTrue(len(ftpd.files_to_copy)==2)
 
+  def test_get_more_recent_file(self):
+    files = [
+          {'name':'/test1', 'year': '2013', 'month': '11', 'day': '10', 'size': 10},
+          {'name':'/test2', 'year': '2013', 'month': '11', 'day': '12', 'size': 10},
+          {'name':'/test/test1', 'year': '1988', 'month': '11', 'day': '10', 'size': 10},
+          {'name':'/test/test11', 'year': '2013', 'month': '9', 'day': '23', 'size': 10}
+          ]
+    release = Utils.get_more_recent_file(files)
+    self.assertTrue(release['year']=='2013')
+    self.assertTrue(release['month']=='11')
+    self.assertTrue(release['day']=='12')
+
 class TestBiomajSetup(unittest.TestCase):
 
 
@@ -312,7 +324,7 @@ class TestBiomajSetup(unittest.TestCase):
     self.assertTrue(res)
     self.assertTrue(b.session._session['release'] is not None)
 
-@attr('network')
+
 class TestBiomajFunctional(unittest.TestCase):
 
   def setUp(self):
@@ -320,29 +332,46 @@ class TestBiomajFunctional(unittest.TestCase):
     curdir = os.path.dirname(os.path.realpath(__file__))
     BiomajConfig.load_config(self.utils.global_properties)
 
-    b = Bank('alu')
+    b = Bank('local')
     b.delete()
 
-    self.config = BiomajConfig('alu')
+    self.config = BiomajConfig('local')
     data_dir = self.config.get('data.dir')
-    lock_file = os.path.join(data_dir,'alu.lock')
+    lock_file = os.path.join(data_dir,'local.lock')
     if os.path.exists(lock_file):
       os.remove(lock_file)
 
   def tearDown(self):
     self.utils.clean()
 
+  def test_extract_release_from_file_name(self):
+    b = Bank('local')
+    b.load_session(UpdateWorkflow.FLOW)
+    b.session.config.set('release.file', 'test_(\d+)\.txt')
+    b.session.config.set('release.regexp', '')
+    w = UpdateWorkflow(b)
+    w.wf_release()
+    self.assertTrue(b.session.get('release') == '100')
+
+  def test_extract_release_from_file_content(self):
+    b = Bank('local')
+    b.load_session(UpdateWorkflow.FLOW)
+    b.session.config.set('release.file', 'test_100\.txt')
+    b.session.config.set('release.regexp', 'Release\s*(\d+)')
+    w = UpdateWorkflow(b)
+    w.wf_release()
+    self.assertTrue(b.session.get('release') == '103')
+
 
   # Should test this on local downloader, changing 1 file to force update,
   # else we would get same bank and there would be no update
-  #def test_no_update(self):
-  #    '''
-  #    Try updating twice, at second time, bank should be update
-  #    '''
-  #    b = Bank('alu')
-  #    b.load_session(UpdateWorkflow.FLOW)
-  #    b.update()
-  #    self.assertTrue(b.session.get('update'))
-  #    b.update()
-  #    self.assertFalse(b.session.get('update'))
-  #    self.assertFalse(b.session.get_status(Workflow.POSTPROCESS))
+  def test_no_update(self):
+      '''
+      Try updating twice, at second time, bank should not be updated
+      '''
+      b = Bank('local')
+      b.update()
+      self.assertTrue(b.session.get('update'))
+      b.update()
+      self.assertFalse(b.session.get('update'))
+      self.assertFalse(b.session.get_status(Workflow.FLOW_POSTPROCESS))

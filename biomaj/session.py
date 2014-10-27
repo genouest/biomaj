@@ -65,7 +65,10 @@ class Session:
     '''
     Return an attribute of session
     '''
-    return self._session[attr]
+    if attr in self._session:
+      return self._session[attr]
+    else:
+      return None
 
   def set(self, attr, value):
     '''

@@ -2,9 +2,13 @@ import logging
 import datetime
 import os
 import shutil
+import tempfile
+import re
 
 from biomaj.utils import Utils
 from biomaj.download.ftp import FTPDownload
+from biomaj.download.copy import LocalDownload
+
 from biomaj.mongo_connector import MongoConnector
 from biomaj.options import Options
 
@@ -42,6 +46,17 @@ class Workflow:
     self.name = bank.name
     # Skip all remaining tasks, no need to update
     self.skip_all = False
+
+  def get_handler(self, protocol, server, remote_dir):
+    '''
+    Get a protocol download handler
+    '''
+    downloader = None
+    if protocol == 'ftp':
+      downloader = FTPDownload(protocol, server, remote_dir)
+    if protocol == 'local':
+      downloader = LocalDownload(remote_dir)
+    return downloader
 
 
   def get_flow(self, task):
@@ -150,17 +165,74 @@ class UpdateWorkflow(Workflow):
     Find current release on remote
     '''
     logging.debug('Workflow:wf_release')
+    cf = self.session.config
+    self.session.previous_release = self.session.get('release')
+    logging.debug('Workflow:wf_release:previous_session:'+str(self.session.previous_release))
     if self.session.config.get('release.file') == '':
-      now = datetime.datetime.now()
-      self.session._session['release'] = str(now.year)+'-'+str(now.month)+'-'+str(now.day)
+      logging.debug('Workflow:wf_release:norelease')
+      self.session.set('release',None)
+      return True
     else:
-      logging.warn('SHOULD GET RELEASE FROM release.file')
-      logging.warn('IF SAME RELEASE SKIP')
-      #self.skip_all = True
-      #self.session._session['status'][Workflow.FLOW_OVER] = True
-      #self.session._session['update'] = False
-      raise Exception('GET RELEASE NOT YET IMPLEMENTED')
-    logging.info('Session:Release:'+self.session._session['release'])
+      protocol = cf.get('protocol')
+      if cf.get('release.protocol') is not None:
+        protocol = cf.get('release.protocol')
+      server = cf.get('server')
+      if cf.get('release.server') is not None:
+        server = cf.get('release.server')
+      remote_dir = cf.get('remote.dir')
+      if cf.get('release.remote.dir') is not None:
+        remote_dir = cf.get('release.remote.dir')
+      release_downloader = self.get_handler(protocol,server,remote_dir)
+
+      if release_downloader is None:
+        logging.error('Protocol '+protocol+' not supported')
+        return False
+
+      (file_list, dir_list) = release_downloader.list()
+
+      release_downloader.match([cf.get('release.file')], file_list, dir_list)
+      if len(release_downloader.files_to_download) == 0:
+        logging.error('release.file defined but does not match any file')
+        return False
+      if len(release_downloader.files_to_download) > 1:
+        logging.error('release.file defined but matches multiple files')
+        return False
+
+      if cf.get('release.regexp') is None or not cf.get('release.regexp'):
+        # Try to get from regexp in file name
+        rel = re.search(cf.get('release.file'), release_downloader.files_to_download[0]['name'])
+        if rel is None:
+          logging.error('release.file defined but does not match any file')
+          return False
+        release = rel.group(1)
+      else:
+        # Download and extract
+        tmp_dir = tempfile.mkdtemp('biomaj')
+        rel_files = release_downloader.download(tmp_dir)
+        rel_file = open(tmp_dir + '/' + rel_files[0]['name'])
+        rel_content = rel_file.read()
+        rel_file.close()
+        shutil.rmtree(tmp_dir)
+        rel = re.search(cf.get('release.regexp'), rel_content)
+        if rel is None:
+          logging.error('release.regexp defined but does not match any file content')
+          return False
+        release = rel.group(1)
+
+      release_downloader.close()
+
+    self.session.set('release', release)
+    logging.info('Session:Release:'+self.session.get('release'))
+    return True
+
+
+  def no_need_to_update(self):
+    '''
+    Set status to over and update = False because there is not a need to update bank
+    '''
+    self.skip_all = True
+    self.session._session['status'][Workflow.FLOW_OVER] = True
+    self.session._session['update'] = False
     return True
 
   def wf_download(self):
@@ -172,9 +244,8 @@ class UpdateWorkflow(Workflow):
     downloader = None
     cf = self.session.config
 
-    logging.warn('SHOULD DOWNLOAD FILES ACCORDING TO PROTOCOL')
-    if cf.get('protocol') == 'ftp':
-      downloader = FTPDownload('ftp', cf.get('server'), cf.get('remote.dir'))
+    downloader = self.get_handler(cf.get('protocol'),cf.get('server'),cf.get('remote.dir'))
+
     if downloader is None:
       logging.error('Protocol '+cf.get('protocol')+' not supported')
       return False
@@ -183,7 +254,18 @@ class UpdateWorkflow(Workflow):
 
     downloader.match(cf.get('remote.files').split(), file_list, dir_list)
 
-    self.session._session['download_files'] = downloader.files_to_download
+    self.session.set('download_files',downloader.files_to_download)
+
+    if self.session.get('release') is None:
+        # Not defined, or could not get it ealier
+        # Set release to most recent file to download
+        release_dict = Utils.get_more_recent_file(downloader.files_to_download)
+        release = str(release_dict['year']) + '-' + str(release_dict['month']) + '-' + str(release_dict['day'])
+        self.session.set('release', release)
+        logging.debug('Workflow:wf_release:release:'+release)
+        if self.session.previous_release == release:
+          logging.debug('Workflow:wf_release:same_as_previous_session')
+          return self.no_need_to_update()
 
     logging.warn('SHOULD CHECK IF FILE NOT ALREADY PRESENT IN PRODUCTION')
     logging.warn('SHOULD CHECK IF FILE NOT ALREADY PRESENT IN OFFLINE DIR')
@@ -196,6 +278,12 @@ class UpdateWorkflow(Workflow):
     copied_files = []
 
     if nb_prod_dir > 0:
+      for prod in self.bank['production']:
+        if self.session.get('release') == prod['release']:
+          logging.debug('Workflow:wf_release:same_as_previous_production_dir')
+          return self.no_need_to_update()
+
+
       # Get last production
       last_production = self.bank['production'][nb_prod_dir-1]
       # Get session corresponding to production directory
@@ -204,10 +292,8 @@ class UpdateWorkflow(Workflow):
       # Checks if some files can be copied instead of downloaded
       downloader.download_or_copy(last_production_session['sessions'][0]['files'],last_production_dir)
       if len(downloader.files_to_download) == 0:
-        self.skip_all = True
-        self.session._session['status'][Workflow.FLOW_OVER] = True
-        self.session._session['update'] = False
-        return True
+        return self.no_need_to_update()
+
       #release_dir = os.path.join(self.session.config.get('data.dir'),
       #              self.session.config.get('dir.version'),
       #              self.session.get_release_directory())

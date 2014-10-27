@@ -101,7 +101,7 @@ class Bank:
         if index < len(self.bank['production']):
           self.bank['production'].pop(index)
 
-      production = { 'release': self.session._session['release'],
+      production = { 'release': self.session.get('release'),
                       'session': self.session._session['id'],
                       'data_dir': self.config.get('data.dir'),
                       'prod_dir': self.session.get_release_directory()}

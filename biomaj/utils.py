@@ -15,6 +15,26 @@ class Utils:
   '''
 
   @staticmethod
+  def get_more_recent_file(files):
+    '''
+    Return the date of the most recent file in list.
+
+    Each file is a dict like with (at least) parameters: year, month, day
+    '''
+    release = None
+    for file in files:
+      if release is None:
+        release = { 'year': file['year'], 'month': file['month'], 'day': file['day']}
+      else:
+        rel_date = datetime.date(int(release['year']),int(release['month']),int(release['day']))
+        file_date = datetime.date(int(file['year']),int(file['month']),int(file['day']))
+        if file_date > rel_date:
+          release['year'] = file['year']
+          release['month'] = file['month']
+          release['day'] = file['day']
+    return release
+
+  @staticmethod
   def month_to_num(date):
     return{
           'Jan' : 1,

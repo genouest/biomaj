@@ -76,6 +76,9 @@ class BiomajConfig:
     logger.addHandler(hdlr)
 
 
+  def set(self, prop, value, section='GENERAL'):
+    self.config_bank.set(section, prop, value)
+
   def get(self, prop, section='GENERAL', escape=True):
     '''
     Get a property from bank or general configration. Optionally in section.

@@ -12,6 +12,9 @@ def main():
   parser = OptionParser()
   parser.add_option('-c', '--config', dest="config",help="Configuration file")
   parser.add_option('-u', '--update', dest="update", help="Update action", action="store_true", default=False)
+  parser.add_option('--publish', dest="publish", help="Publish", action="store_true", default=False)
+  parser.add_option('--release', dest="release",help="release of the bank")
+  parser.add_option('-r', '--remove', dest="update", help="Update action", action="store_true", default=False)
   parser.add_option('-s', '--status', dest="status", help="Get status", action="store_true", default=False)
   parser.add_option('-b', '--bank', dest="bank",help="bank name")
 
@@ -70,6 +73,29 @@ def main():
     Notify.notifyBankAction(bmaj)
     if not res:
       sys.exit(1)
+
+  if options.publish:
+    if not options.bank or not options.release:
+      print "Bank name or release is missing"
+      sys.exit(1)
+    bmaj = Bank(options.bank, options)
+    bmaj.load_session()
+    bank = bmaj.bank
+    session = None
+    # Search production release matching release
+    for prod in bank['production']:
+      if prod['release'] == options.release or prod['prod_dir'] == options.release:
+        # Search session related to this production release
+        for s in bank['sessions']:
+          if s['id'] == prod['session']:
+            session = s
+            break
+        break
+    if session is None:
+      print "No production session could be found for this release"
+      sys.exit(1)
+    bank.session._session = session
+    bank.publish()
 
 if __name__ == '__main__':
     main()

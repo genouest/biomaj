@@ -127,20 +127,34 @@ class Bank:
                       'prod_dir': self.session.get_release_directory()}
 
       self.bank['production'].append(production)
-      if self.options.get_option(Options.PUBLISH):
-        # If we want to publish, set as latest
-        #self.bank['current'] = self.session._session['id']
-        self.banks.update({'name': self.name},
-                          {
-                          '$push': {'production': production},
-                          '$set': {'current': self.session._session['id']}
-                          })
-      else:
-        # no publish, latest is not modified
-        self.banks.update({'name': self.name},
+
+      self.banks.update({'name': self.name},
                           {'$push': { 'production': production }})
 
       self.bank = self.banks.find_one({'name': self.name})
+
+
+  def publish(self):
+    '''
+    Set session release to *current*
+    '''
+    current_link = os.path.join(self.config.get('data.dir'),
+                                self.config.get('dir.version'),
+                                'current')
+    prod_dir = self.session.get_full_release_directory()
+
+    to_dir = os.path.join(self.config.get('data.dir'),
+                  self.config.get('dir.version'))
+
+    if os.path.lexists(current_link):
+      os.remove(current_link)
+    os.chdir(to_dir)
+    os.symlink(prod_dir,'current')
+
+    self.banks.update({'name': self.name},
+                      {
+                      '$set': {'current': self.session._session['id']}
+                      })
 
   def load_session(self, flow=Workflow.FLOW):
     '''

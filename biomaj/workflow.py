@@ -364,18 +364,7 @@ class UpdateWorkflow(Workflow):
       logging.debug('Workflow:wf_publish:no')
       return True
     logging.debug('Workflow:wf_publish')
-    current_link = os.path.join(self.session.config.get('data.dir'),
-                                self.session.config.get('dir.version'),
-                                'current')
-    prod_dir = self.session.get_full_release_directory()
-
-    to_dir = os.path.join(self.session.config.get('data.dir'),
-                  self.session.config.get('dir.version'))
-
-    if os.path.lexists(current_link):
-      os.remove(current_link)
-    os.chdir(to_dir)
-    os.symlink(prod_dir,'current')
+    self.bank.publish()
     return True
 
   def wf_clean_offline(self):

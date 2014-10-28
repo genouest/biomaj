@@ -265,6 +265,7 @@ class TestBiomajSetup(unittest.TestCase):
       os.remove(lock_file)
 
   def tearDown(self):
+    data_dir = self.config.get('data.dir')
     lock_file = os.path.join(data_dir,'alu.lock')
     if os.path.exists(lock_file):
       os.remove(lock_file)
@@ -353,6 +354,7 @@ class TestBiomajFunctional(unittest.TestCase):
       os.remove(lock_file)
 
   def tearDown(self):
+    data_dir = self.config.get('data.dir')
     lock_file = os.path.join(data_dir,'local.lock')
     if os.path.exists(lock_file):
       os.remove(lock_file)

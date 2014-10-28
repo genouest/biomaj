@@ -71,8 +71,6 @@ class Workflow:
     '''
     logging.info('Start workflow')
 
-    print "OSALLOU "+str(self.session._session['status'])
-
     for flow in UpdateWorkflow.FLOW:
 
 
@@ -82,7 +80,6 @@ class Workflow:
       if self.options.get_option(Options.STOP_BEFORE) == flow['name']:
         break
       # Always run INIT
-      print "OSALLOU "+flow['name']+' = '+str(self.session.get_status(flow['name']))
       if flow['name'] == Workflow.FLOW_INIT or not self.session.get_status(flow['name']):
         logging.info('Workflow:'+flow['name'])
         try:

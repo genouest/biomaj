@@ -1,24 +1,39 @@
 #!/usr/bin/python
 
 import os,sys
-from optparse import OptionParser
+#from optparse import OptionParser
+import argparse
 
 from biomaj.bank import Bank
 from biomaj.config import BiomajConfig
 from biomaj.notify import Notify
+from biomaj.options import Options
 
 def main():
 
-  parser = OptionParser()
-  parser.add_option('-c', '--config', dest="config",help="Configuration file")
-  parser.add_option('-u', '--update', dest="update", help="Update action", action="store_true", default=False)
-  parser.add_option('--publish', dest="publish", help="Publish", action="store_true", default=False)
-  parser.add_option('--release', dest="release",help="release of the bank")
-  parser.add_option('-r', '--remove', dest="remove", help="Update action", action="store_true", default=False)
-  parser.add_option('-s', '--status', dest="status", help="Get status", action="store_true", default=False)
-  parser.add_option('-b', '--bank', dest="bank",help="bank name")
+  #parser = OptionParser()
+  #parser.add_option('-c', '--config', dest="config",help="Configuration file")
+  #parser.add_option('-u', '--update', dest="update", help="Update action", action="store_true", default=False)
+  #parser.add_option('--fromscratch', dest="fromscratch", help="Force a new cycle update", action="store_true", default=False)
+  #parser.add_option('--publish', dest="publish", help="Publish", action="store_true", default=False)
+  #parser.add_option('--release', dest="release",help="release of the bank")
+  #parser.add_option('-r', '--remove', dest="remove", help="Update action", action="store_true", default=False)
+  #parser.add_option('-s', '--status', dest="status", help="Get status", action="store_true", default=False)
+  #parser.add_option('-b', '--bank', dest="bank",help="bank name")
+  #(options, args) = parser.parse_args()
 
-  (options, args) = parser.parse_args()
+  parser = argparse.ArgumentParser()
+  parser.add_argument('-c', '--config', dest="config",help="Configuration file")
+  parser.add_argument('-u', '--update', dest="update", help="Update action", action="store_true", default=False)
+  parser.add_argument('--fromscratch', dest="fromscratch", help="Force a new cycle update", action="store_true", default=False)
+  parser.add_argument('--publish', dest="publish", help="Publish", action="store_true", default=False)
+  parser.add_argument('--release', dest="release",help="release of the bank")
+  parser.add_argument('-r', '--remove', dest="remove", help="Update action", action="store_true", default=False)
+  parser.add_argument('-s', '--status', dest="status", help="Get status", action="store_true", default=False)
+  parser.add_argument('-b', '--bank', dest="bank",help="bank name")
+
+  options = Options()
+  parser.parse_args(namespace=options)
 
   bmaj = None
   if options.config is not None:

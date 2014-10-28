@@ -416,6 +416,17 @@ class TestBiomajFunctional(unittest.TestCase):
       self.assertFalse(b.session.get('update'))
       self.assertFalse(b.session.get_status(Workflow.FLOW_POSTPROCESS))
 
+  def test_fromscratch_update(self):
+      '''
+      Try updating twice, at second time, bank should not be updated
+      '''
+      b = Bank('local')
+      b.update()
+      self.assertTrue(b.session.get('update'))
+      b.options.fromscratch = True
+      b.update()
+      self.assertTrue(b.session.get('update'))
+
   def test_remove(self):
     '''
     test removal of a production dir

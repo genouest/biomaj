@@ -33,7 +33,11 @@ class Bank:
     self.config = BiomajConfig(self.name)
     logging.info("Log file: "+self.config.log_file)
 
-    self.options = Options(options)
+    #self.options = Options(options)
+    if options is None:
+      self.options = Options()
+    else:
+      self.options = options
 
     if MongoConnector.db is None:
       MongoConnector(BiomajConfig.global_config.get('GENERAL','db.url'),

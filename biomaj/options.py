@@ -15,9 +15,11 @@ class Options:
     if self.options is None:
       return None
 
-    #if option in self.options:
     if hasattr(self.options, option):
-      return self.options[option]
+      return getattr(self.options, option)
+
+    #if option in self.options:
+    #  return self.options[option]
 
     return None
 

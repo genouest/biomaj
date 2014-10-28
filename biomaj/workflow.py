@@ -74,8 +74,7 @@ class Workflow:
     '''
     logging.info('Start workflow')
 
-    for flow in UpdateWorkflow.FLOW:
-
+    for flow in self.session.flow:
 
       if self.skip_all:
         continue
@@ -157,8 +156,12 @@ class RemoveWorkflow(Workflow):
     logging.debug('New workflow')
 
   def wf_remove_release(self):
+    logging.debug('Workflow:wf_remove_release')
+    if not self.session.get('update_session_id'):
+      logging.error('Bug: update_session_id not set in session')
+      return False
     shutil.rmtree(self.session.get_full_release_directory())
-    return self.bank.remove_session(self.session['id'])
+    return self.bank.remove_session(self.session.get('update_session_id'))
 
 
 class UpdateWorkflow(Workflow):

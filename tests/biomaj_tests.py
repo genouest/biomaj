@@ -343,7 +343,7 @@ class TestBiomajSetup(unittest.TestCase):
       b.session = s
       b.save_session()
     self.assertTrue(len(b.bank['sessions'])==4)
-    b.remove_session()
+    b.remove_session(b.session.get('id'))
     self.assertTrue(len(b.bank['sessions'])==3)
 
 class TestBiomajFunctional(unittest.TestCase):
@@ -415,3 +415,16 @@ class TestBiomajFunctional(unittest.TestCase):
       b.update()
       self.assertFalse(b.session.get('update'))
       self.assertFalse(b.session.get_status(Workflow.FLOW_POSTPROCESS))
+
+  def test_remove(self):
+    '''
+    test removal of a production dir
+    '''
+    b = Bank('local')
+    b.update()
+    self.assertTrue(os.path.exists(b.session.get_full_release_directory()))
+    self.assertTrue(len(b.bank['production'])==1)
+    b.remove(b.session.get('release'))
+    self.assertFalse(os.path.exists(b.session.get_full_release_directory()))
+    b = Bank('local')
+    self.assertTrue(len(b.bank['production'])==0)

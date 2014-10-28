@@ -4,7 +4,7 @@ import logging
 from biomaj.mongo_connector import MongoConnector
 
 from biomaj.session import Session
-from biomaj.workflow import UpdateWorkflow, Workflow
+from biomaj.workflow import UpdateWorkflow, RemoveWorkflow, Workflow
 from biomaj.config import BiomajConfig
 from biomaj.options import Options
 
@@ -173,8 +173,9 @@ class Bank:
     :type flow: :func:`biomaj.workflow.Workflow.FLOW`
     '''
     if session is not None:
-      logging.debug('Load specified session '+str(session[id]))
-      self.session = session
+      logging.debug('Load specified session '+str(session['id']))
+      self.session = Session(self.name, self.config, flow)
+      self.session.load(session)
       return
     if len(self.bank['sessions']) == 0 or self.options.get_option(Options.FROMSCRATCH):
         self.session = Session(self.name, self.config, flow)
@@ -206,18 +207,20 @@ class Bank:
               self.use_last_session = True
 
 
-  def remove_session(self):
+  def remove_session(self, sid):
     '''
     Delete a session from db
+
+    :param sid: id of the session
+    :type sid: long
+    :return: bool
     '''
     self.banks.update({'name': self.name},{'$pull':{
-                                            'sessions': {'id': self.session.get('id')},
-                                            'production': {'session':self.session.get('id')}
+                                            'sessions': {'id': sid},
+                                            'production': {'session': sid}
                                             }
                       })
     # Update object
-    print '#OSALLOU s='+str(self.bank['sessions'])
-
     self.bank = self.banks.find_one({'name': self.name})
     return True
 
@@ -232,10 +235,10 @@ class Bank:
     logging.warning('REMOVE BANK: '+self.name+' - '+release)
     session = None
     # Search production release matching release
-    for prod in bank['production']:
+    for prod in self.bank['production']:
       if prod['release'] == release or prod['prod_dir'] == release:
         # Search session related to this production release
-        for s in bank['sessions']:
+        for s in self.bank['sessions']:
           if s['id'] == prod['session']:
             session = s
             break
@@ -243,12 +246,18 @@ class Bank:
     if session is None:
       logging.error('No production session could be found for this release')
       return False
-    if self.bank['current'] == session['id']:
+    if 'current' in self.bank and self.bank['current'] == session['id']:
       logging.error('This release is the release in the main release production, you should first unpublish it')
       return False
-    self.load_session(DeleteWorkflow.FLOW, session)
-    self.session.set('action','remove')
-    res = self.start_update()
+
+    # New empty session for removal
+    self.session = Session(self.name, self.config, RemoveWorkflow.FLOW)
+    self.session.set('action', 'remove')
+    self.session.set('release', session['release'])
+    self.session.set('update_session_id', session['id'])
+
+    # Reset status, we take an update session
+    res = self.start_remove()
     self.save_session()
     return res
 
@@ -263,6 +272,13 @@ class Bank:
     res = self.start_update()
     self.save_session()
     return res
+
+  def start_remove(self):
+    '''
+    Start a removal workflow
+    '''
+    workflow = RemoveWorkflow(self)
+    return workflow.start()
 
   def start_update(self):
     '''

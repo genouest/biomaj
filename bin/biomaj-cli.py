@@ -14,7 +14,7 @@ def main():
   parser.add_option('-u', '--update', dest="update", help="Update action", action="store_true", default=False)
   parser.add_option('--publish', dest="publish", help="Publish", action="store_true", default=False)
   parser.add_option('--release', dest="release",help="release of the bank")
-  parser.add_option('-r', '--remove', dest="update", help="Update action", action="store_true", default=False)
+  parser.add_option('-r', '--remove', dest="remove", help="Update action", action="store_true", default=False)
   parser.add_option('-s', '--status', dest="status", help="Get status", action="store_true", default=False)
   parser.add_option('-b', '--bank', dest="bank",help="bank name")
 
@@ -70,6 +70,13 @@ def main():
   if options.update and options.bank:
     bmaj = Bank(options.bank, options)
     res = bmaj.update()
+    Notify.notifyBankAction(bmaj)
+    if not res:
+      sys.exit(1)
+
+  if options.remove and options.bank and options.release:
+    bmaj = Bank(options.bank, options)
+    res = bmaj.remove(options.release)
     Notify.notifyBankAction(bmaj)
     if not res:
       sys.exit(1)

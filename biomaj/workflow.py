@@ -112,7 +112,6 @@ class Workflow:
     Initialize workflow
     '''
     logging.debug('Workflow:wf_init')
-    self.session._session['update'] = True
     data_dir = self.session.config.get('data.dir')
     lock_file = os.path.join(data_dir,self.name+'.lock')
     if os.path.exists(lock_file):
@@ -154,6 +153,7 @@ class RemoveWorkflow(Workflow):
     '''
     Workflow.__init__(self, bank)
     logging.debug('New workflow')
+    self.session._session['remove'] = True
 
   def wf_remove_release(self):
     logging.debug('Workflow:wf_remove_release')
@@ -190,6 +190,7 @@ class UpdateWorkflow(Workflow):
     '''
     Workflow.__init__(self, bank)
     logging.debug('New workflow')
+    self.session._session['update'] = True
 
 
   def wf_check(self):

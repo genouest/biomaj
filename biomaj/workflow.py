@@ -34,15 +34,18 @@ class Workflow:
     { 'name': 'over', 'steps': []}
   ]
 
-  def __init__(self, bank):
+  def __init__(self, bank, session=None):
     '''
     Instantiate a new workflow
 
     :param bank: bank on which to apply the workflow
-    :type bank: Bank
+    :type bank: :class:`biomaj.bank.Bank`
     '''
     self.bank = bank
-    self.session = bank.session
+    if session is None:
+      self.session = bank.session
+    else:
+      self.session = session
     self.options = Options(bank.options)
     self.name = bank.name
     # Skip all remaining tasks, no need to update
@@ -75,7 +78,6 @@ class Workflow:
     logging.info('Start workflow')
 
     for flow in self.session.flow:
-
       if self.skip_all:
         continue
 
@@ -144,16 +146,20 @@ class RemoveWorkflow(Workflow):
     { 'name': 'over', 'steps': []}
   ]
 
-  def __init__(self, bank):
+  def __init__(self, bank, session):
     '''
     Instantiate a new workflow
 
     :param bank: bank on which to apply the workflow
     :type bank: Bank
+    :param session: session to remove
+    :type session: :class:`biomaj.session.Session`
     '''
-    Workflow.__init__(self, bank)
+    Workflow.__init__(self, bank, session)
     logging.debug('New workflow')
     self.session._session['remove'] = True
+
+
 
   def wf_remove_release(self):
     logging.debug('Workflow:wf_remove_release')
@@ -341,22 +347,22 @@ class UpdateWorkflow(Workflow):
           return self.no_need_to_update()
 
     self.banks = MongoConnector.banks
-    self.bank = self.banks.find_one({'name': self.name},{ 'production': 1})
+    self.bank.bank = self.banks.find_one({'name': self.name},{ 'production': 1})
 
-    nb_prod_dir = len(self.bank['production'])
+    nb_prod_dir = len(self.bank.bank['production'])
     offline_dir = self.session.get_offline_directory()
 
     copied_files = []
 
     if nb_prod_dir > 0:
-      for prod in self.bank['production']:
+      for prod in self.bank.bank['production']:
         if self.session.get('release') == prod['release']:
           logging.debug('Workflow:wf_release:same_as_previous_production_dir')
           return self.no_need_to_update()
 
 
       # Get last production
-      last_production = self.bank['production'][nb_prod_dir-1]
+      last_production = self.bank.bank['production'][nb_prod_dir-1]
       # Get session corresponding to production directory
       last_production_session = self.banks.find_one({'name': self.name, 'sessions.id': last_production['session']},{ 'sessions.$': 1})
       last_production_dir = os.path.join(last_production['data_dir'],cf.get('dir.version'),last_production['release'])
@@ -440,21 +446,40 @@ class UpdateWorkflow(Workflow):
     Delete old production dirs
     '''
     logging.debug('Workflow:wf_delete_old')
-    keep = self.session.config.get('keep.old.version')
+    keep = int(self.session.config.get('keep.old.version'))
     # Current production dir is not yet in list
-    nb_prod = len(self.bank['production'])
+    nb_prod = len(self.bank.bank['production'])
+    # save session during delete workflow
+    keep_session = self.bank.session
+
     if nb_prod > keep:
-      bremove = Bank(self.bank.name)
-      for prod in self.bank['production']:
+      for prod in self.bank.bank['production']:
         if nb_prod - keep > 0:
           nb_prod -= 1
-          bremove.session = Session(self.name, self.session.config, RemoveWorkflow.FLOW)
-          bremove.session.set('action', 'remove')
-          bremove.session.set('release', prod['release'])
-          bremove.session.set('update_session_id', prod['session'])
-          res = bremove.start_remove()
+          session = self.bank.get_new_session(RemoveWorkflow.FLOW)
+          # Delete init and over because we are already in a run
+          i_init = -1
+          i_over = -1
+          for i in range(0,len(session.flow)):
+            if session.flow[i]['name'] == 'init':
+              i_init = i
+          if i_init >= 0:
+            del session.flow[i_init]
+          for i in range(0,len(session.flow)):
+            if session.flow[i]['name'] == 'over':
+              i_over = i
+          if i_over >= 0:
+            del session.flow[i_over]
+
+          session.set('action', 'remove')
+          session.set('release', prod['release'])
+          session.set('update_session_id', prod['session'])
+          res = self.bank.start_remove(session)
           if not res:
             logging.error('Workflow:wf_delete_old:ErrorDelete:'+prod['release'])
         else:
           break
+    # Set session back
+    self.bank.session  = keep_session
+
     return True

@@ -427,6 +427,22 @@ class TestBiomajFunctional(unittest.TestCase):
       b.update()
       self.assertTrue(b.session.get('update'))
 
+  def test_delete_old_dirs(self):
+      '''
+      Try updating 3 times, oldest dir should be removed
+      '''
+      b = Bank('local')
+      b.update()
+      self.assertTrue(b.session.get('update'))
+      b.options.fromscratch = True
+      b.update()
+      self.assertTrue(b.session.get('update'))
+      self.assertTrue(len(b.bank['production']) == 2)
+      b.update()
+      self.assertTrue(b.session.get('update'))
+      # one new dir, but olders must be deleted
+      self.assertTrue(len(b.bank['production']) == 2)
+
   def test_remove(self):
     '''
     test removal of a production dir

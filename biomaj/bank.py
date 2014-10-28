@@ -167,6 +167,15 @@ class Bank:
                       '$set': {'current': self.session._session['id']}
                       })
 
+  def get_new_session(self, flow=Workflow.FLOW):
+    '''
+    Returns an empty session
+
+    :param flow: kind of workflow
+    :type flow: :func:`biomaj.workflow.Workflow.FLOW`
+    '''
+    return Session(self.name, self.config, flow)
+
   def load_session(self, flow=Workflow.FLOW, session=None):
     '''
     Loads last session or, if over or forced, a new session
@@ -236,38 +245,42 @@ class Bank:
     :type release: str
     :return: bool
     '''
-    logging.warning('REMOVE BANK: '+self.name+' - '+release)
-    session = None
+
+    self.session = self.get_new_session(RemoveWorkflow.FLOW)
+    oldsession = None
     # Search production release matching release
     for prod in self.bank['production']:
       if prod['release'] == release or prod['prod_dir'] == release:
         # Search session related to this production release
         for s in self.bank['sessions']:
           if s['id'] == prod['session']:
-            session = s
+            oldsession = s
             break
         break
-    if session is None:
+    if oldsession is None:
       logging.error('No production session could be found for this release')
       return False
-    if 'current' in self.bank and self.bank['current'] == session['id']:
+    if 'current' in self.bank and self.bank['current'] == oldsession['id']:
       logging.error('This release is the release in the main release production, you should first unpublish it')
       return False
 
     # New empty session for removal
-    self.session = Session(self.name, self.config, RemoveWorkflow.FLOW)
-    self.session.set('action', 'remove')
-    self.session.set('release', session['release'])
-    self.session.set('update_session_id', session['id'])
+    session = Session(self.name, self.config, RemoveWorkflow.FLOW)
+    session.set('action', 'remove')
+    session.set('release', oldsession['release'])
+    session.set('update_session_id', oldsession['id'])
 
     # Reset status, we take an update session
-    res = self.start_remove()
+    res = self.start_remove(session)
+
     self.save_session()
     return res
 
   def update(self):
     '''
     Launch a bank update
+
+    :return: bool
     '''
     logging.warning('UPDATE BANK: '+self.name)
     self.controls()
@@ -277,11 +290,15 @@ class Bank:
     self.save_session()
     return res
 
-  def start_remove(self):
+  def start_remove(self, session):
     '''
     Start a removal workflow
+
+    :param session: Session to remove
+    :type session: :class:`biomaj.session.Session`
+    :return: bool
     '''
-    workflow = RemoveWorkflow(self)
+    workflow = RemoveWorkflow(self, session)
     return workflow.start()
 
   def start_update(self):

@@ -108,7 +108,63 @@ class Workflow:
         break
     return True
 
+  def wf_init(self):
+    '''
+    Initialize workflow
+    '''
+    logging.debug('Workflow:wf_init')
+    self.session._session['update'] = True
+    data_dir = self.session.config.get('data.dir')
+    lock_file = os.path.join(data_dir,self.name+'.lock')
+    if os.path.exists(lock_file):
+      logging.error('Bank '+self.name+' is locked, a process may be in progress, else remove the lock file '+lock_file)
+      #print 'Bank '+self.name+' is locked, a process may be in progress, else remove the lock file'
+      return False
+    f = open(lock_file, 'w')
+    f.write('1')
+    f.close()
+    return True
+
+  def wf_over(self):
+    '''
+    Workflow is over
+    '''
+    logging.debug('Workflow:wf_over')
+    data_dir = self.session.config.get('data.dir')
+    lock_file = os.path.join(data_dir,self.name+'.lock')
+    os.remove(lock_file)
+    return True
+
+class RemoveWorkflow(Workflow):
+  '''
+  Workflow to remove a bank instance
+  '''
+
+  FLOW = [
+    { 'name': 'init', 'steps': []},
+    { 'name': 'remove_release', 'steps': []},
+    { 'name': 'over', 'steps': []}
+  ]
+
+  def __init__(self, bank):
+    '''
+    Instantiate a new workflow
+
+    :param bank: bank on which to apply the workflow
+    :type bank: Bank
+    '''
+    Workflow.__init__(self, bank)
+    logging.debug('New workflow')
+
+  def wf_remove_release(self):
+    shutil.rmtree(self.session.get_full_release_directory())
+    return self.bank.remove_session(self.session['id'])
+
+
 class UpdateWorkflow(Workflow):
+  '''
+  Workflow for a bank update
+  '''
 
   FLOW = [
     { 'name': 'init', 'steps': []},
@@ -132,23 +188,6 @@ class UpdateWorkflow(Workflow):
     Workflow.__init__(self, bank)
     logging.debug('New workflow')
 
-
-  def wf_init(self):
-    '''
-    Initialize workflow
-    '''
-    logging.debug('Workflow:wf_init')
-    self.session._session['update'] = True
-    data_dir = self.session.config.get('data.dir')
-    lock_file = os.path.join(data_dir,self.name+'.lock')
-    if os.path.exists(lock_file):
-      logging.error('Bank '+self.name+' is locked, a process may be in progress, else remove the lock file '+lock_file)
-      #print 'Bank '+self.name+' is locked, a process may be in progress, else remove the lock file'
-      return False
-    f = open(lock_file, 'w')
-    f.write('1')
-    f.close()
-    return True
 
   def wf_check(self):
     '''
@@ -380,14 +419,4 @@ class UpdateWorkflow(Workflow):
     Delete old production dirs
     '''
     logging.debug('Workflow:wf_delete_old')
-    return True
-
-  def wf_over(self):
-    '''
-    Workflow is over
-    '''
-    logging.debug('Workflow:wf_over')
-    data_dir = self.session.config.get('data.dir')
-    lock_file = os.path.join(data_dir,self.name+'.lock')
-    os.remove(lock_file)
     return True

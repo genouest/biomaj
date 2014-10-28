@@ -90,7 +90,7 @@ class Bank:
       os.makedirs(log_dir)
 
 
-  def delete(self):
+  def _delete(self):
     '''
     Delete bank from database, not files
     '''
@@ -102,16 +102,23 @@ class Bank:
     '''
     if self.use_last_session:
       # Remove last session
-      self.banks.update({'name': self.name}, {'$pull' : { 'sessions.id': self.session._session['id'] }})
+      self.banks.update({'name': self.name}, {'$pull' : { 'sessions': { 'id': self.session._session['id']} }})
     # Insert session
-    self.banks.update({'name': self.name}, {'$push' : { 'sessions': self.session._session }})
-    if self.session.get_status(Workflow.FLOW_OVER) and self.session.get('update'):
+    if self.session.get('action') == 'update':
+      action = 'last_update_session'
+    if self.session.get('action') == 'remove':
+      action = 'last_remove_session'
+    self.banks.update({'name': self.name}, {
+      '$set': {action: self.session._session['id']},
+      '$push' : { 'sessions': self.session._session }
+      })
+    if self.session.get('action') == 'update' and self.session.get_status(Workflow.FLOW_OVER) and self.session.get('update'):
       # We expect that a production release has reached the FLOW_OVER status.
       # If no update is needed (same release etc...), the *update* session of the session is set to False
       logging.debug('Bank:Save:'+self.name)
       if len(self.bank['production']) > 0:
         # Remove from database
-        self.banks.update({'name': self.name}, {'$pull' : { 'production.release': self.session._session['release'] }})
+        self.banks.update({'name': self.name}, {'$pull' : { 'production': { 'release': self.session._session['release'] }}})
         # Update local object
         #index = 0
         #for prod in self.bank['production']:
@@ -129,9 +136,9 @@ class Bank:
       self.bank['production'].append(production)
 
       self.banks.update({'name': self.name},
-                          {'$push': { 'production': production }})
+                        {'$push': {'production': production}})
 
-      self.bank = self.banks.find_one({'name': self.name})
+    self.bank = self.banks.find_one({'name': self.name})
 
 
   def publish(self):
@@ -156,7 +163,7 @@ class Bank:
                       '$set': {'current': self.session._session['id']}
                       })
 
-  def load_session(self, flow=Workflow.FLOW):
+  def load_session(self, flow=Workflow.FLOW, session=None):
     '''
     Loads last session or, if over or forced, a new session
 
@@ -165,23 +172,85 @@ class Bank:
     :param flow: kind of workflow
     :type flow: :func:`biomaj.workflow.Workflow.FLOW`
     '''
+    if session is not None:
+      logging.debug('Load specified session '+str(session[id]))
+      self.session = session
+      return
     if len(self.bank['sessions']) == 0 or self.options.get_option(Options.FROMSCRATCH):
         self.session = Session(self.name, self.config, flow)
         logging.debug('Start new session')
     else:
         # Take last session
         self.session = Session(self.name, self.config, flow)
-        self.session.load(self.bank['sessions'][len(self.bank['sessions'])-1])
-        if self.config.last_modified > self.session.get('last_modified'):
-          # Config has changed, need to restart
-          self.session = Session(self.name, self.config, flow)
-          logging.info('Configuration file has been modified since last session, restart in any case a new session')
-        if self.session.get_status(Workflow.FLOW_OVER):
-          self.session = Session(self.name, self.config, flow)
-          logging.debug('Start new session')
-        else:
-          logging.debug('Load previous session '+str(self.session.get('id')))
-          self.use_last_session = True
+        session_id = None
+        # Load previous session for updates only
+        if self.session.get('action') == 'update' and 'last_update_session' in self.bank and self.bank['last_update_session']:
+          session_id = self.bank['last_update_session']
+          load_session = None
+          for session in self.bank['sessions']:
+            if session['id'] == session_id:
+              load_session = session
+              break
+          if load_session is not None:
+            #self.session.load(self.bank['sessions'][len(self.bank['sessions'])-1])
+            self.session.load(session)
+            if self.config.last_modified > self.session.get('last_modified'):
+              # Config has changed, need to restart
+              self.session = Session(self.name, self.config, flow)
+              logging.info('Configuration file has been modified since last session, restart in any case a new session')
+            if self.session.get_status(Workflow.FLOW_OVER):
+              self.session = Session(self.name, self.config, flow)
+              logging.debug('Start new session')
+            else:
+              logging.debug('Load previous session '+str(self.session.get('id')))
+              self.use_last_session = True
+
+
+  def remove_session(self):
+    '''
+    Delete a session from db
+    '''
+    self.banks.update({'name': self.name},{'$pull':{
+                                            'sessions': {'id': self.session.get('id')},
+                                            'production': {'session':self.session.get('id')}
+                                            }
+                      })
+    # Update object
+    print '#OSALLOU s='+str(self.bank['sessions'])
+
+    self.bank = self.banks.find_one({'name': self.name})
+    return True
+
+  def remove(self, release):
+    '''
+    Remove a release (db and files)
+
+    :param release: release or release directory
+    :type release: str
+    :return: bool
+    '''
+    logging.warning('REMOVE BANK: '+self.name+' - '+release)
+    session = None
+    # Search production release matching release
+    for prod in bank['production']:
+      if prod['release'] == release or prod['prod_dir'] == release:
+        # Search session related to this production release
+        for s in bank['sessions']:
+          if s['id'] == prod['session']:
+            session = s
+            break
+        break
+    if session is None:
+      logging.error('No production session could be found for this release')
+      return False
+    if self.bank['current'] == session['id']:
+      logging.error('This release is the release in the main release production, you should first unpublish it')
+      return False
+    self.load_session(DeleteWorkflow.FLOW, session)
+    self.session.set('action','remove')
+    res = self.start_update()
+    self.save_session()
+    return res
 
   def update(self):
     '''
@@ -190,6 +259,7 @@ class Bank:
     logging.warning('UPDATE BANK: '+self.name)
     self.controls()
     self.load_session(UpdateWorkflow.FLOW)
+    self.session.set('action','update')
     res = self.start_update()
     self.save_session()
     return res

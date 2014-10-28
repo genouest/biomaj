@@ -4,7 +4,7 @@ import logging
 import time
 import copy
 
-from biomaj.workflow import Workflow
+from biomaj.workflow import Workflow, UpdateWorkflow, RemoveWorkflow
 
 
 class Session:
@@ -14,7 +14,7 @@ class Session:
 
   OVER = 0
 
-  def __init__(self, name, config, flow=Workflow.FLOW):
+  def __init__(self, name, config, flow=Workflow.FLOW, action='update'):
     '''
     Creates a new session
 
@@ -23,6 +23,8 @@ class Session:
     :param config: bank and global config
     :type config: BiomajConfig
     :param flow: Workflow tasks
+    :param action: type of flow update|remove
+    :type action: str
     :type flow: dict
     '''
     self.name = name
@@ -33,6 +35,10 @@ class Session:
         self._session['status'][flow['name']] = False
 
     self.set('last_modified',self.config.last_modified)
+
+    # Default is update
+    self._session['action'] = action
+
 
   def load(self, session):
     '''

@@ -335,6 +335,16 @@ class TestBiomajSetup(unittest.TestCase):
     self.assertTrue(res)
     self.assertTrue(b.session._session['release'] is not None)
 
+  def test_remove_session(self):
+    b = Bank('alu')
+    for i in range(1,5):
+      s = Session('alu', self.config, UpdateWorkflow.FLOW)
+      s._session['status'][Workflow.FLOW_INIT] = True
+      b.session = s
+      b.save_session()
+    self.assertTrue(len(b.bank['sessions'])==4)
+    b.remove_session()
+    self.assertTrue(len(b.bank['sessions'])==3)
 
 class TestBiomajFunctional(unittest.TestCase):
 

@@ -13,10 +13,6 @@ from bson.objectid import ObjectId
 class Bank:
   '''
   BioMAJ bank
-
-  TODO: define options:
-     - stop_before, stop_after: stop before/after processing a workflow task
-
   '''
 
   def __init__(self, name, options=None):
@@ -39,17 +35,38 @@ class Bank:
     self.options = Options(options)
 
     if MongoConnector.db is None:
-      MongoConnector(self.config.get('db.url'),
-                      self.config.get('db.name'))
+      MongoConnector(BiomajConfig.global_config.get('GENERAL','db.url'),
+                      BiomajConfig.global_config.get('GENERAL','db.name'))
+
     self.banks = MongoConnector.banks
 
     self.bank = self.banks.find_one({'name': self.name})
+
     if self.bank is None:
-        self.bank = { 'name' : self.name, 'sessions': [], 'production': [] }
+        self.bank = { 'name' : self.name, 'sessions': [], 'production': [], 'type': self.config.get('db.type') }
         self.bank['_id'] = self.banks.insert(self.bank)
 
     self.session = None
     self.use_last_session = False
+
+  @staticmethod
+  def list(with_sessions=False):
+    '''
+    Return a list of banks
+
+    :param with_sessions: should sessions be returned or not (can be quite big)
+    :type with_sessions: bool
+    :return: list of :class:`biomaj.bank.Bank`
+    '''
+    if MongoConnector.db is None:
+      MongoConnector(BiomajConfig.global_config.get('GENERAL','db.url'),
+                      BiomajConfig.global_config.get('GENERAL','db.name'))
+
+
+    if with_sessions:
+      return MongoConnector.banks.find({})
+    else:
+      return MongoConnector.banks.find({},{'sessions': 0})
 
   def controls(self):
     '''
@@ -88,18 +105,18 @@ class Bank:
     # Insert session
     self.banks.update({'name': self.name}, {'$push' : { 'sessions': self.session._session }})
     if self.session.get_status(Workflow.FLOW_OVER):
-      logging.debug('SAVE:PUBLISH:'+self.name)
+      logging.debug('Bank:Save:'+self.name)
       if len(self.bank['production']) > 0:
         # Remove from database
         self.banks.update({'name': self.name}, {'$pull' : { 'production.release': self.session._session['release'] }})
         # Update local object
-        index = 0
-        for prod in self.bank['production']:
-          if prod['release'] == self.session._session['release']:
-            break;
-          index += 1
-        if index < len(self.bank['production']):
-          self.bank['production'].pop(index)
+        #index = 0
+        #for prod in self.bank['production']:
+        #  if prod['release'] == self.session._session['release']:
+        #    break;
+        #  index += 1
+        #if index < len(self.bank['production']):
+        #  self.bank['production'].pop(index)
 
       production = { 'release': self.session.get('release'),
                       'session': self.session._session['id'],
@@ -108,17 +125,19 @@ class Bank:
 
       self.bank['production'].append(production)
       if self.options.get_option(Options.PUBLISH):
-        # IF we want to publish, set as latest
-        self.bank['current'] = self.session._session['id']
+        # If we want to publish, set as latest
+        #self.bank['current'] = self.session._session['id']
         self.banks.update({'name': self.name},
                           {
                           '$push': {'production': production},
-                          '$set': {'latest': self.session._session['id']}
+                          '$set': {'current': self.session._session['id']}
                           })
       else:
         # no publish, latest is not modified
         self.banks.update({'name': self.name},
                           {'$push': { 'production': production }})
+
+      self.bank = self.banks.find_one({'name': self.name})
 
   def load_session(self, flow=Workflow.FLOW):
     '''
@@ -127,7 +146,7 @@ class Bank:
     Creates a new session or load last session if not over
 
     :param flow: kind of workflow
-    :type flow: Workflow.FLOW
+    :type flow: :func:`biomaj.workflow.Workflow.FLOW`
     '''
     if len(self.bank['sessions']) == 0 or self.options.get_option(Options.FROMSCRATCH):
         self.session = Session(self.name, self.config, flow)

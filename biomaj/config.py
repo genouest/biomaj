@@ -19,6 +19,15 @@ class BiomajConfig:
   'http.group.file.size': 3
   }
 
+  # Old biomaj level compatibility
+  LOGLEVEL = {
+    'DEBUG': logging.DEBUG,
+    'VERBOSE': logging.INFO,
+    'INFO': logging.INFO,
+    'WARN': logging.WARNING,
+    'ERR': logging.ERROR
+  }
+
   '''
   Global configuration file
   '''
@@ -38,7 +47,10 @@ class BiomajConfig:
     BiomajConfig.config_file = config_file
 
     BiomajConfig.global_config = ConfigParser.ConfigParser()
-    BiomajConfig.global_config.read([config_file, os.path.expanduser('~/.biomaj.cfg')])
+    if os.path.exists(os.path.expanduser('~/.biomaj.cfg')):
+      BiomajConfig.global_config.read([os.path.expanduser('~/.biomaj.cfg')])
+    else:
+      BiomajConfig.global_config.read([config_file])
 
 
   def __init__(self, bank):
@@ -70,7 +82,7 @@ class BiomajConfig:
     if not os.path.exists(bank_log_dir):
       os.makedirs(bank_log_dir)
     hdlr = logging.FileHandler(os.path.join(bank_log_dir,bank+'.log'))
-    #hdlr.setLevel(logging.DEBUG)
+    hdlr.setLevel(BiomajConfig.LOGLEVEL[self.get('historic.logfile.level')])
     formatter = logging.Formatter('%(asctime)s %(levelname)-5.5s [%(name)s][%(threadName)s] %(message)s')
     hdlr.setFormatter(formatter)
     logger.addHandler(hdlr)

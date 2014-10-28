@@ -254,8 +254,9 @@ class TestBiomajSetup(unittest.TestCase):
     curdir = os.path.dirname(os.path.realpath(__file__))
     BiomajConfig.load_config(self.utils.global_properties)
 
+    # Delete all banks
     b = Bank('alu')
-    b.delete()
+    b.banks.remove({})
 
     self.config = BiomajConfig('alu')
     data_dir = self.config.get('data.dir')
@@ -264,6 +265,9 @@ class TestBiomajSetup(unittest.TestCase):
       os.remove(lock_file)
 
   def tearDown(self):
+    lock_file = os.path.join(data_dir,'alu.lock')
+    if os.path.exists(lock_file):
+      os.remove(lock_file)
     self.utils.clean()
 
   def test_new_bank(self):
@@ -312,6 +316,12 @@ class TestBiomajSetup(unittest.TestCase):
     b.load_session(UpdateWorkflow.FLOW)
     self.assertFalse(b.session.get_status(Workflow.FLOW_INIT))
 
+  def test_bank_list(self):
+    b1 = Bank('alu')
+    b2 = Bank('local')
+    banks = Bank.list()
+    self.assertTrue(banks.count() == 2)
+
   @attr('network')
   def test_get_release(self):
     '''
@@ -332,8 +342,9 @@ class TestBiomajFunctional(unittest.TestCase):
     curdir = os.path.dirname(os.path.realpath(__file__))
     BiomajConfig.load_config(self.utils.global_properties)
 
+  # Delete all banks
     b = Bank('local')
-    b.delete()
+    b.banks.remove({})
 
     self.config = BiomajConfig('local')
     data_dir = self.config.get('data.dir')
@@ -342,6 +353,9 @@ class TestBiomajFunctional(unittest.TestCase):
       os.remove(lock_file)
 
   def tearDown(self):
+    lock_file = os.path.join(data_dir,'local.lock')
+    if os.path.exists(lock_file):
+      os.remove(lock_file)
     self.utils.clean()
 
   def test_extract_release_from_file_name(self):

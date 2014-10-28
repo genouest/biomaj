@@ -4,6 +4,7 @@ import os
 import shutil
 import tempfile
 import re
+import traceback
 
 from biomaj.utils import Utils
 from biomaj.download.ftp import FTPDownload
@@ -69,21 +70,31 @@ class Workflow:
     Start the workflow
     '''
     logging.info('Start workflow')
+
+    print "OSALLOU "+str(self.session._session['status'])
+
     for flow in UpdateWorkflow.FLOW:
+
 
       if self.skip_all:
         continue
 
       if self.options.get_option(Options.STOP_BEFORE) == flow['name']:
-      #if self.options and 'stop_before' in self.options and self.options['stop_before'] == flow['name']:
         break
       # Always run INIT
+      print "OSALLOU "+flow['name']+' = '+str(self.session.get_status(flow['name']))
       if flow['name'] == Workflow.FLOW_INIT or not self.session.get_status(flow['name']):
         logging.info('Workflow:'+flow['name'])
-        self.session._session['status'][flow['name']] = getattr(self, 'wf_'+flow['name'])()
+        try:
+          self.session._session['status'][flow['name']] = getattr(self, 'wf_'+flow['name'])()
+        except Exception as e:
+          self.session._session['status'][flow['name']] = False
+          logging.error('Workflow:'+flow['name']+'Exception:'+str(e))
+          logging.debug(traceback.format_exc())
         if flow['name'] != Workflow.FLOW_OVER and not self.session.get_status(flow['name']):
             logging.error('Error during task '+flow['name'])
-            self.wf_over()
+            if flow['name'] != Workflow.FLOW_INIT:
+              self.wf_over()
             return False
         # Main task is over, execute sub tasks of main
         if not self.skip_all:
@@ -131,8 +142,8 @@ class UpdateWorkflow(Workflow):
     data_dir = self.session.config.get('data.dir')
     lock_file = os.path.join(data_dir,self.name+'.lock')
     if os.path.exists(lock_file):
-      logging.error('Bank '+self.name+' is locked, a process may be in progress, else remove the lock file')
-      print 'Bank '+self.name+' is locked, a process may be in progress, else remove the lock file'
+      logging.error('Bank '+self.name+' is locked, a process may be in progress, else remove the lock file '+lock_file)
+      #print 'Bank '+self.name+' is locked, a process may be in progress, else remove the lock file'
       return False
     f = open(lock_file, 'w')
     f.write('1')
@@ -233,6 +244,8 @@ class UpdateWorkflow(Workflow):
     self.skip_all = True
     self.session._session['status'][Workflow.FLOW_OVER] = True
     self.session._session['update'] = False
+    self.session.set('download_files',[])
+    self.wf_over()
     return True
 
   def wf_download(self):
@@ -267,8 +280,6 @@ class UpdateWorkflow(Workflow):
           logging.debug('Workflow:wf_release:same_as_previous_session')
           return self.no_need_to_update()
 
-    logging.warn('SHOULD CHECK IF FILE NOT ALREADY PRESENT IN PRODUCTION')
-    logging.warn('SHOULD CHECK IF FILE NOT ALREADY PRESENT IN OFFLINE DIR')
     self.banks = MongoConnector.banks
     self.bank = self.banks.find_one({'name': self.name},{ 'production': 1})
 

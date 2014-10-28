@@ -81,7 +81,6 @@ class FTPDownload(DownloadInterface):
     '''
     logging.debug('FTP:Download')
 
-    logging.warn('TODO: parallelize downloads')
     nb_files = len(self.files_to_download)
     cur_files = 1
 

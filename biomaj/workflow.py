@@ -276,6 +276,17 @@ class UpdateWorkflow(Workflow):
       release_downloader.close()
 
     self.session.set('release', release)
+    # We restart from scratch, a directory with this release already exists
+    if self.options.get_option(Options.FROMSCRATCH) and os.path.exists(self.session.get_full_release_directory()):
+      index = 1
+      while os.path.exists(self.session.get_full_release_directory()+'_'+str(index)):
+        index += 1
+      self.session.set('release', release+'_'+str(index))
+
+    if self.session.previous_release == release:
+      logging.debug('Workflow:wf_release:same_as_previous_session')
+      return self.no_need_to_update()
+
     logging.info('Session:Release:'+self.session.get('release'))
     return True
 
@@ -318,6 +329,12 @@ class UpdateWorkflow(Workflow):
         release_dict = Utils.get_more_recent_file(downloader.files_to_download)
         release = str(release_dict['year']) + '-' + str(release_dict['month']) + '-' + str(release_dict['day'])
         self.session.set('release', release)
+        # We restart from scratch, a directory with this release already exists
+        if self.options.get_option(Options.FROMSCRATCH) and os.path.exists(self.session.get_full_release_directory()):
+          index = 1
+          while os.path.exists(self.session.get_full_release_directory()+'_'+str(index)):
+            index += 1
+          self.session.set('release', release+'_'+str(index))
         logging.debug('Workflow:wf_release:release:'+release)
         if self.session.previous_release == release:
           logging.debug('Workflow:wf_release:same_as_previous_session')

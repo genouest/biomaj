@@ -21,6 +21,8 @@ class Options:
 
     return None
 
+  UPDATE = 'update'
+  REMOVE = 'remove'
   PUBLISH = 'publish'
   STOP_BEFORE = 'stop_before'
   STOP_AFTER = 'stop_after'

@@ -104,7 +104,7 @@ class Bank:
       self.banks.update({'name': self.name}, {'$pull' : { 'sessions.id': self.session._session['id'] }})
     # Insert session
     self.banks.update({'name': self.name}, {'$push' : { 'sessions': self.session._session }})
-    if self.session.get_status(Workflow.FLOW_OVER):
+    if self.session.get_status(Workflow.FLOW_OVER) and self.session.get('update'):
       logging.debug('Bank:Save:'+self.name)
       if len(self.bank['production']) > 0:
         # Remove from database

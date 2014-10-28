@@ -94,8 +94,8 @@ def main():
     if session is None:
       print "No production session could be found for this release"
       sys.exit(1)
-    bank.session._session = session
-    bank.publish()
+    bmaj.session._session = session
+    bmaj.publish()
 
 if __name__ == '__main__':
     main()

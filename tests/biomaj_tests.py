@@ -378,6 +378,20 @@ class TestBiomajFunctional(unittest.TestCase):
     w.wf_release()
     self.assertTrue(b.session.get('release') == '103')
 
+  def test_publish(self):
+    '''
+    Update a bank, then publish it
+    '''
+    b = Bank('local')
+    b.update()
+    current_link = os.path.join(b.config.get('data.dir'),
+                                b.config.get('dir.version'),
+                                'current')
+    self.assertFalse(os.path.exists(current_link))
+    self.assertTrue('current' not in b.bank)
+    b.publish()
+    self.assertTrue(os.path.exists(current_link))
+    self.assertTrue(b.bank['current'] == b.session._session['id'])
 
   # Should test this on local downloader, changing 1 file to force update,
   # else we would get same bank and there would be no update

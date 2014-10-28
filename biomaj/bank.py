@@ -150,7 +150,7 @@ class Bank:
       os.remove(current_link)
     os.chdir(to_dir)
     os.symlink(prod_dir,'current')
-
+    self.bank['current'] = self.session._session['id']
     self.banks.update({'name': self.name},
                       {
                       '$set': {'current': self.session._session['id']}

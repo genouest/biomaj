@@ -440,4 +440,21 @@ class UpdateWorkflow(Workflow):
     Delete old production dirs
     '''
     logging.debug('Workflow:wf_delete_old')
+    keep = self.session.config.get('keep.old.version')
+    # Current production dir is not yet in list
+    nb_prod = len(self.bank['production'])
+    if nb_prod > keep:
+      bremove = Bank(self.bank.name)
+      for prod in self.bank['production']:
+        if nb_prod - keep > 0:
+          nb_prod -= 1
+          bremove.session = Session(self.name, self.session.config, RemoveWorkflow.FLOW)
+          bremove.session.set('action', 'remove')
+          bremove.session.set('release', prod['release'])
+          bremove.session.set('update_session_id', prod['session'])
+          res = bremove.start_remove()
+          if not res:
+            logging.error('Workflow:wf_delete_old:ErrorDelete:'+prod['release'])
+        else:
+          break
     return True

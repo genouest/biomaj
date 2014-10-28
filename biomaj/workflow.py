@@ -48,6 +48,9 @@ class Workflow:
     # Skip all remaining tasks, no need to update
     self.skip_all = False
 
+    self.session._session['update'] = False
+    self.session._session['remove'] = False
+
   def get_handler(self, protocol, server, remote_dir):
     '''
     Get a protocol download handler

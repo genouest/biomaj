@@ -20,7 +20,7 @@ Contents:
    interface
    ftp
    copy
-
+   notify
 
 Indices and tables
 ==================

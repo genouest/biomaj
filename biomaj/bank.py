@@ -31,6 +31,7 @@ class Bank:
     self.name = name
 
     self.config = BiomajConfig(self.name)
+    logging.info("Log file: "+self.config.log_file)
 
     self.options = Options(options)
 
@@ -105,6 +106,8 @@ class Bank:
     # Insert session
     self.banks.update({'name': self.name}, {'$push' : { 'sessions': self.session._session }})
     if self.session.get_status(Workflow.FLOW_OVER) and self.session.get('update'):
+      # We expect that a production release has reached the FLOW_OVER status.
+      # If no update is needed (same release etc...), the *update* session of the session is set to False
       logging.debug('Bank:Save:'+self.name)
       if len(self.bank['production']) > 0:
         # Remove from database

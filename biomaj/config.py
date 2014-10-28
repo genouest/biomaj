@@ -82,6 +82,7 @@ class BiomajConfig:
     if not os.path.exists(bank_log_dir):
       os.makedirs(bank_log_dir)
     hdlr = logging.FileHandler(os.path.join(bank_log_dir,bank+'.log'))
+    self.log_file = os.path.join(bank_log_dir,bank+'.log')
     hdlr.setLevel(BiomajConfig.LOGLEVEL[self.get('historic.logfile.level')])
     formatter = logging.Formatter('%(asctime)s %(levelname)-5.5s [%(name)s][%(threadName)s] %(message)s')
     hdlr.setFormatter(formatter)

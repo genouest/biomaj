@@ -5,6 +5,7 @@ from optparse import OptionParser
 
 from biomaj.bank import Bank
 from biomaj.config import BiomajConfig
+from biomaj.notify import Notify
 
 def main():
 
@@ -65,7 +66,10 @@ def main():
 
   if options.update and options.bank:
     bmaj = Bank(options.bank, options)
-    return bmaj.update()
+    res = bmaj.update()
+    Notify.notifyBankAction(bmaj)
+    if not res:
+      sys.exit(1)
 
 if __name__ == '__main__':
     main()

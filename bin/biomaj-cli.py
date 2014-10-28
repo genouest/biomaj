@@ -23,6 +23,25 @@ def main():
   if options.status:
     if options.bank:
       bank = Bank(options.bank)
+      _bank = bank.bank
+      print '#' * 80
+      print "# Name:\t"+_bank['name']
+      print "# Type:\t"+_bank['type']
+      release = None
+      if 'current' in _bank and _bank['current']:
+        for prod in _bank['production']:
+          if _bank['current'] == prod['session']:
+            release = prod['release']
+      print "# Published release:\t"+str(release)
+      print "# Production directories"
+      for prod in _bank['production']:
+        print "#\tRelease:\t"+prod['release']
+        print "#\t\tSession:\t"+str(prod['session'])
+        release_dir = os.path.join(bank.config.get('data.dir'),
+                      bank.config.get('dir.version'),
+                      prod['prod_dir'])
+        print "#\t\tDirectory:\t"+release_dir
+      print '#' * 80
     else:
       print '#' * 80
       print "# Name\tType\tRelease"
@@ -35,7 +54,7 @@ def main():
                         'prod_dir': self.session.get_release_directory()}
         '''
         if 'current' in bank and bank['current']:
-          for prod in production:
+          for prod in bank['production']:
             if bank['current'] == prod['session']:
               release = prod['release']
         else:

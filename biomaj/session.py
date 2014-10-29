@@ -87,3 +87,9 @@ class Session:
     Return status for a flow event
     '''
     return self._session['status'][status]
+
+  def set_status(self, status, value):
+    '''
+    Set status for a flow event
+    '''
+    self._session['status'][status] = value

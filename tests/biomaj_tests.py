@@ -455,3 +455,31 @@ class TestBiomajFunctional(unittest.TestCase):
     self.assertFalse(os.path.exists(b.session.get_full_release_directory()))
     b = Bank('local')
     self.assertTrue(len(b.bank['production'])==0)
+
+  def test_update_stop_after(self):
+    b = Bank('local')
+    b.options.stop_after = 'download'
+    b.update()
+    self.assertTrue(b.session.get_status('download'))
+    self.assertFalse(b.session.get_status('postprocess'))
+
+  def test_update_stop_before(self):
+    b = Bank('local')
+    b.options.stop_before = 'postprocess'
+    b.update()
+    self.assertTrue(b.session.get_status('download'))
+    self.assertFalse(b.session.get_status('postprocess'))
+
+
+  def test_reupdate_from_task(self):
+    b = Bank('local')
+    b.options.stop_after = 'download'
+    b.update()
+    self.assertFalse(b.session.get_status('postprocess'))
+    print 'B1: '+str(b.session._session)
+    b2 = Bank('local')
+    b2.options.from_task = 'postprocess'
+    b2.options.release = b.session.get('release')
+    b2.update()
+    self.assertTrue(b2.session.get_status('postprocess'))
+    self.assertEqual(b.session.get_full_release_directory(), b2.session.get_full_release_directory())

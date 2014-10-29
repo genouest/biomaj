@@ -1,5 +1,6 @@
 import os
 import logging
+import time
 
 from biomaj.mongo_connector import MongoConnector
 
@@ -104,6 +105,7 @@ class Bank:
     '''
     Save session in database
     '''
+    self.session._session['last_update_time'] = time.time()
     if self.use_last_session:
       # Remove last session
       self.banks.update({'name': self.name}, {'$pull' : { 'sessions': { 'id': self.session._session['id']} }})
@@ -175,6 +177,28 @@ class Bank:
     :type flow: :func:`biomaj.workflow.Workflow.FLOW`
     '''
     return Session(self.name, self.config, flow)
+
+  def get_session_from_release(self, release):
+    '''
+    Loads the session matching a specific release
+
+    :param release: release name oe production dir
+    :type release: str
+    :return: :class:`biomaj.session.Session`
+    '''
+    oldsession = None
+    # Search production release matching release
+    for prod in self.bank['production']:
+      if prod['release'] == release or prod['prod_dir'] == release:
+        # Search session related to this production release
+        for s in self.bank['sessions']:
+          if s['id'] == prod['session']:
+            oldsession = s
+            break
+        break
+    if oldsession is None:
+      logging.error('No production session could be found for this release')
+    return oldsession
 
   def load_session(self, flow=Workflow.FLOW, session=None):
     '''
@@ -284,7 +308,20 @@ class Bank:
     '''
     logging.warning('UPDATE BANK: '+self.name)
     self.controls()
-    self.load_session(UpdateWorkflow.FLOW)
+    if self.options.get_option('release'):
+      s = self.get_session_from_release(self.options.get_option('release'))
+      self.load_session(UpdateWorkflow.FLOW, s)
+    else:
+      self.load_session(UpdateWorkflow.FLOW)
+    # if from task, reset workflow status in session.
+    if self.options.get_option('from_task'):
+      set_to_false = False
+      for task in self.session.flow:
+        if task['name'] == self.options.get_option('release'):
+          set_to_false = True
+        if set_to_false:
+          # After from_task task, tasks must be set to False to be run
+          self.session.set_status(task['name'], False)
     self.session.set('action','update')
     res = self.start_update()
     self.save_session()

@@ -26,6 +26,7 @@ class Options:
   UPDATE = 'update'
   REMOVE = 'remove'
   PUBLISH = 'publish'
+  FROM_TASK = 'from_task'
   STOP_BEFORE = 'stop_before'
   STOP_AFTER = 'stop_after'
   FROMSCRATCH = 'fromscratch'

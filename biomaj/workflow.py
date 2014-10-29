@@ -82,6 +82,7 @@ class Workflow:
         continue
 
       if self.options.get_option(Options.STOP_BEFORE) == flow['name']:
+        self.wf_over()
         break
       # Always run INIT
       if flow['name'] == Workflow.FLOW_INIT or not self.session.get_status(flow['name']):
@@ -105,6 +106,7 @@ class Workflow:
               logging.error('Error during '+flow['name']+' subtask: wf_' + step)
               return False
       if self.options.get_option(Options.STOP_AFTER) == flow['name']:
+        self.wf_over()
       #if self.options and 'stop_after' in self.options and self.options['stop_after'] == flow['name']:
         break
     return True

@@ -12,12 +12,14 @@ class Options:
     '''
     Gets an option if present, else return None
     '''
-    if self.options is None:
-      return None
+    #if self.options is None:
+    #  return None
 
-    if hasattr(self.options, option):
-      return getattr(self.options, option)
+    #if hasattr(self.options, option):
+    #  return getattr(self.options, option)
 
+    if hasattr(self, option):
+      return getattr(self, option)
     #if option in self.options:
     #  return self.options[option]
 

@@ -476,7 +476,6 @@ class TestBiomajFunctional(unittest.TestCase):
     b.options.stop_after = 'download'
     b.update()
     self.assertFalse(b.session.get_status('postprocess'))
-    print 'B1: '+str(b.session._session)
     b2 = Bank('local')
     b2.options.from_task = 'postprocess'
     b2.options.release = b.session.get('release')

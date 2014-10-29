@@ -46,7 +46,7 @@ class Workflow:
       self.session = bank.session
     else:
       self.session = session
-    self.options = Options(bank.options)
+    self.options = bank.options
     self.name = bank.name
     # Skip all remaining tasks, no need to update
     self.skip_all = False
@@ -290,8 +290,11 @@ class UpdateWorkflow(Workflow):
       while os.path.exists(self.session.get_full_release_directory()+'_'+str(index)):
         index += 1
       self.session.set('release', release+'_'+str(index))
-
-    if self.session.previous_release == release:
+    self.download_go_ahead = False
+    if self.options.get_option(Options.FROM_TASK) == 'download':
+      # We want to download again in same release, that's fine, we do not care it is the same release
+      self.download_go_ahead = True
+    if not self.download_go_ahead and self.session.previous_release == release:
       logging.debug('Workflow:wf_release:same_as_previous_session')
       return self.no_need_to_update()
 
@@ -344,7 +347,11 @@ class UpdateWorkflow(Workflow):
             index += 1
           self.session.set('release', release+'_'+str(index))
         logging.debug('Workflow:wf_release:release:'+release)
-        if self.session.previous_release == release:
+        self.download_go_ahead = False
+        if self.options.get_option(Options.FROM_TASK) == 'download':
+          # We want to download again in same release, that's fine, we do not care it is the same release
+          self.download_go_ahead = True
+        if not self.download_go_ahead and self.session.previous_release == release:
           logging.debug('Workflow:wf_release:same_as_previous_session')
           return self.no_need_to_update()
 
@@ -356,7 +363,12 @@ class UpdateWorkflow(Workflow):
 
     copied_files = []
 
-    if nb_prod_dir > 0:
+    self.download_go_ahead = False
+    if self.options.get_option(Options.FROM_TASK) == 'download':
+      # We want to download again in same release, that's fine, we do not care it is the same release
+      self.download_go_ahead = True
+
+    if not self.download_go_ahead and nb_prod_dir > 0:
       for prod in self.bank.bank['production']:
         if self.session.get('release') == prod['release']:
           logging.debug('Workflow:wf_release:same_as_previous_production_dir')

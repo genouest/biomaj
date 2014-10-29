@@ -317,7 +317,7 @@ class Bank:
     if self.options.get_option('from_task'):
       set_to_false = False
       for task in self.session.flow:
-        if task['name'] == self.options.get_option('release'):
+        if task['name'] == self.options.get_option('from_task'):
           set_to_false = True
         if set_to_false:
           # After from_task task, tasks must be set to False to be run

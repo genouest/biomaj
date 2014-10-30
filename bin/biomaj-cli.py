@@ -28,9 +28,12 @@ def main():
   parser.add_argument('--fromscratch', dest="fromscratch", help="Force a new cycle update", action="store_true", default=False)
   parser.add_argument('--publish', dest="publish", help="Publish", action="store_true", default=False)
   parser.add_argument('--release', dest="release",help="release of the bank")
+  parser.add_argument('--from-task', dest="from_task",help="Start cycle at a specific task (init always executed)")
   parser.add_argument('-r', '--remove', dest="remove", help="Update action", action="store_true", default=False)
   parser.add_argument('-s', '--status', dest="status", help="Get status", action="store_true", default=False)
   parser.add_argument('-b', '--bank', dest="bank",help="bank name")
+  parser.add_argument('--stop-before', dest="stop_before",help="Store workflow before task")
+  parser.add_argument('--stop-after', dest="stop_after",help="Store workflow after task")
 
   options = Options()
   parser.parse_args(namespace=options)
@@ -84,6 +87,7 @@ def main():
 
   if options.update and options.bank:
     bmaj = Bank(options.bank, options)
+    print 'Log file: '+bmaj.config.log_file
     res = bmaj.update()
     Notify.notifyBankAction(bmaj)
     if not res:
@@ -91,6 +95,7 @@ def main():
 
   if options.remove and options.bank and options.release:
     bmaj = Bank(options.bank, options)
+    print 'Log file: '+bmaj.config.log_file
     res = bmaj.remove(options.release)
     Notify.notifyBankAction(bmaj)
     if not res:
@@ -101,6 +106,7 @@ def main():
       print "Bank name or release is missing"
       sys.exit(1)
     bmaj = Bank(options.bank, options)
+    print 'Log file: '+bmaj.config.log_file
     bmaj.load_session()
     bank = bmaj.bank
     session = None

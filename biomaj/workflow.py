@@ -13,7 +13,7 @@ from biomaj.download.copy import LocalDownload
 from biomaj.mongo_connector import MongoConnector
 from biomaj.options import Options
 
-class Workflow:
+class Workflow(object):
   '''
   Bank update workflow
   '''
@@ -200,6 +200,13 @@ class UpdateWorkflow(Workflow):
     logging.debug('New workflow')
     self.session._session['update'] = True
 
+  def wf_init(self):
+    err = super(UpdateWorkflow, self).wf_init()
+    if not err:
+      return False
+    if self.options.get_option(Options.FROMSCRATCH):
+      return self.wf_clean_offline()
+    return True
 
   def wf_check(self):
     '''
@@ -452,7 +459,8 @@ class UpdateWorkflow(Workflow):
     Clean offline directory
     '''
     logging.debug('Workflow:wf_clean_offline')
-    shutil.rmtree(self.session.get_offline_directory())
+    if os.path.exists(self.session.get_offline_directory()):
+      shutil.rmtree(self.session.get_offline_directory())
     return True
 
   def wf_delete_old(self):

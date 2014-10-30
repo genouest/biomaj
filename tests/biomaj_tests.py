@@ -44,6 +44,10 @@ class UtilsForTest():
     self.log_dir =os.path.join(self.test_dir,'log')
     if not os.path.exists(self.log_dir):
       os.makedirs(self.log_dir)
+    self.process_dir =os.path.join(self.test_dir,'process')
+    if not os.path.exists(self.process_dir):
+      os.makedirs(self.process_dir)
+
 
     if self.global_properties is None:
       self.__copy_global_properties()
@@ -74,6 +78,8 @@ class UtilsForTest():
       for line in fin:
         if line.startswith('remote.dir'):
           fout.write("remote.dir="+os.path.join(curdir,'bank')+"\n")
+        elif line.startswith('remote.files'):
+          fout.write(line.replace('/tmp', os.path.join(curdir,'bank')))
         else:
           fout.write(line)
     fout.close()
@@ -93,6 +99,8 @@ class UtilsForTest():
             fout.write("log.dir="+self.log_dir+"\n")
           elif line.startswith('data.dir'):
             fout.write("data.dir="+self.data_dir+"\n")
+          elif line.startswith('process.dir'):
+            fout.write("process.dir="+self.process_dir+"\n")
           else:
             fout.write(line)
     fout.close()

@@ -30,7 +30,16 @@ class Session:
     self.name = name
     self.config = config
     self.flow = copy.deepcopy(flow)
-    self._session = { 'id':  time.time(), 'status': {}, 'files': [], 'release': 'none' }
+    self._session = { 'id':  time.time(),
+                      'status': {},
+                      'files': [],
+                      'release': 'none',
+                      'process': {
+                                  'post': {},
+                                  'pre': {},
+                                  'remove': {}
+                                  }
+                    }
     for flow in self.flow:
         self._session['status'][flow['name']] = False
 

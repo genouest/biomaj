@@ -13,6 +13,8 @@ from biomaj.download.copy import LocalDownload
 from biomaj.mongo_connector import MongoConnector
 from biomaj.options import Options
 
+from biomaj.process.processfactory import RemoveProcessFactory,PreProcessFactory,PostProcessFactory
+
 class Workflow(object):
   '''
   Bank update workflow
@@ -144,6 +146,7 @@ class RemoveWorkflow(Workflow):
 
   FLOW = [
     { 'name': 'init', 'steps': []},
+    { 'name': 'removeprocess', 'steps': []},
     { 'name': 'remove_release', 'steps': []},
     { 'name': 'over', 'steps': []}
   ]
@@ -170,6 +173,14 @@ class RemoveWorkflow(Workflow):
       return False
     shutil.rmtree(self.session.get_full_release_directory())
     return self.bank.remove_session(self.session.get('update_session_id'))
+
+  def wf_removeprocess(self):
+    logging.debug('Workflow:wf_removepreprocess')
+    metas = self.session._session['process']['remove']
+    pfactory = RemoveProcessFactory(self.bank, metas)
+    res = pfactory.run()
+    self.session._session['process']['remove'] = pfactory.meta_status
+    return res
 
 
 class UpdateWorkflow(Workflow):
@@ -227,7 +238,11 @@ class UpdateWorkflow(Workflow):
     Execute pre-processes
     '''
     logging.debug('Workflow:wf_preprocess')
-    return True
+    metas = self.session._session['process']['pre']
+    pfactory = PreProcessFactory(self.bank, metas)
+    res = pfactory.run()
+    self.session._session['process']['pre'] = pfactory.meta_status
+    return res
 
   def wf_release(self):
     '''
@@ -440,7 +455,11 @@ class UpdateWorkflow(Workflow):
     Execute post processes
     '''
     logging.debug('Workflow:wf_postprocess')
-    return True
+    blocks = self.session._session['process']['post']
+    pfactory = PostProcessFactory(self.bank, blocks)
+    res = pfactory.run()
+    self.session._session['process']['post'] = pfactory.blocks
+    return res
 
   def wf_publish(self):
     '''

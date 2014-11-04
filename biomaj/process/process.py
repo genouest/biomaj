@@ -1,11 +1,13 @@
-
+import logging
+import os
+import subprocess
 
 class Process:
   '''
   Define a process to execute
   '''
 
-  def __init__(self, name, path, args, env=None):
+  def __init__(self, name, exe, args, desc=None, type=None, cluster=False, bank_env=None, log_dir=None):
     '''
     Define one process
 
@@ -17,11 +19,47 @@ class Process:
     :type args: str
     :param env: environnement variables to set
     :type env: list
+    :param log_dir: directroy to place process stdout and stderr
+    :type log_dir: str
     '''
     self.name = name
-    self.path = path
-    self.args = args
-    self.env = env
+    self.exe = exe
+    self.desc= desc
+    self.args = args.split()
+    self.bank_env = bank_env
+    self.cluster = cluster
+    self.type = type
+    if log_dir is not None:
+      self.output_file = os.path.join(log_dir,name+'.out')
+      self.error_file = os.path.join(log_dir,name+'.err')
+    else:
+      self.output_file = name+'.out'
+      self.error_file = name+'.err'
 
-  def run(self):
-    pass
+  def run(self, simulate=False):
+    '''
+    Execute process
+
+    :param simulate: does not execute process
+    :type simulate: bool
+    :return: exit code of process
+    '''
+    args = [ self.exe ] + self.args
+    args = " ".join(args)
+    logging.debug('PROCESS:EXEC:'+str(self.args))
+    err= False
+    if not simulate:
+      logging.info('Run process '+self.name)
+      with open(self.output_file,'w') as fout:
+        with open(self.error_file,'w') as ferr:
+          proc = subprocess.Popen(args, stdout=fout, stderr=ferr, env=self.bank_env, shell=True)
+          proc.wait()
+          if proc.returncode == 0:
+            err = True
+          fout.flush()
+          ferr.flush()
+
+    else:
+      err = True
+    logging.info('PROCESS:EXEC:' + self.name + ':' + str(err))
+    return err

@@ -99,7 +99,7 @@ class BiomajConfig:
     if self.config_bank.has_option(section,prop):
       val = self.config_bank.get(section,prop)
       # If regexp, escape backslashes
-      if escape and prop == 'local.files' or prop == 'remote.files':
+      if escape and (prop == 'local.files' or prop == 'remote.files'):
         val = val.replace('\\\\','\\')
       return val
 
@@ -110,7 +110,6 @@ class BiomajConfig:
       return BiomajConfig.DEFAULTS[prop]
 
     return None
-
 
 
   def get_time(self):

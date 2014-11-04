@@ -91,9 +91,11 @@ class FTPDownload(DownloadInterface):
         os.makedirs(file_dir)
       logging.debug(str(cur_files)+'/'+str(nb_files)+' downloading file '+rfile['name'])
       cur_files += 1
+      if not 'url' in rfile:
+        rfile['url'] = self.url
       fp = open(file_path, "wb")
       curl = pycurl.Curl()
-      curl.setopt(pycurl.URL, self.url+rfile['root']+'/'+rfile['name'])
+      curl.setopt(pycurl.URL, rfile['url']+rfile['root']+'/'+rfile['name'])
       curl.setopt(pycurl.WRITEDATA, fp)
       curl.perform()
       curl.close()

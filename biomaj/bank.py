@@ -30,6 +30,7 @@ class Bank:
       raise Exception('Configuration must be loaded first')
 
     self.name = name
+    self.depends = []
 
     self.config = BiomajConfig(self.name)
     logging.info("Log file: "+self.config.log_file)

@@ -6,6 +6,7 @@ import shutil
 import os
 import tempfile
 import logging
+import copy
 
 from optparse import OptionParser
 
@@ -17,6 +18,8 @@ from biomaj.utils import Utils
 from biomaj.download.ftp import FTPDownload
 from biomaj.download.copy  import LocalDownload
 from biomaj.config import BiomajConfig
+from biomaj.process.processfactory import PostProcessFactory,PreProcessFactory,RemoveProcessFactory
+
 
 import unittest
 
@@ -71,18 +74,20 @@ class UtilsForTest():
     shutil.copyfile(from_file, to_file)
 
     # Manage local bank test, use bank test subdir as remote
-    from_file = os.path.join(curdir, 'local.properties')
-    to_file = os.path.join(self.conf_dir, 'local.properties')
-    fout = open(to_file,'w')
-    with open(from_file,'r') as fin:
-      for line in fin:
-        if line.startswith('remote.dir'):
-          fout.write("remote.dir="+os.path.join(curdir,'bank')+"\n")
-        elif line.startswith('remote.files'):
-          fout.write(line.replace('/tmp', os.path.join(curdir,'bank')))
-        else:
-          fout.write(line)
-    fout.close()
+    properties = ['local.properties', 'localprocess.properties']
+    for prop in properties:
+      from_file = os.path.join(curdir, prop)
+      to_file = os.path.join(self.conf_dir, prop)
+      fout = open(to_file,'w')
+      with open(from_file,'r') as fin:
+        for line in fin:
+          if line.startswith('remote.dir'):
+            fout.write("remote.dir="+os.path.join(curdir,'bank')+"\n")
+          elif line.startswith('remote.files'):
+            fout.write(line.replace('/tmp', os.path.join(curdir,'bank')))
+          else:
+            fout.write(line)
+      fout.close()
 
   def __copy_global_properties(self):
     if self.global_properties is not None:
@@ -353,6 +358,46 @@ class TestBiomajSetup(unittest.TestCase):
     self.assertTrue(len(b.bank['sessions'])==4)
     b.remove_session(b.session.get('id'))
     self.assertTrue(len(b.bank['sessions'])==3)
+
+  @attr('process')
+  def test_postprocesses_setup(self):
+    b = Bank('localprocess')
+    pfactory = PostProcessFactory(b)
+    pfactory.run(True)
+    self.assertTrue(len(pfactory.threads_tasks[0])==2)
+    self.assertTrue(len(pfactory.threads_tasks[1])==1)
+
+  @attr('process')
+  def test_postprocesses_exec_again(self):
+    '''
+    Execute once, set a status to false, check that False processes are executed
+    '''
+    b = Bank('localprocess')
+    pfactory = PostProcessFactory(b)
+    pfactory.run()
+    self.assertTrue(pfactory.blocks['BLOCK1']['META0']['PROC0'])
+    self.assertTrue(pfactory.blocks['BLOCK2']['META1']['PROC1'])
+    self.assertTrue(pfactory.blocks['BLOCK2']['META1']['PROC2'])
+    blocks = copy.deepcopy(pfactory.blocks)
+    blocks['BLOCK2']['META1']['PROC2'] = False
+    pfactory2 = PostProcessFactory(b, blocks)
+    pfactory2.run()
+    self.assertTrue(pfactory2.blocks['BLOCK2']['META1']['PROC2'])
+
+  @attr('process')
+  def test_preprocesses(self):
+    b = Bank('localprocess')
+    pfactory = PreProcessFactory(b)
+    pfactory.run()
+    self.assertTrue(pfactory.meta_status['META0']['PROC0'])
+
+  @attr('process')
+  def test_removeprocesses(self):
+    b = Bank('localprocess')
+    pfactory = RemoveProcessFactory(b)
+    pfactory.run()
+    self.assertTrue(pfactory.meta_status['META0']['PROC0'])
+
 
 class TestBiomajFunctional(unittest.TestCase):
 

@@ -27,6 +27,7 @@ class Workflow(object):
   FLOW_RELEASE = 'release'
   FLOW_DOWNLOAD = 'download'
   FLOW_POSTPROCESS = 'postprocess'
+  FLOW_REMOVEPROCESS = 'removeprocess'
   FLOW_PUBLISH = 'publish'
   FLOW_OVER = 'over'
 

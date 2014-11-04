@@ -37,6 +37,8 @@ class MetaProcess(threading.Thread):
       # Copy all config from bank
       for conf in dict(self.bank.config.config_bank.items('GENERAL')):
         self.bmaj_env[conf] = self.bank.config.config_bank.get('GENERAL', conf)
+        if self.bmaj_env[conf] is None:
+          self.bmaj_env[conf] = ''
 
       self.bmaj_env['dbname'] = self.bank.name
       self.bmaj_env['datadir'] = self.bank.config.get('data.dir')
@@ -46,13 +48,15 @@ class MetaProcess(threading.Thread):
       if 'PATH' in self.bmaj_env:
         self.bmaj_env['PATH'] += ':' + self.bmaj_env['processdir']
       else:
-        self.bmaj_env['PATH'] = self.bmaj_env['processdir']
+        self.bmaj_env['PATH'] = self.bmaj_env['processdir']+':/usr/local/bin:/usr/sbin:/usr/bin'
 
       # Set some session specific env
       if self.bank.session is not None:
         self.bmaj_env['offlinedir'] = self.bank.session.get_offline_directory()
         self.bmaj_env['dirversion'] = self.bank.config.get('dir.version')
         self.bmaj_env['noextract'] = self.bank.config.get('no.extract')
+        if self.bmaj_env['noextract'] is None:
+          self.bmaj_env['noextract'] = ''
         self.bmaj_env['remoterelease'] = self.bank.session.get('release')
         self.bmaj_env['removedrelease'] = self.bank.session.get('release')
 

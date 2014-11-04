@@ -323,6 +323,12 @@ class Bank:
         if set_to_false:
           # After from_task task, tasks must be set to False to be run
           self.session.set_status(task['name'], False)
+          if task['name'] == Workflow.FLOW_POSTPROCESS:
+            self.session.reset_proc(Workflow.FLOW_POSTPROCESS)
+          elif task['name'] == Workflow.FLOW_PREPROCESS:
+            self.session.reset_proc(Workflow.FLOW_PREPROCESS)
+          elif task['name'] == Workflow.FLOW_REMOVEPROCESS:
+            self.session.reset_proc(Workflow.FLOW_REMOVEPROCESS)
     self.session.set('action','update')
     res = self.start_update()
     self.save_session()

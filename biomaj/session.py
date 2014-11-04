@@ -48,6 +48,47 @@ class Session:
     # Default is update
     self._session['action'] = action
 
+  def reset_proc(self, type_proc, proc=None):
+    '''
+    Reset status of processes for type in session
+
+    :param type_proc: post pre or remove
+    :type type_proc: Workflow.POSTPROCESS, Workflow.PREPROCESS, Workflow.REMOVEPROCESS
+    :param proc: reset from block/meta/proc, all reset all
+    :type proc: str
+    '''
+    if type_proc == Workflow.FLOW_POSTPROCESS:
+      if proc in self._session['process']['post']:
+        self.reset_meta(self._session['process']['post'][proc])
+      else:
+        for elt in self._session['process']['post'].keys():
+          self.reset_meta(self._session['process']['post'][elt], proc)
+    elif type_proc == Workflow.FLOW_PREPROCESS:
+      self.reset_meta(self._session['process']['pre'])
+    elif type_proc == Workflow.FLOW_REMOVEPROCESS:
+      self.reset_meta(self._session['process']['remove'], proc)
+
+  def reset_meta(self, metas, proc=None):
+    '''
+    Reset status of meta processes
+    '''
+    if proc in metas:
+      reset_process(self, procs)
+    else:
+      for meta in metas.keys():
+        reset_process(self, metas[meta], proc)
+
+  def reset_process(self, processes, proc=None):
+    '''
+    Reset status of processes
+    '''
+    set_to_false = False
+    for process in processes.keys():
+      if process == proc or proc is None:
+        set_to_false = True
+      if set_to_false:
+        processes[process] = False
+
 
   def load(self, session):
     '''

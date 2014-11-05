@@ -235,7 +235,11 @@ class UpdateWorkflow(Workflow):
     Checks bank dependencies with other banks. If bank has dependencies, execute update on other banks first
     '''
     logging.info('Workflow:wf_depends')
-    return True
+    # Always rescan depends, there might be a new release
+    self.session.set('depends', {})
+    res = self.bank.update_dependencies()
+    logging.info('Workflow:wf_depends:'+str(res))
+    return res
 
   def wf_preprocess(self):
     '''

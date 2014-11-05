@@ -66,6 +66,59 @@ class Bank:
     self.session = None
     self.use_last_session = False
 
+
+  def update_dependencies(self):
+    '''
+    Update bank dependencies
+
+    :return: status of updates
+    '''
+    self.depends = []
+    if self.run_depends:
+      depends = self.get_dependencies()
+    else:
+      depends = []
+
+    self.session.set('depends', {})
+    res = True
+    for dep in depends:
+      self.session._session['depends'][dep] = False
+    for dep in depends:
+      if self.session._session['depends'][dep]:
+        # Bank has been marked as depends multiple times, run only once
+        continue
+      logging.info('Update:Depends:'+dep)
+      b = Bank(dep)
+      res = b.update()
+      self.depends.append(b)
+      self.session._session['depends'][dep] = res
+      logging.info('Update:Depends:'+dep+':'+str(res))
+      if not res:
+        break
+    return res
+
+  def get_dependencies(self, bank=None):
+    '''
+    Search all bank dependencies
+
+    :return: list of bank names to update
+    '''
+    if bank is None:
+      deps = self.config.get('depends')
+    else:
+      deps = bank.config.get('depends')
+
+    if deps is None:
+      return []
+    # Mainn deps
+    deps = deps.split(',')
+    # Now search in deps if they themselves depend on other banks
+    for dep in deps:
+      b = Bank(dep)
+      deps = b.get_dependencies() + deps
+    return deps
+
+
   def get_properties(self):
     '''
     Read bank properties from config file
@@ -351,13 +404,18 @@ class Bank:
     self.save_session()
     return res
 
-  def update(self):
+  def update(self, depends=False):
     '''
     Launch a bank update
 
+    :param depends: run update of bank dependencies first
+    :type depends: bool
     :return: bool
     '''
     logging.warning('UPDATE BANK: '+self.name)
+
+    self.run_depends = depends
+
     self.controls()
     if self.options.get_option('release'):
       s = self.get_session_from_release(self.options.get_option('release'))

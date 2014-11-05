@@ -64,6 +64,7 @@ class MetaProcess(threading.Thread):
       for bdep in self.bank.depends:
         self.bmaj_env[bdep.name+'source'] = bdep.session.get_full_release_directory()
 
+
     def run(self):
       # Run meta processes
       self.global_status = True

@@ -75,7 +75,7 @@ class UtilsForTest():
     shutil.copyfile(from_file, to_file)
 
     # Manage local bank test, use bank test subdir as remote
-    properties = ['local.properties', 'localprocess.properties', 'testhttp.properties']
+    properties = ['local.properties', 'localprocess.properties', 'testhttp.properties', 'computed.properties', 'sub1.properties', 'sub2.properties']
     for prop in properties:
       from_file = os.path.join(curdir, prop)
       to_file = os.path.join(self.conf_dir, prop)
@@ -453,6 +453,10 @@ class TestBiomajSetup(unittest.TestCase):
     pfactory.run()
     self.assertTrue(pfactory.meta_status['META0']['PROC0'])
 
+  def test_dependencies_list(self):
+    b = Bank('computed')
+    deps = b.get_dependencies()
+    self.assertTrue(len(deps)==2)
 
 class TestBiomajFunctional(unittest.TestCase):
 
@@ -620,3 +624,11 @@ class TestBiomajFunctional(unittest.TestCase):
     b3.update()
     self.assertFalse(os.path.exists(proc1file))
     self.assertTrue(os.path.exists(proc2file))
+
+
+  @attr('test')
+  def test_computed(self):
+    b = Bank('computed')
+    res = b.update(True)
+    self.assertTrue(res)
+    self.assertTrue(1==0)

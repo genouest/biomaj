@@ -353,6 +353,22 @@ class TestBiomajSetup(unittest.TestCase):
     b.load_session(UpdateWorkflow.FLOW)
     self.assertTrue(b.session.get_status(Workflow.FLOW_INIT))
 
+  def test_clean_old_sessions(self):
+    '''
+    Checks a session is used if present
+    '''
+    b = Bank('local')
+    for i in range(1,5):
+      s = Session('alu', self.config, UpdateWorkflow.FLOW)
+      s._session['status'][Workflow.FLOW_INIT] = True
+      b.session = s
+      b.save_session()
+    b2 = Bank('local')
+    b2.update()
+    b2.clean_old_sessions()
+    self.assertTrue(len(b2.bank['sessions']) == 1)
+
+
   def test_session_reload_over(self):
     '''
     Checks a session if is not over

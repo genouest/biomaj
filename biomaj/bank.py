@@ -169,6 +169,34 @@ class Bank:
 
     self.bank = self.banks.find_one({'name': self.name})
 
+  def clean_old_sessions(self):
+    '''
+    Delete old sessions, not latest ones nor related to production sessions
+    '''
+    if self.session is None:
+      return
+    # No previous session
+    if 'sessions' not in self.bank:
+      return
+    #'last_update_session' in self.bank and self.bank['last_update_session']
+    old_sessions = []
+    for session in self.bank['sessions']:
+      if session['id'] == self.session.get('last_update_session'):
+        continue
+      if session['id'] == self.session.get('last_remove_session'):
+        continue
+      is_prod_session = False
+      for prod in self.bank['production']:
+        if session['id'] == prod['session']:
+          is_prod_session = True
+          break
+      if is_prod_session:
+        continue
+      old_sessions.append(session['id'])
+    if len(old_sessions) > 0:
+      for session_id in old_sessions:
+        self.banks.update({'name': self.name}, {'$pull' : { 'sessions': { 'id': session_id }}})
+      self.bank = self.banks.find_one({'name': self.name})
 
   def publish(self):
     '''

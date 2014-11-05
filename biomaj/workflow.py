@@ -120,7 +120,7 @@ class Workflow(object):
     '''
     Initialize workflow
     '''
-    logging.debug('Workflow:wf_init')
+    logging.info('Workflow:wf_init')
     data_dir = self.session.config.get('data.dir')
     lock_file = os.path.join(data_dir,self.name+'.lock')
     if os.path.exists(lock_file):
@@ -136,7 +136,7 @@ class Workflow(object):
     '''
     Workflow is over
     '''
-    logging.debug('Workflow:wf_over')
+    logging.info('Workflow:wf_over')
     data_dir = self.session.config.get('data.dir')
     lock_file = os.path.join(data_dir,self.name+'.lock')
     os.remove(lock_file)
@@ -170,7 +170,7 @@ class RemoveWorkflow(Workflow):
 
 
   def wf_remove_release(self):
-    logging.debug('Workflow:wf_remove_release')
+    logging.info('Workflow:wf_remove_release')
     if not self.session.get('update_session_id'):
       logging.error('Bug: update_session_id not set in session')
       return False
@@ -178,7 +178,7 @@ class RemoveWorkflow(Workflow):
     return self.bank.remove_session(self.session.get('update_session_id'))
 
   def wf_removeprocess(self):
-    logging.debug('Workflow:wf_removepreprocess')
+    logging.info('Workflow:wf_removepreprocess')
     metas = self.session._session['process']['remove']
     pfactory = RemoveProcessFactory(self.bank, metas)
     res = pfactory.run()
@@ -199,7 +199,7 @@ class UpdateWorkflow(Workflow):
     { 'name': 'release', 'steps': []},
     { 'name': 'download', 'steps': ['uncompress','copy']},
     { 'name': 'postprocess', 'steps': []},
-    { 'name': 'publish', 'steps': ['clean_offline', 'delete_old']},
+    { 'name': 'publish', 'steps': ['clean_offline', 'delete_old', 'clean_old_sessions']},
     { 'name': 'over', 'steps': []}
   ]
 
@@ -227,21 +227,21 @@ class UpdateWorkflow(Workflow):
     '''
     Basic checks
     '''
-    logging.debug('Workflow:wf_check')
+    logging.info('Workflow:wf_check')
     return True
 
   def wf_depends(self):
     '''
     Checks bank dependencies with other banks. If bank has dependencies, execute update on other banks first
     '''
-    logging.debug('Workflow:wf_depends')
+    logging.info('Workflow:wf_depends')
     return True
 
   def wf_preprocess(self):
     '''
     Execute pre-processes
     '''
-    logging.debug('Workflow:wf_preprocess')
+    logging.info('Workflow:wf_preprocess')
     metas = self.session._session['process']['pre']
     pfactory = PreProcessFactory(self.bank, metas)
     res = pfactory.run()
@@ -252,7 +252,7 @@ class UpdateWorkflow(Workflow):
     '''
     Find current release on remote
     '''
-    logging.debug('Workflow:wf_release')
+    logging.info('Workflow:wf_release')
     cf = self.session.config
     self.session.previous_release = self.session.get('release')
     logging.debug('Workflow:wf_release:previous_session:'+str(self.session.previous_release))
@@ -343,7 +343,7 @@ class UpdateWorkflow(Workflow):
     '''
     Download remote files or use an available local copy from last production directory if possible.
     '''
-    logging.debug('Workflow:wf_download')
+    logging.info('Workflow:wf_download')
     flow = self.get_flow(Workflow.FLOW_DOWNLOAD)
     downloader = None
     cf = self.session.config
@@ -389,6 +389,28 @@ class UpdateWorkflow(Workflow):
 
     copied_files = []
 
+    # Check if already in offlinedir
+    keep_files = []
+    if os.path.exists(offline_dir):
+      for file_to_download in downloader.files_to_download:
+        # If file is in offline dir and has same date and size, do not download again
+        if os.path.exists(offline_dir + '/' + file_to_download['name']):
+          file_stat = os.stat(offline_dir + '/' + file_to_download['name'])
+          f_stat = datetime.datetime.fromtimestamp(os.path.getmtime(offline_dir + '/' + file_to_download['name']))
+          year = str(f_stat.year)
+          month = str(f_stat.month)
+          day = str(f_stat.day)
+          if file_stat.ST_SIZE != file_to_download['size'] or \
+             year != file_to_download['year'] or \
+             month != file_to_download['month'] or \
+             day != file_to_download['day']:
+            keep_files.append(file_to_download)
+          else:
+            logging.debug('Workflow:wf_download:offline:'+file_to_download['name'])
+        else:
+          keep_files.append(file_to_download)
+      downloader.files_to_download = keep_files
+
     self.download_go_ahead = False
     if self.options.get_option(Options.FROM_TASK) == 'download':
       # We want to download again in same release, that's fine, we do not care it is the same release
@@ -428,7 +450,7 @@ class UpdateWorkflow(Workflow):
     '''
     Uncompress files if archives and no.extract = false
     '''
-    logging.debug('Workflow:wf_uncompress')
+    logging.info('Workflow:wf_uncompress')
     no_extract = self.session.config.get('no.extract')
     if no_extract is None or no_extract == 'false':
       for file in self.downloaded_files:
@@ -439,7 +461,7 @@ class UpdateWorkflow(Workflow):
     '''
     Copy files from offline directory to release directory
     '''
-    logging.debug('Workflow:wf_copy')
+    logging.info('Workflow:wf_copy')
     from_dir = os.path.join(self.session.config.get('data.dir'),
                   self.session.config.get('offline.dir.name'))
     regexp = self.session.config.get('local.files').split()
@@ -473,7 +495,7 @@ class UpdateWorkflow(Workflow):
     os.chdir(to_dir)
     os.symlink(prod_dir,'future_release')
 
-    logging.debug('Workflow:wf_postprocess')
+    logging.info('Workflow:wf_postprocess')
     blocks = self.session._session['process']['post']
     pfactory = PostProcessFactory(self.bank, blocks)
     res = pfactory.run()
@@ -491,9 +513,9 @@ class UpdateWorkflow(Workflow):
     '''
 
     if not self.options.get_option(Options.PUBLISH):
-      logging.debug('Workflow:wf_publish:no')
+      logging.info('Workflow:wf_publish:no')
       return True
-    logging.debug('Workflow:wf_publish')
+    logging.info('Workflow:wf_publish')
     self.bank.publish()
     return True
 
@@ -501,16 +523,24 @@ class UpdateWorkflow(Workflow):
     '''
     Clean offline directory
     '''
-    logging.debug('Workflow:wf_clean_offline')
+    logging.info('Workflow:wf_clean_offline')
     if os.path.exists(self.session.get_offline_directory()):
       shutil.rmtree(self.session.get_offline_directory())
+    return True
+
+  def wf_clean_old_sessions(self):
+    '''
+    Delete old sessions not related to a production directory or last run
+    '''
+    logging.info('Workflow:wf_clean_old_sessions')
+    self.bank.clean_old_sessions()
     return True
 
   def wf_delete_old(self):
     '''
     Delete old production dirs
     '''
-    logging.debug('Workflow:wf_delete_old')
+    logging.info('Workflow:wf_delete_old')
     keep = int(self.session.config.get('keep.old.version'))
     # Current production dir is not yet in list
     nb_prod = len(self.bank.bank['production'])

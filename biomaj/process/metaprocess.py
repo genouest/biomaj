@@ -57,6 +57,7 @@ class MetaProcess(threading.Thread):
         self.bmaj_env['noextract'] = self.bank.config.get('no.extract')
         if self.bmaj_env['noextract'] is None:
           self.bmaj_env['noextract'] = ''
+        self.bmaj_env['localrelease'] = self.bank.session.get_release_directory()
         self.bmaj_env['remoterelease'] = self.bank.session.get('release')
         self.bmaj_env['removedrelease'] = self.bank.session.get('release')
 
@@ -73,7 +74,7 @@ class MetaProcess(threading.Thread):
           processes_status = {}
           for bprocess in processes:
             # Process status already ok, do not replay
-            if bprocess in self.meta_status[meta] and self.meta_status[meta][bprocess]:
+            if meta in self.meta_status and bprocess in self.meta_status[meta] and self.meta_status[meta][bprocess]:
               logging.info("PROC:META:SKIP:PROCESS:"+bprocess)
               processes_status[bprocess] = True
               continue

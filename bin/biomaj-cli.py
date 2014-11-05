@@ -29,6 +29,8 @@ def main():
   parser.add_argument('--publish', dest="publish", help="Publish", action="store_true", default=False)
   parser.add_argument('--release', dest="release",help="release of the bank")
   parser.add_argument('--from-task', dest="from_task",help="Start cycle at a specific task (init always executed)")
+  parser.add_argument('--process', dest="process",help="Linked to from-task, optionally specify a block, meta or process name to start from")
+  parser.add_argument('--log', dest="log",help="log level")
   parser.add_argument('-r', '--remove', dest="remove", help="Update action", action="store_true", default=False)
   parser.add_argument('-s', '--status', dest="status", help="Get status", action="store_true", default=False)
   parser.add_argument('-b', '--bank', dest="bank",help="bank name")

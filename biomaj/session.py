@@ -73,10 +73,10 @@ class Session:
     Reset status of meta processes
     '''
     if proc in metas:
-      reset_process(self, procs)
+      self.reset_process(procs)
     else:
       for meta in metas.keys():
-        reset_process(self, metas[meta], proc)
+        self.reset_process(metas[meta], proc)
 
   def reset_process(self, processes, proc=None):
     '''

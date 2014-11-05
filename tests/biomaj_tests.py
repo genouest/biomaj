@@ -535,3 +535,33 @@ class TestBiomajFunctional(unittest.TestCase):
     b2.update()
     self.assertTrue(b2.session.get_status('postprocess'))
     self.assertEqual(b.session.get_full_release_directory(), b2.session.get_full_release_directory())
+
+
+  @attr('process')
+  def test_postprocesses_restart_from_proc(self):
+    b = Bank('localprocess')
+    b.update()
+    print 'RELEASE '+b.session.get_full_release_directory()
+    proc1file = os.path.join(b.session.get_full_release_directory(),'proc1.txt')
+    proc2file = os.path.join(b.session.get_full_release_directory(),'proc2.txt')
+    self.assertTrue(os.path.exists(proc1file))
+    self.assertTrue(os.path.exists(proc2file))
+    os.remove(proc1file)
+    os.remove(proc2file)
+    # Restart from postprocess, reexecute all processes
+    b2 = Bank('localprocess')
+    b2.options.from_task = 'postprocess'
+    b2.options.release = b.session.get('release')
+    b2.update()
+    self.assertTrue(os.path.exists(proc1file))
+    self.assertTrue(os.path.exists(proc2file))
+    os.remove(proc1file)
+    os.remove(proc2file)
+    # Restart from postprocess, but at process PROC2 and following
+    b3 = Bank('localprocess')
+    b3.options.from_task = 'postprocess'
+    b3.options.process = 'PROC2'
+    b3.options.release = b.session.get('release')
+    b3.update()
+    self.assertFalse(os.path.exists(proc1file))
+    self.assertTrue(os.path.exists(proc2file))

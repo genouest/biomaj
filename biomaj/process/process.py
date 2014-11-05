@@ -62,7 +62,6 @@ class Process:
             err = True
           fout.flush()
           ferr.flush()
-
     else:
       err = True
     logging.info('PROCESS:EXEC:' + self.name + ':' + str(err))

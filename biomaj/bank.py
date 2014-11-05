@@ -85,6 +85,7 @@ class Bank:
       self.session._session['depends'][dep] = False
     for dep in depends:
       if self.session._session['depends'][dep]:
+        logging.debug('Update:Depends:'+dep+':SKIP')
         # Bank has been marked as depends multiple times, run only once
         continue
       logging.info('Update:Depends:'+dep)

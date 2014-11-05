@@ -626,9 +626,7 @@ class TestBiomajFunctional(unittest.TestCase):
     self.assertTrue(os.path.exists(proc2file))
 
 
-  @attr('test')
   def test_computed(self):
     b = Bank('computed')
     res = b.update(True)
     self.assertTrue(res)
-    self.assertTrue(1==0)

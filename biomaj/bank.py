@@ -8,6 +8,7 @@ from biomaj.session import Session
 from biomaj.workflow import UpdateWorkflow, RemoveWorkflow, Workflow
 from biomaj.config import BiomajConfig
 from biomaj.options import Options
+from biomaj.process.processfactory import ProcessFactory
 
 from bson.objectid import ObjectId
 
@@ -32,7 +33,11 @@ class Bank:
     self.name = name
     self.depends = []
 
-    self.config = BiomajConfig(self.name)
+    self.config = BiomajConfig(self.name, options)
+
+    if self.config.get('bank.num.threads') is not None:
+      ProcessFactory.NB_THREAD = int(self.config.get('bank.num.threads'))
+
     logging.info("Log file: "+self.config.log_file)
 
     #self.options = Options(options)
@@ -50,11 +55,28 @@ class Bank:
     self.bank = self.banks.find_one({'name': self.name})
 
     if self.bank is None:
-        self.bank = { 'name' : self.name, 'sessions': [], 'production': [], 'type': self.config.get('db.type') }
+        self.bank = {
+                      'name' : self.name,
+                      'sessions': [],
+                      'production': [],
+                      'properties': self.get_properties()
+                    }
         self.bank['_id'] = self.banks.insert(self.bank)
 
     self.session = None
     self.use_last_session = False
+
+  def get_properties(self):
+    '''
+    Read bank properties from config file
+
+    :return: properties dict
+    '''
+    return {
+      'visibility': self.config.get('visibility.default'),
+      'owner': 'admin',
+      'type': self.config.get('db.type')
+    }
 
   @staticmethod
   def list(with_sessions=False):
@@ -116,7 +138,7 @@ class Bank:
     if self.session.get('action') == 'remove':
       action = 'last_remove_session'
     self.banks.update({'name': self.name}, {
-      '$set': {action: self.session._session['id']},
+      '$set': {action: self.session._session['id'], 'properties': self.get_properties()},
       '$push' : { 'sessions': self.session._session }
       })
     if self.session.get('action') == 'update' and self.session.get_status(Workflow.FLOW_OVER) and self.session.get('update'):
@@ -323,12 +345,16 @@ class Bank:
         if set_to_false:
           # After from_task task, tasks must be set to False to be run
           self.session.set_status(task['name'], False)
-          if task['name'] == Workflow.FLOW_POSTPROCESS:
-            self.session.reset_proc(Workflow.FLOW_POSTPROCESS)
-          elif task['name'] == Workflow.FLOW_PREPROCESS:
-            self.session.reset_proc(Workflow.FLOW_PREPROCESS)
-          elif task['name'] == Workflow.FLOW_REMOVEPROCESS:
-            self.session.reset_proc(Workflow.FLOW_REMOVEPROCESS)
+          proc = None
+          if task['name'] in [Workflow.FLOW_POSTPROCESS, Workflow.FLOW_PREPROCESS, Workflow.FLOW_REMOVEPROCESS]:
+            proc = self.options.get_option('process')
+            self.session.reset_proc(task['name'], proc)
+          #if task['name'] == Workflow.FLOW_POSTPROCESS:
+          #  self.session.reset_proc(Workflow.FLOW_POSTPROCESS, proc)
+          #elif task['name'] == Workflow.FLOW_PREPROCESS:
+          #  self.session.reset_proc(Workflow.FLOW_PREPROCESS, proc)
+          #elif task['name'] == Workflow.FLOW_REMOVEPROCESS:
+          #  self.session.reset_proc(Workflow.FLOW_REMOVEPROCESS, proc)
     self.session.set('action','update')
     res = self.start_update()
     self.save_session()

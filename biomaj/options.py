@@ -29,6 +29,7 @@ class Options:
   REMOVE = 'remove'
   PUBLISH = 'publish'
   FROM_TASK = 'from_task'
+  PROCESS = 'process'
   STOP_BEFORE = 'stop_before'
   STOP_AFTER = 'stop_after'
   FROMSCRATCH = 'fromscratch'

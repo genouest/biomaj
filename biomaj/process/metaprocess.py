@@ -84,7 +84,8 @@ class MetaProcess(threading.Thread):
             proc_type = self.bank.config.get(bprocess+'.type')
             exe = self.bank.config.get(bprocess+'.exe')
             args = self.bank.config.get(bprocess+'.args')
-            bmaj_process = Process(meta+'_'+name, exe, args, desc, proc_type, cluster, self.bmaj_env, os.path.dirname(self.bank.config.log_file))
+            expand = self.bank.config.get_bool(bprocess+'.expand', default=True)
+            bmaj_process = Process(meta+'_'+name, exe, args, desc, proc_type, cluster, expand, self.bmaj_env, os.path.dirname(self.bank.config.log_file))
             res = bmaj_process.run(self.simulate)
             processes_status[bprocess] = res
             if not res:

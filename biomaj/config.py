@@ -16,7 +16,9 @@ class BiomajConfig:
   'http.group.dir.date': 2,
   'http.group.file.name': 1,
   'http.group.file.date': 2,
-  'http.group.file.size': 3
+  'http.group.file.size': 3,
+  'visibility.default': 'public',
+  'historic.logfile.level': 'INFO'
   }
 
   # Old biomaj level compatibility
@@ -53,12 +55,14 @@ class BiomajConfig:
       BiomajConfig.global_config.read([config_file])
 
 
-  def __init__(self, bank):
+  def __init__(self, bank, options=None):
     '''
     Loads bank configuration
 
     :param bank: bank name
     :type bank: str
+    :param options: bank options
+    :type options: argparse
     '''
     self.name = bank
     if BiomajConfig.global_config is None:
@@ -83,7 +87,10 @@ class BiomajConfig:
       os.makedirs(bank_log_dir)
     hdlr = logging.FileHandler(os.path.join(bank_log_dir,bank+'.log'))
     self.log_file = os.path.join(bank_log_dir,bank+'.log')
-    hdlr.setLevel(BiomajConfig.LOGLEVEL[self.get('historic.logfile.level')])
+    if options is not None and options.get_option('log') is not None:
+      hdlr.setLevel(BiomajConfig.LOGLEVEL[options.get_option('log')])
+    else:
+      hdlr.setLevel(BiomajConfig.LOGLEVEL[self.get('historic.logfile.level')])
     formatter = logging.Formatter('%(asctime)s %(levelname)-5.5s [%(name)s][%(threadName)s] %(message)s')
     hdlr.setFormatter(formatter)
     logger.addHandler(hdlr)
@@ -92,7 +99,17 @@ class BiomajConfig:
   def set(self, prop, value, section='GENERAL'):
     self.config_bank.set(section, prop, value)
 
-  def get(self, prop, section='GENERAL', escape=True):
+  def get_bool(self, prop, section='GENERAL', escape=True, default=None):
+    '''
+    Get a boolean property from bank or general configration. Optionally in section.
+    '''
+    value = self.get(prop,section,escape,default)
+    if value == 'true' or value == '1':
+      return True
+    else:
+      return False
+
+  def get(self, prop, section='GENERAL', escape=True, default=None):
     '''
     Get a property from bank or general configration. Optionally in section.
     '''
@@ -109,7 +126,7 @@ class BiomajConfig:
     if prop in BiomajConfig.DEFAULTS:
       return BiomajConfig.DEFAULTS[prop]
 
-    return None
+    return default
 
 
   def get_time(self):

@@ -7,7 +7,7 @@ class Process:
   Define a process to execute
   '''
 
-  def __init__(self, name, exe, args, desc=None, type=None, cluster=False, bank_env=None, log_dir=None):
+  def __init__(self, name, exe, args, desc=None, proc_type=None, cluster=False, expand=True, bank_env=None, log_dir=None):
     '''
     Define one process
 
@@ -28,7 +28,8 @@ class Process:
     self.args = args.split()
     self.bank_env = bank_env
     self.cluster = cluster
-    self.type = type
+    self.type = proc_type
+    self.expand = expand
     if log_dir is not None:
       self.output_file = os.path.join(log_dir,name+'.out')
       self.error_file = os.path.join(log_dir,name+'.err')
@@ -45,14 +46,17 @@ class Process:
     :return: exit code of process
     '''
     args = [ self.exe ] + self.args
-    args = " ".join(args)
     logging.debug('PROCESS:EXEC:'+str(self.args))
     err= False
     if not simulate:
       logging.info('Run process '+self.name)
       with open(self.output_file,'w') as fout:
         with open(self.error_file,'w') as ferr:
-          proc = subprocess.Popen(args, stdout=fout, stderr=ferr, env=self.bank_env, shell=True)
+          if self.expand:
+            args = " ".join(args)
+            proc = subprocess.Popen(args, stdout=fout, stderr=ferr, env=self.bank_env, shell=True)
+          else:
+            proc = subprocess.Popen(args, stdout=fout, stderr=ferr, env=self.bank_env, shell=False)
           proc.wait()
           if proc.returncode == 0:
             err = True

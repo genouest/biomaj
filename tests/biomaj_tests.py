@@ -17,7 +17,8 @@ from biomaj.workflow import Workflow, UpdateWorkflow
 from biomaj.utils import Utils
 from biomaj.download.ftp import FTPDownload
 from biomaj.download.http import HTTPDownload
-from biomaj.download.copy  import LocalDownload
+from biomaj.download.localcopy  import LocalDownload
+from biomaj.download.downloadthreads import DownloadThread
 from biomaj.config import BiomajConfig
 from biomaj.process.processfactory import PostProcessFactory,PreProcessFactory,RemoveProcessFactory
 
@@ -192,6 +193,30 @@ class TestBiomajLocalDownload(unittest.TestCase):
     locald.download(self.utils.data_dir)
     locald.close()
     self.assertTrue(len(locald.files_to_download) == 1)
+
+  def test_parallel_local_download(self):
+    locald = LocalDownload(self.examples)
+    (file_list, dir_list) = locald.list()
+    locald.match([r'^test'], file_list, dir_list)
+    list1 = [locald.files_to_download[0]]
+    list2 = locald.files_to_download[1:]
+    locald.close()
+
+    locald1 = LocalDownload(self.examples)
+    locald1.files_to_download = list1
+    locald2 = LocalDownload(self.examples)
+    locald2.files_to_download = list2
+    t1 = DownloadThread(locald1, self.utils.data_dir)
+    t2 = DownloadThread(locald2, self.utils.data_dir)
+    t1.start()
+    t2.start()
+    t1.join()
+    t2.join()
+    self.assertTrue(len(t1.downloader.files_to_download) == 1)
+    self.assertTrue(os.path.exists(self.utils.data_dir + '/' +list1[0]['name']))
+    self.assertTrue(len(t2.downloader.files_to_download) == 2)
+    self.assertTrue(os.path.exists(self.utils.data_dir + '/' +list2[0]['name']))
+    self.assertTrue(os.path.exists(self.utils.data_dir + '/' +list2[1]['name']))
 
 @attr('network')
 @attr('http')
@@ -391,6 +416,7 @@ class TestBiomajSetup(unittest.TestCase):
     banks = Bank.list()
     self.assertTrue(banks.count() == 2)
 
+  @attr('test')
   @attr('network')
   def test_get_release(self):
     '''

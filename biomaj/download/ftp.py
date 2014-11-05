@@ -100,6 +100,10 @@ class FTPDownload(DownloadInterface):
       curl.setopt(pycurl.URL, rfile['url']+rfile['root']+'/'+rfile['name'])
       curl.setopt(pycurl.WRITEDATA, fp)
       curl.perform()
+      #errcode = curl.getinfo(pycurl.HTTP_CODE)
+      #if int(errcode) != 200:
+      #  self.error = True
+      #  logging.error('Error while downloading '+rfile['name']+' - '+str(errcode))
       curl.close()
       fp.close()
       logging.debug('downloaded!')
@@ -157,3 +161,4 @@ class FTPDownload(DownloadInterface):
 
   def close(self):
     self.crl.close()
+    self.crl = None

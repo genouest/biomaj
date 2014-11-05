@@ -3,11 +3,11 @@ import logging
 import datetime
 import time
 import re
-
 import tarfile
 import zipfile
 
 from biomaj.utils import Utils
+
 
 class DownloadInterface:
   '''
@@ -19,6 +19,7 @@ class DownloadInterface:
   def __init__(self):
     self.files_to_download = []
     self.files_to_copy = []
+    self.error = False
 
   def match(self, patterns, file_list, dir_list=[], prefix=''):
     '''

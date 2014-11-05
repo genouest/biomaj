@@ -18,7 +18,9 @@ class BiomajConfig:
   'http.group.file.date': 2,
   'http.group.file.size': 3,
   'visibility.default': 'public',
-  'historic.logfile.level': 'INFO'
+  'historic.logfile.level': 'INFO',
+  'bank.num.threads': 2,
+  'files.num.threads': 4
   }
 
   # Old biomaj level compatibility

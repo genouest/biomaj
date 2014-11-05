@@ -8,7 +8,9 @@ import traceback
 
 from biomaj.utils import Utils
 from biomaj.download.ftp import FTPDownload
-from biomaj.download.copy import LocalDownload
+from biomaj.download.http import HTTPDownload
+from biomaj.download.localcopy import LocalDownload
+from biomaj.download.downloadthreads import DownloadThread
 
 from biomaj.mongo_connector import MongoConnector
 from biomaj.options import Options
@@ -312,6 +314,9 @@ class UpdateWorkflow(Workflow):
         release = rel.group(1)
 
       release_downloader.close()
+      if release_downloader.error:
+        logging.error('An error occured during download')
+        return False
 
     self.session.set('release', release)
     # We restart from scratch, a directory with this release already exists
@@ -444,9 +449,30 @@ class UpdateWorkflow(Workflow):
       copied_files = downloader.files_to_copy
       Utils.copy_files(downloader.files_to_copy, offline_dir)
 
-    self.downloaded_files = downloader.download(offline_dir) + copied_files
 
     downloader.close()
+    
+    DownloadThread.NB_THREAD = int(self.session.config.get('files.num.threads'))
+    thlist = DownloadThread.get_threads(downloader, offline_dir)
+    for th in thlist:
+      th.start()
+    for th in thlist:
+      th.join()
+    is_error = False
+    for th in thlist:
+      if th.error:
+        is_error = True
+        downloader.error = True
+        break
+
+    self.downloaded_files = downloader.files_to_download + copied_files
+    #self.downloaded_files = downloader.download(offline_dir) + copied_files
+
+    #downloader.close()
+
+    if downloader.error:
+      logging.error('An error occured during download')
+      return False
 
     return True
 

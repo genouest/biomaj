@@ -64,6 +64,8 @@ class Workflow(object):
     downloader = None
     if protocol == 'ftp':
       downloader = FTPDownload(protocol, server, remote_dir)
+    if protocol == 'http':
+      downloader = HTTPDownload(protocol, server, remote_dir, self.bank.config)
     if protocol == 'local':
       downloader = LocalDownload(remote_dir)
     return downloader
@@ -218,6 +220,7 @@ class UpdateWorkflow(Workflow):
       return False
     if self.options.get_option(Options.FROMSCRATCH):
       return self.wf_clean_offline()
+
     return True
 
   def wf_check(self):
@@ -455,11 +458,31 @@ class UpdateWorkflow(Workflow):
     '''
     Execute post processes
     '''
+
+    # Creates a temporary symlink future_release to keep compatibility if process
+    # tries to access dir with this name
+    future_link = os.path.join(self.bank.config.get('data.dir'),
+                                self.bank.config.get('dir.version'),
+                                'future_release')
+    prod_dir = self.session.get_full_release_directory()
+    to_dir = os.path.join(self.bank.config.get('data.dir'),
+                  self.bank.config.get('dir.version'))
+
+    if os.path.lexists(future_link):
+      os.remove(future_link)
+    os.chdir(to_dir)
+    os.symlink(prod_dir,'future_release')
+
     logging.debug('Workflow:wf_postprocess')
     blocks = self.session._session['process']['post']
     pfactory = PostProcessFactory(self.bank, blocks)
     res = pfactory.run()
     self.session._session['process']['post'] = pfactory.blocks
+
+    # In any way, delete symlink
+    if os.path.lexists(future_link):
+      os.remove(future_link)
+
     return res
 
   def wf_publish(self):

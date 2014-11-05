@@ -10,8 +10,8 @@ class BiomajConfig:
   '''
 
   DEFAULTS = {
-  'http.parse.dir.line': r'<a[\s]+href="([\S]+)/".*alt="\[DIR\]">.*([\d]{2}-[\w\d]{2,5}-[\d]{4}\s[\d]{2}:[\d]{2})',
-  'http.parse.file.line': r'<a[\s]+href="([\S]+)".*([\d]{2}-[\w\d]{2,5}-[\d]{4}\s[\d]{2}:[\d]{2})[\s]+([\d\.]+[MKG]{0,1})',
+  'http.parse.dir.line': r'<img[\s]+src="[\S]+"[\s]+alt="\[DIR\]"[\s]*/?>[\s]*<a[\s]+href="([\S]+)/"[\s]*>.*([\d]{2}-[\w\d]{2,5}-[\d]{4}\s[\d]{2}:[\d]{2})',
+  'http.parse.file.line': r'<img[\s]+src="[\S]+"[\s]+alt="\[[\s]+\]"[\s]*/?>[\s]<a[\s]+href="([\S]+)".*([\d]{2}-[\w\d]{2,5}-[\d]{4}\s[\d]{2}:[\d]{2})[\s]+([\d\.]+[MKG]{0,1})',
   'http.group.dir.name': 1,
   'http.group.dir.date': 2,
   'http.group.file.name': 1,
@@ -116,7 +116,7 @@ class BiomajConfig:
     if self.config_bank.has_option(section,prop):
       val = self.config_bank.get(section,prop)
       # If regexp, escape backslashes
-      if escape and (prop == 'local.files' or prop == 'remote.files'):
+      if escape and (prop == 'local.files' or prop == 'remote.files' or prop == 'http.parse.dir.line' or prop == 'http.parse.file.line'):
         val = val.replace('\\\\','\\')
       return val
 

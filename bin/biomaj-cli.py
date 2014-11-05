@@ -112,15 +112,21 @@ def main():
     bmaj.load_session()
     bank = bmaj.bank
     session = None
-    # Search production release matching release
-    for prod in bank['production']:
-      if prod['release'] == options.release or prod['prod_dir'] == options.release:
-        # Search session related to this production release
-        for s in bank['sessions']:
-          if s['id'] == prod['session']:
-            session = s
-            break
-        break
+    if options.get_option('release') is None:
+      # Get latest prod release
+      if len(bank['production']>0):
+        prod = bank['production'][len(bank['production'])-1]
+        session = prod['session']
+    else:
+      # Search production release matching release
+      for prod in bank['production']:
+        if prod['release'] == options.release or prod['prod_dir'] == options.release:
+          # Search session related to this production release
+          for s in bank['sessions']:
+            if s['id'] == prod['session']:
+              session = s
+              break
+          break
     if session is None:
       print "No production session could be found for this release"
       sys.exit(1)

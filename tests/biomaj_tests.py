@@ -16,6 +16,7 @@ from biomaj.session import Session
 from biomaj.workflow import Workflow, UpdateWorkflow
 from biomaj.utils import Utils
 from biomaj.download.ftp import FTPDownload
+from biomaj.download.http import HTTPDownload
 from biomaj.download.copy  import LocalDownload
 from biomaj.config import BiomajConfig
 from biomaj.process.processfactory import PostProcessFactory,PreProcessFactory,RemoveProcessFactory
@@ -67,14 +68,14 @@ class UtilsForTest():
   def __copy_test_bank_properties(self):
     if self.bank_properties is not None:
       return
-    self.bank_properties = ['alu', 'local']
+    self.bank_properties = ['alu', 'local', 'testhttp']
     curdir = os.path.dirname(os.path.realpath(__file__))
     from_file = os.path.join(curdir, 'alu.properties')
     to_file = os.path.join(self.conf_dir, 'alu.properties')
     shutil.copyfile(from_file, to_file)
 
     # Manage local bank test, use bank test subdir as remote
-    properties = ['local.properties', 'localprocess.properties']
+    properties = ['local.properties', 'localprocess.properties', 'testhttp.properties']
     for prop in properties:
       from_file = os.path.join(curdir, prop)
       to_file = os.path.join(self.conf_dir, prop)
@@ -192,7 +193,45 @@ class TestBiomajLocalDownload(unittest.TestCase):
     locald.close()
     self.assertTrue(len(locald.files_to_download) == 1)
 
+@attr('network')
+@attr('http')
+class TestBiomajHTTPDownload(unittest.TestCase):
+  '''
+  Test HTTP downloader
+  '''
+  def setUp(self):
+    self.utils = UtilsForTest()
+    BiomajConfig.load_config(self.utils.global_properties)
+    self.config = BiomajConfig('testhttp')
 
+  def tearDown(self):
+    self.utils.clean()
+
+  def test_http_list(self):
+    httpd = HTTPDownload('http', 'ftp2.fr.debian.org', '/debian/dists/', self.config)
+    (file_list, dir_list) = httpd.list()
+    httpd.close()
+    self.assertTrue(len(file_list) == 1)
+
+  def test_http_download(self):
+    httpd = HTTPDownload('http', 'ftp2.fr.debian.org', '/debian/dists/', self.config)
+    (file_list, dir_list) = httpd.list()
+    httpd.match([r'^README$'], file_list, dir_list)
+    httpd.download(self.utils.data_dir)
+    httpd.close()
+    self.assertTrue(len(httpd.files_to_download) == 1)
+
+  def test_http_download_in_subdir(self):
+    httpd = HTTPDownload('http', 'ftp2.fr.debian.org', '/debian/dists/', self.config)
+    (file_list, dir_list) = httpd.list()
+    httpd.match([r'^stable/Release$'], file_list, dir_list)
+    httpd.download(self.utils.data_dir)
+    httpd.close()
+    self.assertTrue(len(httpd.files_to_download) == 1)
+
+
+
+@attr('ftp')
 @attr('network')
 class TestBiomajFTPDownload(unittest.TestCase):
   '''
@@ -222,7 +261,7 @@ class TestBiomajFTPDownload(unittest.TestCase):
   def test_download_in_subdir(self):
     ftpd = FTPDownload('ftp', 'ftp.ncbi.nih.gov', '/blast/')
     (file_list, dir_list) = ftpd.list()
-    ftpd.match([r'^/db/FASTA/alu.*\.gz$'], file_list, dir_list)
+    ftpd.match([r'^db/FASTA/alu.*\.gz$'], file_list, dir_list)
     ftpd.download(self.utils.data_dir)
     ftpd.close()
     self.assertTrue(len(ftpd.files_to_download) == 2)

@@ -49,7 +49,7 @@ class MetaProcess(threading.Thread):
       self.bmaj_env['datadir'] = self.bank.config.get('data.dir')
       self.bmaj_env['mailadmin'] = self.bank.config.get('mail.admin')
       self.bmaj_env['mailsmtp'] = self.bank.config.get('mail.smtp.host')
-      self.bmaj_env['processdir'] = self.bank.config.get('process.dir')
+      self.bmaj_env['processdir'] = self.bank.config.get('process.dir',default='')
       if 'PATH' in self.bmaj_env:
         self.bmaj_env['PATH'] += ':' + self.bmaj_env['processdir']
       else:

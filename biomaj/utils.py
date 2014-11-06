@@ -58,10 +58,10 @@ class Utils:
 
     Copy keeps the original file stats.
     Files should have attributes name and root:
-      - root: root directory
-      - name: relative path of file in root directory
+    - root: root directory
+    - name: relative path of file in root directory
 
-      /root/file/file1 will be copied in to_dir/file/file1
+    /root/file/file1 will be copied in to_dir/file/file1
 
     :param files_to_copy: list of files to copy
     :type files_to_copy: list

@@ -5,11 +5,11 @@ import os
 from biomaj.process.process import Process
 
 class MetaProcess(threading.Thread):
-  '''
-  Meta process in biomaj process workflow. Meta processes are executed in parallel.
+    '''
+    Meta process in biomaj process workflow. Meta processes are executed in parallel.
 
-  Each meta process defined a list of Process to execute sequentially
-  '''
+    Each meta process defined a list of Process to execute sequentially
+    '''
 
     def __init__(self, bank, metas, meta_status=None, simulate=False):
       '''

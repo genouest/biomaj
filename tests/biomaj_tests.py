@@ -76,7 +76,7 @@ class UtilsForTest():
     shutil.copyfile(from_file, to_file)
 
     # Manage local bank test, use bank test subdir as remote
-    properties = ['local.properties', 'localprocess.properties', 'testhttp.properties', 'computed.properties', 'sub1.properties', 'sub2.properties']
+    properties = ['computederror.properties', 'error.properties', 'local.properties', 'localprocess.properties', 'testhttp.properties', 'computed.properties', 'sub1.properties', 'sub2.properties']
     for prop in properties:
       from_file = os.path.join(curdir, prop)
       to_file = os.path.join(self.conf_dir, prop)
@@ -416,7 +416,6 @@ class TestBiomajSetup(unittest.TestCase):
     banks = Bank.list()
     self.assertTrue(banks.count() == 2)
 
-  @attr('test')
   @attr('network')
   def test_get_release(self):
     '''
@@ -656,3 +655,10 @@ class TestBiomajFunctional(unittest.TestCase):
     b = Bank('computed')
     res = b.update(True)
     self.assertTrue(res)
+
+  def test_computederror(self):
+    b = Bank('computederror')
+    res = b.update(True)
+    self.assertFalse(res)
+    self.assertTrue(b.session._session['depends']['sub2'])
+    self.assertFalse(b.session._session['depends']['error'])

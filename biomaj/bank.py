@@ -10,7 +10,8 @@ from biomaj.config import BiomajConfig
 from biomaj.options import Options
 from biomaj.process.processfactory import ProcessFactory
 
-from bson.objectid import ObjectId
+#from bson.objectid import ObjectId
+
 
 class Bank:
   '''

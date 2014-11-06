@@ -5,6 +5,10 @@ This project is a complete rewrite of BioMAJ (http://biomaj.genouest.org).
 
 It is in development
 
+[![Build Status](https://travis-ci.org/osallou/biomaj.svg?branch=master)](https://travis-ci.org/osallou/biomaj)
+
+[![Coverage Status](https://coveralls.io/repos/osallou/biomaj/badge.png?branch=master)](https://coveralls.io/r/osallou/biomaj?branch=master)
+
 Testing
 =======
 

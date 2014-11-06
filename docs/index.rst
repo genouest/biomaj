@@ -19,8 +19,12 @@ Contents:
    workflow
    interface
    ftp
-   copy
+   http
+   localcopy
    notify
+   metaprocess
+   process
+   processfactory
 
 Indices and tables
 ==================
@@ -28,4 +32,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

@@ -1,14 +1,14 @@
-.. _copy:
+.. _http:
 
 
 *****
-copy
+http
 *****
 
 
-LocalDownloader API reference
+HTTPDownloader API reference
 ==================
- .. automodule:: biomaj.download.copy
+ .. automodule:: biomaj.download.http
    :members: 
    :private-members:
    :special-members:

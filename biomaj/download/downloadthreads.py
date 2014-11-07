@@ -7,6 +7,7 @@ import threading
 import copy
 import tarfile
 import zipfile
+import traceback
 
 class DownloadThread(threading.Thread):
 
@@ -56,6 +57,8 @@ class DownloadThread(threading.Thread):
 
   def run(self):
     logging.info('Start download thread')
+    if self.downloader is None:
+      return True
     self.error = False
     try:
       self.downloader.download(self.local_dir)

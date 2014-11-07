@@ -1,6 +1,7 @@
 import os
 import logging
 import time
+import shutil
 
 from biomaj.mongo_connector import MongoConnector
 
@@ -365,6 +366,27 @@ class Bank:
                       })
     # Update object
     self.bank = self.banks.find_one({'name': self.name})
+    return True
+
+  def get_data_dir(self):
+    '''
+    Returns bank data directory
+
+    :return: str
+    '''
+    return os.path.join(self.config.get('data.dir'),
+                      self.config.get('dir.version'))
+
+  def removeAll(self):
+    '''
+    Remove all bank releases and database records
+
+    :return: bool
+    '''
+    self.banks.remove({'name': self.name})
+    bank_data_dir = self.get_data_dir()
+    print 'DELETE '+bank_data_dir
+    shutil.rmtree(bank_data_dir)
     return True
 
   def remove(self, release):

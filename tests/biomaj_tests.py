@@ -580,6 +580,15 @@ class TestBiomajFunctional(unittest.TestCase):
       # one new dir, but olders must be deleted
       self.assertTrue(len(b.bank['production']) == 2)
 
+
+  def test_removeAll(self):
+    b = Bank('local')
+    b.update()
+    b.removeAll()
+    self.assertFalse(os.path.exists(b.get_data_dir()))
+    bdb = b.banks.find_one({'name': b.name})
+    self.assertTrue(bdb is None)
+
   def test_remove(self):
     '''
     test removal of a production dir

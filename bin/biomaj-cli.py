@@ -31,7 +31,8 @@ def main():
   parser.add_argument('--from-task', dest="from_task",help="Start cycle at a specific task (init always executed)")
   parser.add_argument('--process', dest="process",help="Linked to from-task, optionally specify a block, meta or process name to start from")
   parser.add_argument('--log', dest="log",help="log level")
-  parser.add_argument('-r', '--remove', dest="remove", help="Update action", action="store_true", default=False)
+  parser.add_argument('-r', '--remove', dest="remove", help="Remove a bank release", action="store_true", default=False)
+  parser.add_argument('--remove-all', dest="removeall", help="Remove all bank releases and database records", action="store_true", default=False)
   parser.add_argument('-s', '--status', dest="status", help="Get status", action="store_true", default=False)
   parser.add_argument('-b', '--bank', dest="bank",help="bank name")
   parser.add_argument('--stop-before', dest="stop_before",help="Store workflow before task")
@@ -95,10 +96,13 @@ def main():
     if not res:
       sys.exit(1)
 
-  if options.remove and options.bank and options.release:
+  if ((options.remove and options.release) or options.removeall)) and options.bank:
     bmaj = Bank(options.bank, options)
     print 'Log file: '+bmaj.config.log_file
-    res = bmaj.remove(options.release)
+    if options.removeall:
+      res = bmaj.removeAll()
+    else:
+      res = bmaj.remove(options.release)
     Notify.notifyBankAction(bmaj)
     if not res:
       sys.exit(1)

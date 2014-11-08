@@ -12,6 +12,7 @@ config = {
     'version': '3.0.0',
     'install_requires': ['nose', 'pymongo', 'pycurl', 'mock'],
     'packages': find_packages(),
+    'include_package_data': True,
     'scripts': ['bin/biomaj-cli.py'],
     'name': 'biomaj'
 }

@@ -121,6 +121,12 @@ class TestBiomajUtils(unittest.TestCase):
   def tearDown(self):
     self.utils.clean()
 
+
+  def test_mimes(self):
+    fasta_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),'bank/test2.fasta')
+    (mime, encoding) = Utils.detect_format(fasta_file)
+    self.assertTrue('application/fasta' == mime)
+
   def test_uncompress(self):
     from_file = { 'root': os.path.dirname(os.path.realpath(__file__)),
                   'name': 'bank/test.fasta.gz'

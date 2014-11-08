@@ -451,7 +451,7 @@ class UpdateWorkflow(Workflow):
 
 
     downloader.close()
-    
+
     DownloadThread.NB_THREAD = int(self.session.config.get('files.num.threads'))
     thlist = DownloadThread.get_threads(downloader, offline_dir)
     for th in thlist:

@@ -1,0 +1,7 @@
+# Biological file mime types
+application/fasta         fasta fa fsa
+application/bam           bam bai
+application/gff           gff gff3
+application/bed           bed
+application/fastq         fastq
+application/gtf           gtf

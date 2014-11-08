@@ -9,10 +9,25 @@ import logging
 import shutil
 import datetime
 
+from mimetypes import MimeTypes
+
 class Utils:
   '''
   Utility classes
   '''
+
+  mime = None
+
+  @staticmethod
+  def detect_format(filename):
+    '''
+    try to detect file format by extension
+    '''
+    if Utils.mime is None:
+      Utils.mime = MimeTypes()
+      mimesfile = os.path.join(os.path.dirname(__file__),'mimes-bio.txt')
+      Utils.mime.read(mimesfile,True)
+    return Utils.mime.guess_type(filename, True)
 
   @staticmethod
   def get_more_recent_file(files):
@@ -128,6 +143,8 @@ class Utils:
       file_to_copy['year'] = str(f_stat.year)
       file_to_copy['month'] = str(f_stat.month)
       file_to_copy['day'] = str(f_stat.day)
+      (file_format, encoding) = Utils.detect_format()
+      file_to_copy['format'] = file_format
     return files_to_copy
 
   @staticmethod

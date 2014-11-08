@@ -143,7 +143,7 @@ class Utils:
       file_to_copy['year'] = str(f_stat.year)
       file_to_copy['month'] = str(f_stat.month)
       file_to_copy['day'] = str(f_stat.day)
-      (file_format, encoding) = Utils.detect_format()
+      (file_format, encoding) = Utils.detect_format(to_file)
       file_to_copy['format'] = file_format
     return files_to_copy
 

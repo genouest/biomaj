@@ -100,6 +100,8 @@ class Workflow(object):
           self.session._session['status'][flow['name']] = False
           logging.error('Workflow:'+flow['name']+'Exception:'+str(e))
           logging.debug(traceback.format_exc())
+        finally:
+          self.wf_progress(flow['name'], self.session._session['status'][flow['name']])
         if flow['name'] != Workflow.FLOW_OVER and not self.session.get_status(flow['name']):
             logging.error('Error during task '+flow['name'])
             if flow['name'] != Workflow.FLOW_INIT:
@@ -118,6 +120,27 @@ class Workflow(object):
         break
     return True
 
+  def wf_progress_init(self):
+    '''
+    Set up new progress status
+    '''
+    status = {}
+    for flow in self.session.flow:
+      status[flow['name']] = False
+    MongoConnector.banks.update({'name': self.name},{'$set': {'status': status}})
+
+  def wf_progress_end(self):
+    '''
+    Reset progress status when workflow is over
+    '''
+    MongoConnector.banks.update({'name': self.name},{'$set': {'status': None}})
+
+  def wf_progress(self, task, status):
+    '''
+    Update bank status
+    '''
+    MongoConnector.banks.update({'name': self.name},{'$set': {'status': {task: {'status': status}}}})
+
   def wf_init(self):
     '''
     Initialize workflow
@@ -132,6 +155,7 @@ class Workflow(object):
     f = open(lock_file, 'w')
     f.write('1')
     f.close()
+    self.wf_progress_init()
     return True
 
   def wf_over(self):
@@ -142,6 +166,7 @@ class Workflow(object):
     data_dir = self.session.config.get('data.dir')
     lock_file = os.path.join(data_dir,self.name+'.lock')
     os.remove(lock_file)
+    self.wf_progress_end()
     return True
 
 class RemoveWorkflow(Workflow):

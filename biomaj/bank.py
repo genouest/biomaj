@@ -215,6 +215,7 @@ class Bank:
 
       production = { 'release': self.session.get('release'),
                       'session': self.session._session['id'],
+                      'formats': self.session._session['formats'].keys(),
                       'data_dir': self.config.get('data.dir'),
                       'prod_dir': self.session.get_release_directory()}
 

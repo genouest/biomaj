@@ -30,10 +30,18 @@ class Session:
     self.name = name
     self.config = config
     self.flow = copy.deepcopy(flow)
+
+    formats = {}
+    if self.config.get('db.formats') is not None:
+      flist = self.config.get('db.formats').split(',')
+      for f in flist:
+        formats[f.strip()] = []
+
     self._session = { 'id':  time.time(),
                       'status': {},
                       'files': [],
                       'release': 'none',
+                      'formats': formats,
                       'process': {
                                   'post': {},
                                   'pre': {},

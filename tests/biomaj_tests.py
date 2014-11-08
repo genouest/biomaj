@@ -423,6 +423,7 @@ class TestBiomajSetup(unittest.TestCase):
     self.assertTrue(banks.count() == 2)
 
   @attr('network')
+  @attr('test')
   def test_get_release(self):
     '''
     Get release

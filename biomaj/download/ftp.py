@@ -160,5 +160,6 @@ class FTPDownload(DownloadInterface):
     logging.debug('Download: change dir '+cwd)
 
   def close(self):
-    self.crl.close()
-    self.crl = None
+    if self.crl is not None:
+      self.crl.close()
+      self.crl = None

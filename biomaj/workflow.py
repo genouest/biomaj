@@ -100,6 +100,7 @@ class Workflow(object):
           self.session._session['status'][flow['name']] = False
           logging.error('Workflow:'+flow['name']+'Exception:'+str(e))
           logging.debug(traceback.format_exc())
+          print traceback.format_exc()
         finally:
           self.wf_progress(flow['name'], self.session._session['status'][flow['name']])
         if flow['name'] != Workflow.FLOW_OVER and not self.session.get_status(flow['name']):

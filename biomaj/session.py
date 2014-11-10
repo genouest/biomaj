@@ -38,6 +38,7 @@ class Session:
         formats[f.strip()] = []
 
     self._session = { 'id':  time.time(),
+                      'log_file': self.config.log_file,
                       'status': {},
                       'files': [],
                       'release': 'none',

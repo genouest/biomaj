@@ -88,7 +88,7 @@ class Workflow(object):
     Start the workflow
     '''
     logging.info('Workflow:Start')
-
+    self.wf_progress('log_file', self.session._session['log_file'])
     for flow in self.session.flow:
       if self.skip_all:
         continue

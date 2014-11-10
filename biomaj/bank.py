@@ -131,7 +131,8 @@ class Bank:
     return {
       'visibility': self.config.get('visibility.default'),
       'owner': 'admin',
-      'type': self.config.get('db.type')
+      'type': self.config.get('db.type'),
+      'tags': []
     }
 
   @staticmethod

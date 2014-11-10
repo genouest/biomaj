@@ -22,6 +22,7 @@ from biomaj.download.localcopy  import LocalDownload
 from biomaj.download.downloadthreads import DownloadThread
 from biomaj.config import BiomajConfig
 from biomaj.process.processfactory import PostProcessFactory,PreProcessFactory,RemoveProcessFactory
+from biomaj.user import BmajUser
 
 
 import unittest
@@ -794,3 +795,29 @@ class TestBiomajFunctional(unittest.TestCase):
       content = content_file.read()
       my_json = json.loads(content)
       self.assertTrue(my_json['form']['key1'] == 'value1')
+
+@attr('test')
+@attr('user')
+class TestUser(unittest.TestCase):
+  '''
+  Test user management
+  '''
+
+  def setUp(self):
+    self.utils = UtilsForTest()
+    self.curdir = os.path.dirname(os.path.realpath(__file__))
+    BiomajConfig.load_config(self.utils.global_properties)
+
+  def tearDown(self):
+    self.utils.clean()
+
+  def test_get_user(self):
+    user = BmajUser('biomaj')
+    self.assertTrue(user.user is None)
+    user.remove()
+
+  def test_create_user(self):
+    user = BmajUser('biomaj')
+    user.create('test', 'test@no-reply.org')
+    self.assertTrue(user.user['email'] == 'test@no-reply.org')
+    user.remove()

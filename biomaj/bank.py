@@ -130,7 +130,7 @@ class Bank:
     '''
     return {
       'visibility': self.config.get('visibility.default'),
-      'owner': 'admin',
+      'owner': os.environ['LOGNAME'],
       'type': self.config.get('db.type'),
       'tags': []
     }

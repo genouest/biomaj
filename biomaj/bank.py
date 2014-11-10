@@ -185,6 +185,7 @@ class Bank:
     Save session in database
     '''
     self.session._session['last_update_time'] = time.time()
+    self.session._session['log_file'] = self.config.log_file
     if self.use_last_session:
       # Remove last session
       self.banks.update({'name': self.name}, {'$pull' : { 'sessions': { 'id': self.session._session['id']} }})
@@ -194,7 +195,10 @@ class Bank:
     if self.session.get('action') == 'remove':
       action = 'last_remove_session'
     self.banks.update({'name': self.name}, {
-      '$set': {action: self.session._session['id'], 'properties': self.get_properties()},
+      '$set': {
+        action: self.session._session['id'],
+        'properties': self.get_properties()
+      },
       '$push' : { 'sessions': self.session._session }
       })
     if self.session.get('action') == 'update' and self.session.get_status(Workflow.FLOW_OVER) and self.session.get('update'):

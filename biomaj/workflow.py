@@ -9,6 +9,7 @@ import traceback
 from biomaj.utils import Utils
 from biomaj.download.ftp import FTPDownload
 from biomaj.download.http import HTTPDownload
+from biomaj.download.direct import MultiDownload, DirectFTPDownload, DirectHttpDownload
 from biomaj.download.localcopy import LocalDownload
 from biomaj.download.downloadthreads import DownloadThread
 
@@ -59,7 +60,7 @@ class Workflow(object):
     self.session._session['update'] = False
     self.session._session['remove'] = False
 
-  def get_handler(self, protocol, server, remote_dir):
+  def get_handler(self, protocol, server, remote_dir, list_file=[]):
     '''
     Get a protocol download handler
     '''
@@ -70,6 +71,10 @@ class Workflow(object):
       downloader = HTTPDownload(protocol, server, remote_dir, self.bank.config)
     if protocol == 'local':
       downloader = LocalDownload(remote_dir)
+    if protocol == 'directftp':
+      downloader = DirectFTPDownload('ftp', server, remote_dir, list_file)
+    if protocol == 'directhttp':
+      downloader = DirectHttpDownload('http', server, remote_dir, list_file)
     return downloader
 
 
@@ -82,7 +87,7 @@ class Workflow(object):
     '''
     Start the workflow
     '''
-    logging.info('Start workflow')
+    logging.info('Workflow:Start')
 
     for flow in self.session.flow:
       if self.skip_all:
@@ -93,14 +98,14 @@ class Workflow(object):
         break
       # Always run INIT
       if flow['name'] == Workflow.FLOW_INIT or not self.session.get_status(flow['name']):
-        logging.info('Workflow:'+flow['name'])
+        logging.info('Workflow:Start:'+flow['name'])
         try:
           self.session._session['status'][flow['name']] = getattr(self, 'wf_'+flow['name'])()
         except Exception as e:
           self.session._session['status'][flow['name']] = False
           logging.error('Workflow:'+flow['name']+'Exception:'+str(e))
           logging.debug(traceback.format_exc())
-          print traceback.format_exc()
+          #print str(traceback.format_exc())
         finally:
           self.wf_progress(flow['name'], self.session._session['status'][flow['name']])
         if flow['name'] != Workflow.FLOW_OVER and not self.session.get_status(flow['name']):
@@ -383,7 +388,80 @@ class UpdateWorkflow(Workflow):
     downloader = None
     cf = self.session.config
 
-    downloader = self.get_handler(cf.get('protocol'),cf.get('server'),cf.get('remote.dir'))
+
+    if cf.get('protocol') == 'multi':
+      '''
+      Search for:
+      protocol = multi
+      remote.file.0.protocol = directftp
+      remote.file.0.server = ftp.ncbi.org
+      remote.file.0.path = /musmusculus/chr1/chr1.fa
+
+      => http://ftp2.fr.debian.org/debian/README.html?key1=value&key2=value2
+      remote.file.1.protocol = directhttp
+      remote.file.1.server = ftp2.fr.debian.org
+      remote.file.1.path = debian/README.html
+      remote.file.1.method =  GET
+      remote.file.1.params.keys = key1,key2
+      remote.file.1.params.key1 = value1
+      remote.file.1.params.key2 = value2
+
+      => http://ftp2.fr.debian.org/debian/README.html
+          #POST PARAMS:
+            key1=value
+            key2=value2
+      remote.file.1.protocol = directhttp
+      remote.file.1.server = ftp2.fr.debian.org
+      remote.file.1.path = debian/README.html
+      remote.file.1.method =  POST
+      remote.file.1.params.keys = key1,key2
+      remote.file.1.params.key1 = value1
+      remote.file.1.params.key2 = value2
+
+      ......
+      '''
+      downloader = MultiDownload()
+      downloaders = []
+      # Creates multiple downloaders
+      i = 0
+      rfile = cf.get('remote.file.'+str(i)+'.path')
+      while(rfile is not None):
+        if cf.get('remote.file.'+str(i)+'.protocol') is not None:
+          protocol = cf.get('remote.file.'+str(i)+'.protocol')
+        else:
+          protocol = cf.get('protocol')
+        if cf.get('remote.file.'+str(i)+'.server') is not None:
+          server = cf.get('remote.file.'+str(i)+'.server')
+        else:
+          server = cf.get('server')
+        subdownloader = self.get_handler(protocol,server,'', [cf.get('remote.file.'+str(i)+'.path')])
+        if protocol == 'directhttp':
+          subdownloader.method = cf.get('remote.file.'+str(i)+'.method')
+          if subdownloader.method is None:
+            subdownloader.method = 'GET'
+          if cf.get('remote.file.'+str(i)+'.name'):
+            subdownloader.save_as = cf.get('remote.file.'+str(i)+'.name')
+          else:
+            subdownloader.save_as = cf.get('remote.file.'+str(i)+'.path')
+          if cf.get('remote.file.'+str(i)+'.method'):
+            subdownloader.method = cf.get('remote.file.'+str(i)+'.method').strip().upper()
+          subdownloader.params = {}
+          keys = cf.get('remote.file.'+str(i)+'.params.keys')
+          if keys is not None:
+            keys = keys.split(',')
+            for key in keys:
+              param = cf.get('remote.file.'+str(i)+'.params.'+key.strip())
+              subdownloader.param[key.strip()] = param.strip()
+        downloaders.append(subdownloader)
+        i += 1
+        rfile = cf.get('remote.file.'+str(i)+'.path')
+      downloader.add_downloaders(downloaders)
+
+    else:
+      '''
+      Simple case, one downloader with regexp
+      '''
+      downloader = self.get_handler(cf.get('protocol'),cf.get('server'),cf.get('remote.dir'))
 
     if downloader is None:
       logging.error('Protocol '+cf.get('protocol')+' not supported')
@@ -394,7 +472,6 @@ class UpdateWorkflow(Workflow):
     downloader.match(cf.get('remote.files').split(), file_list, dir_list)
 
     self.session.set('download_files',downloader.files_to_download)
-
     if self.session.get('release') is None:
         # Not defined, or could not get it ealier
         # Set release to most recent file to download
@@ -479,7 +556,12 @@ class UpdateWorkflow(Workflow):
     downloader.close()
 
     DownloadThread.NB_THREAD = int(self.session.config.get('files.num.threads'))
-    thlist = DownloadThread.get_threads(downloader, offline_dir)
+
+    if cf.get('protocol') == 'multi':
+      thlist = DownloadThread.get_threads_multi(downloader.downloaders, offline_dir)
+    else:
+      thlist = DownloadThread.get_threads(downloader, offline_dir)
+
     for th in thlist:
       th.start()
     for th in thlist:
@@ -490,7 +572,6 @@ class UpdateWorkflow(Workflow):
         is_error = True
         downloader.error = True
         break
-
     self.downloaded_files = downloader.files_to_download + copied_files
     #self.downloaded_files = downloader.download(offline_dir) + copied_files
 

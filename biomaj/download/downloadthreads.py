@@ -40,6 +40,28 @@ class DownloadThread(threading.Thread):
       thread_id += 1
     return threads
 
+  @staticmethod
+  def get_threads_multi(downloaders, local_dir):
+    '''
+    Dispatch multiple downloaders on threads
+
+    :param downloaders: downlaoders to dispatch in threads
+    :type downloaders: list of :class:`biomaj.download.interface.DownloadInterface`
+    :param local_dir: directory where files should be downloaded
+    :type local_dir: str
+    :return: list of threads
+    '''
+    threads = []
+    # Creates threads with copies of the downloader
+    thread_id = 0
+    for downloader in downloaders:
+      if thread_id == DownloadThread.NB_THREAD:
+        thread_id = 0
+      th = DownloadThread(downloader, local_dir)
+      threads.append(th)
+      thread_id += 1
+    return threads
+
   def __init__(self, downloader, local_dir):
     '''
     Download thread to download a list of files
@@ -67,3 +89,6 @@ class DownloadThread(threading.Thread):
       logging.error('Error in download execution of thread: '+str(e))
       logging.debug(traceback.format_exc())
       self.error = True
+
+  def stop(self):
+    self._stopevent.set( )

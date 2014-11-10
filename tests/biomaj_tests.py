@@ -1,7 +1,7 @@
 from nose.tools import *
 from nose.plugins.attrib import attr
 
-
+import json
 import shutil
 import os
 import tempfile
@@ -16,6 +16,7 @@ from biomaj.session import Session
 from biomaj.workflow import Workflow, UpdateWorkflow
 from biomaj.utils import Utils
 from biomaj.download.ftp import FTPDownload
+from biomaj.download.direct import DirectFTPDownload, DirectHttpDownload
 from biomaj.download.http import HTTPDownload
 from biomaj.download.localcopy  import LocalDownload
 from biomaj.download.downloadthreads import DownloadThread
@@ -76,7 +77,7 @@ class UtilsForTest():
     shutil.copyfile(from_file, to_file)
 
     # Manage local bank test, use bank test subdir as remote
-    properties = ['computederror.properties', 'error.properties', 'local.properties', 'localprocess.properties', 'testhttp.properties', 'computed.properties', 'sub1.properties', 'sub2.properties']
+    properties = ['multi.properties', 'computederror.properties', 'error.properties', 'local.properties', 'localprocess.properties', 'testhttp.properties', 'computed.properties', 'sub1.properties', 'sub2.properties']
     for prop in properties:
       from_file = os.path.join(curdir, prop)
       to_file = os.path.join(self.conf_dir, prop)
@@ -261,6 +262,110 @@ class TestBiomajHTTPDownload(unittest.TestCase):
     self.assertTrue(len(httpd.files_to_download) == 1)
 
 
+@attr('directftp')
+@attr('network')
+class TestBiomajDirectFTPDownload(unittest.TestCase):
+  '''
+  Test DirectFTP downloader
+  '''
+
+  def setUp(self):
+    self.utils = UtilsForTest()
+
+  def tearDown(self):
+    self.utils.clean()
+
+  def test_ftp_list(self):
+    file_list = ['/blast/db/FASTA/alu.n.gz.md5']
+    ftpd = DirectFTPDownload('ftp', 'ftp.ncbi.nih.gov', '', file_list)
+    (file_list, dir_list) = ftpd.list()
+    ftpd.close()
+    self.assertTrue(len(file_list) == 1)
+
+  def test_download(self):
+    file_list = ['/blast/db/FASTA/alu.n.gz.md5']
+    ftpd = DirectFTPDownload('ftp', 'ftp.ncbi.nih.gov', '', file_list)
+    (file_list, dir_list) = ftpd.list()
+    ftpd.download(self.utils.data_dir, False)
+    ftpd.close()
+    self.assertTrue(os.path.exists(os.path.join(self.utils.data_dir,'alu.n.gz.md5')))
+
+
+@attr('directhttp')
+@attr('network')
+class TestBiomajDirectHTTPDownload(unittest.TestCase):
+  '''
+  Test DirectFTP downloader
+  '''
+
+  def setUp(self):
+    self.utils = UtilsForTest()
+
+  def tearDown(self):
+    self.utils.clean()
+
+  def test_http_list(self):
+    file_list = ['/debian/README.html']
+    ftpd = DirectHttpDownload('http', 'ftp2.fr.debian.org', '', file_list)
+    fday = ftpd.files_to_download[0]['day']
+    fmonth = ftpd.files_to_download[0]['month']
+    fyear = ftpd.files_to_download[0]['year']
+    (file_list, dir_list) = ftpd.list()
+    ftpd.close()
+    self.assertTrue(len(file_list) == 1)
+    self.assertTrue(file_list[0]['size']!=0)
+    self.assertFalse(fday == ftpd.files_to_download[0]['day'])
+    self.assertFalse(fmonth == ftpd.files_to_download[0]['month'])
+    self.assertFalse(fyear == ftpd.files_to_download[0]['year'])
+
+  def test_download(self):
+    file_list = ['/debian/README.html']
+    ftpd = DirectHttpDownload('http', 'ftp2.fr.debian.org', '', file_list)
+    (file_list, dir_list) = ftpd.list()
+    ftpd.download(self.utils.data_dir, False)
+    ftpd.close()
+    self.assertTrue(os.path.exists(os.path.join(self.utils.data_dir,'README.html')))
+
+  def test_download_get_params_save_as(self):
+    file_list = ['/get']
+    ftpd = DirectHttpDownload('http', 'httpbin.org', '', file_list)
+    ftpd.param = { 'key1': 'value1', 'key2': 'value2'}
+    ftpd.save_as = 'test.json'
+    (file_list, dir_list) = ftpd.list()
+    ftpd.download(self.utils.data_dir, False)
+    ftpd.close()
+    self.assertTrue(os.path.exists(os.path.join(self.utils.data_dir,'test.json')))
+    with open(os.path.join(self.utils.data_dir,'test.json'), 'r') as content_file:
+      content = content_file.read()
+      my_json = json.loads(content)
+      self.assertTrue(my_json['args']['key1'] == 'value1')
+
+  def test_download_save_as(self):
+    file_list = ['/debian/README.html']
+    ftpd = DirectHttpDownload('http', 'ftp2.fr.debian.org', '', file_list)
+    ftpd.save_as = 'test.html'
+    (file_list, dir_list) = ftpd.list()
+    ftpd.download(self.utils.data_dir, False)
+    ftpd.close()
+    self.assertTrue(os.path.exists(os.path.join(self.utils.data_dir,'test.html')))
+
+  def test_download_post_params(self):
+    #file_list = ['/debian/README.html']
+    file_list = ['/post']
+    ftpd = DirectHttpDownload('http', 'httpbin.org', '', file_list)
+    #ftpd = DirectHttpDownload('http', 'ftp2.fr.debian.org', '', file_list)
+    ftpd.param = { 'key1': 'value1', 'key2': 'value2'}
+    ftpd.save_as = 'test.json'
+    ftpd.method = 'POST'
+    (file_list, dir_list) = ftpd.list()
+    ftpd.download(self.utils.data_dir, False)
+    ftpd.close()
+    self.assertTrue(os.path.exists(os.path.join(self.utils.data_dir,'test.json')))
+    with open(os.path.join(self.utils.data_dir,'test.json'), 'r') as content_file:
+      content = content_file.read()
+      my_json = json.loads(content)
+      self.assertTrue(my_json['form']['key1'] == 'value1')
+
 
 @attr('ftp')
 @attr('network')
@@ -423,7 +528,6 @@ class TestBiomajSetup(unittest.TestCase):
     self.assertTrue(banks.count() == 2)
 
   @attr('network')
-  @attr('test')
   def test_get_release(self):
     '''
     Get release
@@ -678,3 +782,15 @@ class TestBiomajFunctional(unittest.TestCase):
     self.assertFalse(res)
     self.assertTrue(b.session._session['depends']['sub2'])
     self.assertFalse(b.session._session['depends']['error'])
+
+  def test_multi(self):
+    b = Bank('multi')
+    res = b.update()
+    with open(os.path.join(b.session.get_full_release_directory(),'test1.json'), 'r') as content_file:
+      content = content_file.read()
+      my_json = json.loads(content)
+      self.assertTrue(my_json['args']['key1'] == 'value1')
+    with open(os.path.join(b.session.get_full_release_directory(),'test2.json'), 'r') as content_file:
+      content = content_file.read()
+      my_json = json.loads(content)
+      self.assertTrue(my_json['form']['key1'] == 'value1')

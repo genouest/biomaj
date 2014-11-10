@@ -73,12 +73,14 @@ class FTPDownload(DownloadInterface):
     if len(self.files_to_download) == 0:
       raise Exception('no file found matching expressions')
 
-  def download(self, local_dir):
+  def download(self, local_dir, keep_dirs=True):
     '''
     Download remote files to local_dir
 
     :param local_dir: Directory where files should be downloaded
     :type local_dir: str
+    :param keep_dirs: keep file name directory structure or copy file in local_dir directly
+    :param keep_dirs: bool
     :return: list of downloaded files
     '''
     logging.debug('FTP:Download')
@@ -87,7 +89,9 @@ class FTPDownload(DownloadInterface):
     cur_files = 1
 
     for rfile in self.files_to_download:
-      file_dir = local_dir + os.path.dirname(rfile['name'])
+      file_dir = local_dir
+      if keep_dirs:
+        file_dir = local_dir + os.path.dirname(rfile['name'])
       file_path = file_dir + '/' + os.path.basename(rfile['name'])
       if not os.path.exists(file_dir):
         os.makedirs(file_dir)

@@ -28,6 +28,7 @@ class MetaProcess(threading.Thread):
       self.simulate = simulate
       self.bank = bank
       self.metas = metas
+      self.meta_data = {}
       self.meta_status = {}
       for meta in self.metas:
         self.meta_status[meta] = {}
@@ -98,9 +99,34 @@ class MetaProcess(threading.Thread):
             if not res:
               self.global_status = False
               break
+            if not self.simulate:
+              self._get_metata_from_outputfile(bmaj_process.output_file)
         self.meta_status[meta] = processes_status
 
+    def _get_metata_from_outputfile(self, output_file):
+      '''
+      Extract metadata given by process on stdout. Store metadata in self.metadata
 
+      :param output_file: path to process output file
+      :type output_file: str
+      '''
+      with open(output_file) as f:
+        for line in f:
+          if line.startswith('##BIOMAJ#'):
+            line = line.replace('##BIOMAJ#', '')
+            metas = line.split('#')
+            meta_format = metas[0]
+            meta_tags = metas[1]
+            meta_files = metas[2]
+            if not meta_format in self.meta_data:
+              self.meta_data[meta_format] = []
+            tags = meta_tags.split(',')
+            tag_list = {}
+            for tag in tags:
+              t = tag.split(':')
+              tag_list[t[0]] = t[1]
+            self.meta_data[meta_format].append({'tags': tag_list,
+                                                'files': meta_files.split(',')})
 
     def stop(self):
       self._stopevent.set( )

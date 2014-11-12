@@ -65,4 +65,5 @@ class Process:
     else:
       err = True
     logging.info('PROCESS:EXEC:' + self.name + ':' + str(err))
+
     return err

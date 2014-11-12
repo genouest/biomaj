@@ -125,7 +125,7 @@ def main():
       sys.exit(1)
 
   if options.publish:
-    if not options.bank or not options.release:
+    if not options.bank:
       print "Bank name or release is missing"
       sys.exit(1)
     bmaj = Bank(options.bank, options)
@@ -135,9 +135,12 @@ def main():
     session = None
     if options.get_option('release') is None:
       # Get latest prod release
-      if len(bank['production']>0):
+      if len(bank['production'])>0:
         prod = bank['production'][len(bank['production'])-1]
-        session = prod['session']
+        for s in bank['sessions']:
+          if s['id'] == prod['session']:
+            session = s
+            break
     else:
       # Search production release matching release
       for prod in bank['production']:

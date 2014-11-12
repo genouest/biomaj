@@ -7,6 +7,7 @@ import os
 import tempfile
 import logging
 import copy
+import stat
 
 from optparse import OptionParser
 
@@ -76,6 +77,15 @@ class UtilsForTest():
     from_file = os.path.join(curdir, 'alu.properties')
     to_file = os.path.join(self.conf_dir, 'alu.properties')
     shutil.copyfile(from_file, to_file)
+
+    self.bank_process = ['test.sh']
+    curdir = os.path.dirname(os.path.realpath(__file__))
+    procdir = os.path.join(curdir, 'bank/process')
+    for proc in self.bank_process:
+      from_file = os.path.join(procdir, proc)
+      to_file = os.path.join(self.process_dir, proc)
+      shutil.copyfile(from_file, to_file)
+      os.chmod(to_file, stat.S_IRWXU)
 
     # Manage local bank test, use bank test subdir as remote
     properties = ['multi.properties', 'computederror.properties', 'error.properties', 'local.properties', 'localprocess.properties', 'testhttp.properties', 'computed.properties', 'sub1.properties', 'sub2.properties']
@@ -832,6 +842,14 @@ class TestBiomajFunctional(unittest.TestCase):
     self.assertTrue(prod['freeze'] == False)
     res = b.remove(rel)
     self.assertTrue(res == True)
+
+  @attr('test')
+  @attr('process')
+  def test_processes_meta_data(self):
+    b = Bank('localprocess')
+    b.update()
+    print b.session._session
+    self.assertTrue(1==0)
 
 
 @attr('user')

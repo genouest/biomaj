@@ -686,6 +686,8 @@ class UpdateWorkflow(Workflow):
 
     if nb_prod > keep:
       for prod in self.bank.bank['production']:
+        if 'freeze' in prod and prod['freeze']:
+          continue
         if nb_prod - keep > 0:
           nb_prod -= 1
           session = self.bank.get_new_session(RemoveWorkflow.FLOW)

@@ -222,7 +222,8 @@ class Bank:
                       'session': self.session._session['id'],
                       'formats': self.session._session['formats'].keys(),
                       'data_dir': self.config.get('data.dir'),
-                      'prod_dir': self.session.get_release_directory()}
+                      'prod_dir': self.session.get_release_directory(),
+                      'freeze': False }
 
       self.bank['production'].append(production)
 
@@ -281,6 +282,61 @@ class Bank:
                       {
                       '$set': {'current': self.session._session['id']}
                       })
+
+
+  def get_production(self, release):
+    '''
+    Get production field for release
+
+    :param release: release name or production dir name
+    :type release: str
+    :return: production field
+    '''
+    production = None
+    for prod in self.bank['production']:
+      if prod['release'] == release or prod['prod_dir'] == release:
+        production = prod
+    return production
+
+  def freeze(self, release):
+    '''
+    Freeze a production release
+
+    When freezed, a production release cannot be removed (manually or automatically)
+
+    :param release: release name or production dir name
+    :type release: str
+    :return: bool
+    '''
+    rel = None
+    for prod in self.bank['production']:
+      if prod['release'] == release or prod['prod_dir'] == release:
+        # Search session related to this production release
+        rel = prod['release']
+    if rel is None:
+      logging.error('Release not found: '+release)
+    self.banks.update({'name': self.name, 'production.release': rel},{'$set': { 'production.$.freeze': True }})
+    self.bank = self.banks.find_one({'name': self.name})
+    return True
+
+  def unfreeze(self, release):
+    '''
+    Unfreeze a production release to allow removal
+
+    :param release: release name or production dir name
+    :type release: str
+    :return: bool
+    '''
+    rel = None
+    for prod in self.bank['production']:
+      if prod['release'] == release or prod['prod_dir'] == release:
+        # Search session related to this production release
+        rel = prod['release']
+    if rel is None:
+      logging.error('Release not found: '+release)
+    self.banks.update({'name': self.name, 'production.release': rel},{'$set': { 'production.$.freeze': False }})
+    self.bank = self.banks.find_one({'name': self.name})
+    return True
 
   def get_new_session(self, flow=Workflow.FLOW):
     '''
@@ -383,15 +439,27 @@ class Bank:
     return os.path.join(self.config.get('data.dir'),
                       self.config.get('dir.version'))
 
-  def removeAll(self):
+  def removeAll(self, force=False):
     '''
     Remove all bank releases and database records
 
+    :param force: force removal even if some production dirs are freezed
+    :type force: bool
     :return: bool
     '''
+    if not force:
+      has_freeze = False
+      for prod in self.bank['production']:
+        if 'freeze' in prod and prod['freeze']:
+          has_freeze = True
+          break
+      if has_freeze:
+        logging.error('Cannot remove bank, some production directories are freezed, use force if needed')
+        return False
+
     self.banks.remove({'name': self.name})
     bank_data_dir = self.get_data_dir()
-    print 'DELETE '+bank_data_dir
+    logging.warn('DELETE '+bank_data_dir)
     shutil.rmtree(bank_data_dir)
     return True
 
@@ -409,6 +477,9 @@ class Bank:
     # Search production release matching release
     for prod in self.bank['production']:
       if prod['release'] == release or prod['prod_dir'] == release:
+        if 'freeze' in prod and prod['freeze']:
+          logging.error('Cannot remove release, release is freezed, unfreeze it first')
+          return False
         # Search session related to this production release
         for s in self.bank['sessions']:
           if s['id'] == prod['session']:

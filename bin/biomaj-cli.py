@@ -37,6 +37,8 @@ def main():
   parser.add_argument('-b', '--bank', dest="bank",help="bank name")
   parser.add_argument('--stop-before', dest="stop_before",help="Store workflow before task")
   parser.add_argument('--stop-after', dest="stop_after",help="Store workflow after task")
+  parser.add_argument('--freeze', dest="freeze", help="Freeze a bank release", action="store_true", default=False)
+  parser.add_argument('--unfreeze', dest="unfreeze", help="Unfreeze a bank release", action="store_true", default=False)
 
   options = Options()
   parser.parse_args(namespace=options)
@@ -60,6 +62,8 @@ def main():
       print "# Published release:\t"+str(release)
       print "# Production directories"
       for prod in _bank['production']:
+        if 'freeze' in prod:
+          print "#\tFreeze:\t"+prod['freeze']
         print "#\tRelease:\t"+prod['release']
         print "#\t\tSession:\t"+str(prod['session'])
         release_dir = os.path.join(bank.config.get('data.dir'),
@@ -93,6 +97,18 @@ def main():
     print 'Log file: '+bmaj.config.log_file
     res = bmaj.update()
     Notify.notifyBankAction(bmaj)
+    if not res:
+      sys.exit(1)
+
+  if options.freeze and options.release and options.bank:
+    bmaj = Bank(options.bank, options)
+    res = bmaj.freeze(options.release)
+    if not res:
+      sys.exit(1)
+
+  if options.unfreeze and options.release and options.bank:
+    bmaj = Bank(options.bank, options)
+    res = bmaj.unfreeze(options.release)
     if not res:
       sys.exit(1)
 

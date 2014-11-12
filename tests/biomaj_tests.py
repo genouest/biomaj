@@ -796,7 +796,23 @@ class TestBiomajFunctional(unittest.TestCase):
       my_json = json.loads(content)
       self.assertTrue(my_json['form']['key1'] == 'value1')
 
-@attr('test')
+  @attr('test')
+  def test_freeze(self):
+    b = Bank('local')
+    b.update()
+    rel = b.session.get('release')
+    b.freeze(rel)
+    prod = b.get_production(rel)
+    self.assertTrue(prod['freeze'] == True)
+    res = b.remove(rel)
+    self.assertTrue(res == False)
+    b.unfreeze(rel)
+    prod = b.get_production(rel)
+    self.assertTrue(prod['freeze'] == False)
+    res = b.remove(rel)
+    self.assertTrue(res == True)
+
+
 @attr('user')
 class TestUser(unittest.TestCase):
   '''

@@ -39,6 +39,7 @@ def main():
   parser.add_argument('--stop-after', dest="stop_after",help="Store workflow after task")
   parser.add_argument('--freeze', dest="freeze", help="Freeze a bank release", action="store_true", default=False)
   parser.add_argument('--unfreeze', dest="unfreeze", help="Unfreeze a bank release", action="store_true", default=False)
+  parser.add_argument('--force', dest="force", help="Force action", action="store_true", default=False)
 
   options = Options()
   parser.parse_args(namespace=options)
@@ -116,7 +117,7 @@ def main():
     bmaj = Bank(options.bank, options)
     print 'Log file: '+bmaj.config.log_file
     if options.removeall:
-      res = bmaj.removeAll()
+      res = bmaj.removeAll(options.force)
     else:
       res = bmaj.remove(options.release)
     Notify.notifyBankAction(bmaj)

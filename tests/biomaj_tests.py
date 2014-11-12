@@ -682,6 +682,7 @@ class TestBiomajFunctional(unittest.TestCase):
       '''
       b = Bank('local')
       b.removeAll(True)
+      b = Bank('local')
       b.update()
       self.assertTrue(b.session.get('update'))
       b.options.fromscratch = True

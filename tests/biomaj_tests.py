@@ -681,6 +681,7 @@ class TestBiomajFunctional(unittest.TestCase):
       Try updating 3 times, oldest dir should be removed
       '''
       b = Bank('local')
+      b.removeAll(True)
       b.update()
       self.assertTrue(b.session.get('update'))
       b.options.fromscratch = True
@@ -691,6 +692,26 @@ class TestBiomajFunctional(unittest.TestCase):
       self.assertTrue(b.session.get('update'))
       # one new dir, but olders must be deleted
       self.assertTrue(len(b.bank['production']) == 2)
+
+  def test_delete_old_dirs_with_freeze(self):
+      '''
+      Try updating 3 times, oldest dir should be removed
+      '''
+      b = Bank('local')
+      b.removeAll(True)
+      b = Bank('local')
+      b.update()
+      b.freeze(b.session.get('release'))
+      self.assertTrue(b.session.get('update'))
+      b.options.fromscratch = True
+      b.update()
+      b.freeze(b.session.get('release'))
+      self.assertTrue(b.session.get('update'))
+      self.assertTrue(len(b.bank['production']) == 2)
+      b.update()
+      self.assertTrue(b.session.get('update'))
+      # one new dir, but olders must be deleted
+      self.assertTrue(len(b.bank['production']) == 3)
 
 
   def test_removeAll(self):
@@ -796,7 +817,6 @@ class TestBiomajFunctional(unittest.TestCase):
       my_json = json.loads(content)
       self.assertTrue(my_json['form']['key1'] == 'value1')
 
-  @attr('test')
   def test_freeze(self):
     b = Bank('local')
     b.update()

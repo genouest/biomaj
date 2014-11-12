@@ -460,7 +460,8 @@ class Bank:
     self.banks.remove({'name': self.name})
     bank_data_dir = self.get_data_dir()
     logging.warn('DELETE '+bank_data_dir)
-    shutil.rmtree(bank_data_dir)
+    if os.path.exists(bank_data_dir):
+      shutil.rmtree(bank_data_dir)
     return True
 
   def remove(self, release):

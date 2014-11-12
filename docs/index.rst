@@ -25,6 +25,7 @@ Contents:
    metaprocess
    process
    processfactory
+   user
 
 Indices and tables
 ==================

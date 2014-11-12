@@ -696,7 +696,7 @@ class TestBiomajFunctional(unittest.TestCase):
 
   def test_delete_old_dirs_with_freeze(self):
       '''
-      Try updating 3 times, oldest dir should be removed
+      Try updating 3 times, oldest dir should be removed but not freezed releases
       '''
       b = Bank('local')
       b.removeAll(True)

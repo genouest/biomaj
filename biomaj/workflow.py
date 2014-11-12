@@ -124,6 +124,7 @@ class Workflow(object):
         self.wf_over()
       #if self.options and 'stop_after' in self.options and self.options['stop_after'] == flow['name']:
         break
+    self.wf_progress_end()
     return True
 
   def wf_progress_init(self):
@@ -172,7 +173,6 @@ class Workflow(object):
     data_dir = self.session.config.get('data.dir')
     lock_file = os.path.join(data_dir,self.name+'.lock')
     os.remove(lock_file)
-    self.wf_progress_end()
     return True
 
 class RemoveWorkflow(Workflow):

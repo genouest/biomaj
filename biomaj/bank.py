@@ -470,6 +470,8 @@ class Bank:
 
     :return: dict of current workflow status
     '''
+    if self.bank['status'] is None:
+      return {}
     return self.bank['status']
 
   def remove(self, release):

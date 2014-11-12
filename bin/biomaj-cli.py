@@ -120,7 +120,7 @@ def main():
       res = bmaj.removeAll(options.force)
     else:
       res = bmaj.remove(options.release)
-    Notify.notifyBankAction(bmaj)
+      Notify.notifyBankAction(bmaj)
     if not res:
       sys.exit(1)
 

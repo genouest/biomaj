@@ -464,6 +464,14 @@ class Bank:
       shutil.rmtree(bank_data_dir)
     return True
 
+  def get_status(self):
+    '''
+    Get status of current workflow
+
+    :return: dict of current workflow status
+    '''
+    return self.bank['status']
+
   def remove(self, release):
     '''
     Remove a release (db and files)

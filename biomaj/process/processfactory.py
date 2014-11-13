@@ -42,13 +42,17 @@ class ProcessFactory:
       meta_thread.join()
     global_meta_status = {}
     global_status = True
+
     for meta_thread in threads:
-      for meta_data in meta_thread.meta_data.keys():
-        session_formats = self.bank.session.get('formats')
-        if meta_data not in session_formats:
-          session_formats[meta_data] = [meta_thread.meta_data[meta_data]]
-        else:
-          session_formats[meta_data].append(meta_thread.meta_data[meta_data])
+      if self.bank.session:
+        for meta_data in meta_thread.meta_data.keys():
+          session_formats = self.bank.session.get('formats')
+          if meta_data not in session_formats:
+            #session_formats[meta_data] = [meta_thread.meta_data[meta_data]]
+            session_formats[meta_data] = meta_thread.meta_data[meta_data]
+          else:
+            #session_formats[meta_data].append(meta_thread.meta_data[meta_data])
+            session_formats[meta_data] += meta_thread.meta_data[meta_data]
 
       for meta in meta_thread.meta_status:
         global_meta_status[meta] = meta_thread.meta_status[meta]

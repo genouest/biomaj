@@ -843,13 +843,13 @@ class TestBiomajFunctional(unittest.TestCase):
     res = b.remove(rel)
     self.assertTrue(res == True)
 
-  @attr('test')
+
   @attr('process')
   def test_processes_meta_data(self):
     b = Bank('localprocess')
     b.update()
-    print b.session._session
-    self.assertTrue(1==0)
+    formats = b.session.get('formats')
+    self.assertTrue(len(formats['blast'])==2)
 
 
 @attr('user')

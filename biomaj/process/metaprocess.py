@@ -114,6 +114,7 @@ class MetaProcess(threading.Thread):
         for line in f:
           if line.startswith('##BIOMAJ#'):
             line = line.replace('##BIOMAJ#', '')
+            line = line.strip('\n\r')
             metas = line.split('#')
             meta_format = metas[0]
             meta_tags = metas[1]

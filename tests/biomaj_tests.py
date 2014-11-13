@@ -850,6 +850,8 @@ class TestBiomajFunctional(unittest.TestCase):
     b.update()
     formats = b.session.get('formats')
     self.assertTrue(len(formats['blast'])==2)
+    print str(formats)
+    self.assertTrue(1==0)
 
 
 @attr('user')

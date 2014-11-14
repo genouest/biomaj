@@ -44,9 +44,9 @@ class Session:
                       'release': 'none',
                       'formats': formats,
                       'process': {
-                                  'post': {},
-                                  'pre': {},
-                                  'remove': {}
+                                  'postprocess': {},
+                                  'preprocess': {},
+                                  'removeprocess': {}
                                   }
                     }
     for flow in self.flow:
@@ -61,21 +61,21 @@ class Session:
     '''
     Reset status of processes for type in session
 
-    :param type_proc: post pre or remove
+    :param type_proc: postprocess preprocess or removeprocess
     :type type_proc: Workflow.POSTPROCESS, Workflow.PREPROCESS, Workflow.REMOVEPROCESS
     :param proc: reset from block/meta/proc, all reset all
     :type proc: str
     '''
     if type_proc == Workflow.FLOW_POSTPROCESS:
-      if proc in self._session['process']['post']:
-        self.reset_meta(self._session['process']['post'][proc])
+      if proc in self._session['process']['postprocess']:
+        self.reset_meta(self._session['process']['postprocess'][proc])
       else:
-        for elt in self._session['process']['post'].keys():
-          self.reset_meta(self._session['process']['post'][elt], proc)
+        for elt in self._session['process']['postprocess'].keys():
+          self.reset_meta(self._session['process']['postprocess'][elt], proc)
     elif type_proc == Workflow.FLOW_PREPROCESS:
-      self.reset_meta(self._session['process']['pre'])
+      self.reset_meta(self._session['process']['preprocess'])
     elif type_proc == Workflow.FLOW_REMOVEPROCESS:
-      self.reset_meta(self._session['process']['remove'], proc)
+      self.reset_meta(self._session['process']['removeprocess'], proc)
 
   def reset_meta(self, metas, proc=None):
     '''

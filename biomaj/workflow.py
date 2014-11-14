@@ -212,10 +212,10 @@ class RemoveWorkflow(Workflow):
 
   def wf_removeprocess(self):
     logging.info('Workflow:wf_removepreprocess')
-    metas = self.session._session['process']['remove']
+    metas = self.session._session['process']['removeprocess']
     pfactory = RemoveProcessFactory(self.bank, metas)
     res = pfactory.run()
-    self.session._session['process']['remove'] = pfactory.meta_status
+    self.session._session['process']['removeprocess'] = pfactory.meta_status
     return res
 
 
@@ -279,10 +279,10 @@ class UpdateWorkflow(Workflow):
     Execute pre-processes
     '''
     logging.info('Workflow:wf_preprocess')
-    metas = self.session._session['process']['pre']
+    metas = self.session._session['process']['preprocess']
     pfactory = PreProcessFactory(self.bank, metas)
     res = pfactory.run()
-    self.session._session['process']['pre'] = pfactory.meta_status
+    self.session._session['process']['preprocess'] = pfactory.meta_status
     return res
 
   def wf_release(self):
@@ -633,10 +633,10 @@ class UpdateWorkflow(Workflow):
     os.symlink(prod_dir,'future_release')
 
     logging.info('Workflow:wf_postprocess')
-    blocks = self.session._session['process']['post']
+    blocks = self.session._session['process']['postprocess']
     pfactory = PostProcessFactory(self.bank, blocks)
     res = pfactory.run()
-    self.session._session['process']['post'] = pfactory.blocks
+    self.session._session['process']['postprocess'] = pfactory.blocks
 
     # In any way, delete symlink
     if os.path.lexists(future_link):

@@ -65,7 +65,7 @@ class Workflow(object):
     Get a protocol download handler
     '''
     downloader = None
-    if protocol == 'ftp':
+    if protocol == 'ftp' or protocol == 'sftp':
       downloader = FTPDownload(protocol, server, remote_dir)
     if protocol == 'http':
       downloader = HTTPDownload(protocol, server, remote_dir, self.bank.config)

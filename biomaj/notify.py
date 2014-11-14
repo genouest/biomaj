@@ -25,8 +25,9 @@ class Notify:
     msg['From'] = email.utils.formataddr(('Author', mfrom))
     msg['Subject'] = 'BANK['+bank.name+'] - STATUS['+str(bank.session.get_status(Workflow.FLOW_OVER))+'] - UPDATE['+str(bank.session.get('update'))+'] - REMOVE['+str(bank.session.get('remove'))+']'
 
-    server = smtplib.SMTP(bank.config.get('mail.smtp.host'))
+    server = None
     try:
+      server = smtplib.SMTP(bank.config.get('mail.smtp.host'))
       #server.set_debuglevel(1)
       if str(bank.config.get('mail.tls')) == 'true':
         server.starttls()
@@ -36,4 +37,5 @@ class Notify:
     except Exception as e:
       logging.error('Could not send email: '+str(e))
     finally:
-      server.quit()
+      if server is not None:
+        server.quit()

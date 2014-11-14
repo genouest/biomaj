@@ -102,6 +102,8 @@ class FTPDownload(DownloadInterface):
       fp = open(file_path, "wb")
       curl = pycurl.Curl()
       curl.setopt(pycurl.URL, rfile['url']+rfile['root']+'/'+rfile['name'])
+      if self.credentials is not None:
+        curl.setopt(pycurl.USERPWD, self.credentials)
       curl.setopt(pycurl.WRITEDATA, fp)
       curl.perform()
       #errcode = curl.getinfo(pycurl.HTTP_CODE)
@@ -122,6 +124,8 @@ class FTPDownload(DownloadInterface):
     '''
     logging.debug('Download:List:'+self.url+self.rootdir+directory)
     self.crl.setopt(pycurl.URL, self.url+self.rootdir+directory)
+    if self.credentials is not None:
+      curl.setopt(pycurl.USERPWD, self.credentials)
     output = StringIO.StringIO()
     # lets assign this buffer to pycurl object
     self.crl.setopt(pycurl.WRITEFUNCTION, output.write)

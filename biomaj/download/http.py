@@ -34,6 +34,9 @@ class HTTPDownload(FTPDownload):
     '''
     logging.debug('Download:List:'+self.url+self.rootdir+directory)
     self.crl.setopt(pycurl.URL, self.url+self.rootdir+directory)
+    if self.credentials is not None:
+      curl.setopt(pycurl.USERPWD, self.credentials)
+
     output = StringIO.StringIO()
     # lets assign this buffer to pycurl object
     self.crl.setopt(pycurl.WRITEFUNCTION, output.write)

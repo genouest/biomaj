@@ -20,6 +20,7 @@ class DownloadInterface:
     self.files_to_download = []
     self.files_to_copy = []
     self.error = False
+    self.credentials = None
 
   def match(self, patterns, file_list, dir_list=[], prefix=''):
     '''
@@ -146,6 +147,15 @@ class DownloadInterface:
     Change directory
     '''
     pass
+
+  def set_credentials(userpwd):
+    '''
+    Set credentials in format user:pwd
+
+    :param userpwd: credentials
+    :type userpwd: str
+    '''
+    self.credentials = userpwd
 
   def close(self):
     '''

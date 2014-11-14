@@ -156,6 +156,9 @@ class DirectHttpDownload(DirectFTPDownload):
         # Sets request method to POST,
         # Content-Type header to application/x-www-form-urlencoded
         # and data to send in request body.
+        if self.credentials is not None:
+          curl.setopt(pycurl.USERPWD, self.credentials)
+
         curl.setopt(pycurl.POSTFIELDS, postfields)
         curl.setopt(pycurl.URL, rfile['url']+rfile['root']+'/'+rfile['name'])
       else:
@@ -179,6 +182,9 @@ class DirectHttpDownload(DirectFTPDownload):
     '''
     for file in self.files_to_download:
       self.crl.setopt(pycurl.HEADER, True)
+      if self.credentials is not None:
+        curl.setopt(pycurl.USERPWD, self.credentials)
+
       self.crl.setopt(pycurl.NOBODY, True)
       self.crl.setopt(pycurl.URL, self.url+self.rootdir+file['name'])
       output = StringIO.StringIO()

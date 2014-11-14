@@ -309,6 +309,8 @@ class UpdateWorkflow(Workflow):
       if cf.get('release.remote.dir') is not None:
         remote_dir = cf.get('release.remote.dir')
       release_downloader = self.get_handler(protocol,server,remote_dir)
+      if cf.get('server.credentials') is not None:
+        release_downloader.set_credentials(cf.get('server.credentials'))
 
       if release_downloader is None:
         logging.error('Protocol '+protocol+' not supported')
@@ -436,6 +438,12 @@ class UpdateWorkflow(Workflow):
         else:
           server = cf.get('server')
         subdownloader = self.get_handler(protocol,server,'', [cf.get('remote.file.'+str(i)+'.path')])
+        if cf.get('remote.file.'+str(i)+'.credentials') is not None:
+          credentials = cf.get('remote.file.'+str(i)+'.credentials')
+        else:
+          credentials = cf.get('server.credentials')
+        if credentials is not None:
+          subdownloader.set_credentials(credentials)
         if protocol == 'directhttp':
           subdownloader.method = cf.get('remote.file.'+str(i)+'.method')
           if subdownloader.method is None:

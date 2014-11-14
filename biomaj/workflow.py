@@ -91,6 +91,7 @@ class Workflow(object):
     self.wf_progress('log_file', self.session._session['log_file'])
     for flow in self.session.flow:
       if self.skip_all:
+        self.session._session['status'][flow['name']] = None
         continue
 
       if self.options.get_option(Options.STOP_BEFORE) == flow['name']:

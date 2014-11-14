@@ -37,6 +37,11 @@ class BiomajConfig:
   '''
   global_config = None
 
+  '''
+  Per use global configuration file, overriding global_config
+  '''
+  user_config = None
+
   @staticmethod
   def load_config(config_file='global.properties'):
     '''
@@ -47,6 +52,9 @@ class BiomajConfig:
     '''
     if not os.path.exists(config_file) and not os.path.exists(os.path.expanduser('~/.biomaj.cfg')):
       raise Exception('Missing global configuration file')
+
+    if os.path.exists(os.path.expanduser('~/.biomaj.cfg')):
+      Biomaj.user_config = os.path.expanduser('~/.biomaj.cfg')
 
     BiomajConfig.config_file = config_file
 
@@ -121,6 +129,10 @@ class BiomajConfig:
       if escape and (prop == 'local.files' or prop == 'remote.files' or prop == 'http.parse.dir.line' or prop == 'http.parse.file.line'):
         val = val.replace('\\\\','\\')
       return val
+
+    if BiomajConfig.user_config is not None:
+      if BiomajConfig.user_config.has_option(section, prop):
+        return BiomajConfig.user_config.get(section, prop)
 
     if BiomajConfig.global_config.has_option(section, prop):
       return BiomajConfig.global_config.get(section, prop)

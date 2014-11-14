@@ -64,7 +64,7 @@ def main():
       print "# Production directories"
       for prod in _bank['production']:
         if 'freeze' in prod:
-          print "#\tFreeze:\t"+prod['freeze']
+          print "#\tFreeze:\t"+str(prod['freeze'])
         print "#\tRelease:\t"+prod['release']
         print "#\t\tSession:\t"+str(prod['session'])
         release_dir = os.path.join(bank.config.get('data.dir'),

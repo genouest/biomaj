@@ -54,7 +54,7 @@ def main():
       _bank = bank.bank
       print '#' * 80
       print "# Name:\t"+_bank['name']
-      print "# Type:\t"+_bank['properties']['type']
+      print "# Type:\t"+str(_bank['properties']['type'])
       release = None
       if 'current' in _bank and _bank['current']:
         for prod in _bank['production']:

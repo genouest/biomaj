@@ -816,6 +816,7 @@ class TestBiomajFunctional(unittest.TestCase):
     self.assertTrue(b.session._session['depends']['sub2'])
     self.assertFalse(b.session._session['depends']['error'])
 
+  @attr('network')
   def test_multi(self):
     b = Bank('multi')
     res = b.update()

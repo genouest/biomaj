@@ -131,7 +131,7 @@ class Bank:
     return {
       'visibility': self.config.get('visibility.default'),
       'owner': os.environ['LOGNAME'],
-      'type': self.config.get('db.type'),
+      'type': self.config.get('db.type').split(','),
       'tags': []
     }
 
@@ -217,10 +217,16 @@ class Bank:
         #  index += 1
         #if index < len(self.bank['production']):
         #  self.bank['production'].pop(index)
+      release_types = []
+      for release_format in self.session._session['formats']:
+        for release_files in self.session._session['formats'][release_format]:
+          if release_files['types']:
+            release_types += release_files['types']
 
       production = { 'release': self.session.get('release'),
                       'session': self.session._session['id'],
                       'formats': self.session._session['formats'].keys(),
+                      'types': release_types,
                       'data_dir': self.config.get('data.dir'),
                       'prod_dir': self.session.get_release_directory(),
                       'freeze': False }

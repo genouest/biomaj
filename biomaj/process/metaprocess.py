@@ -117,8 +117,9 @@ class MetaProcess(threading.Thread):
             line = line.strip('\n\r')
             metas = line.split('#')
             meta_format = metas[0]
-            meta_tags = metas[1]
-            meta_files = metas[2]
+            meta_type = metas[1]
+            meta_tags = metas[2]
+            meta_files = metas[3]
             if not meta_format in self.meta_data:
               self.meta_data[meta_format] = []
             tags = meta_tags.split(',')
@@ -127,6 +128,7 @@ class MetaProcess(threading.Thread):
               t = tag.split(':')
               tag_list[t[0]] = t[1]
             self.meta_data[meta_format].append({'tags': tag_list,
+                                                'types': meta_type.split(','),
                                                 'files': meta_files.split(',')})
 
     def stop(self):

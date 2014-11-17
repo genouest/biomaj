@@ -536,7 +536,7 @@ class TestBiomajSetup(unittest.TestCase):
     b1 = Bank('alu')
     b2 = Bank('local')
     banks = Bank.list()
-    self.assertTrue(banks.count() == 2)
+    self.assertTrue(len(banks) == 2)
 
   @attr('network')
   def test_get_release(self):
@@ -851,6 +851,19 @@ class TestBiomajFunctional(unittest.TestCase):
     b.update()
     formats = b.session.get('formats')
     self.assertTrue(len(formats['blast'])==2)
+
+  @attr('process')
+  def test_search(self):
+    b = Bank('localprocess')
+    b.update()
+    search_res = Bank.search(['blast'],[])
+    self.assertTrue(len(search_res)==1)
+    search_res = Bank.search([],['nucleic'])
+    self.assertTrue(len(search_res)==1)
+    search_res = Bank.search(['blast'],['nucleic'])
+    self.assertTrue(len(search_res)==1)
+    search_res = Bank.search(['blast'],['proteic'])
+    self.assertTrue(len(search_res)==0)
 
 
 @attr('user')

@@ -2,6 +2,7 @@ import os
 import logging
 import time
 import shutil
+import copy
 
 from biomaj.mongo_connector import MongoConnector
 
@@ -135,6 +136,45 @@ class Bank:
       'tags': []
     }
 
+
+  @staticmethod
+  def search(formats=[], types=[], with_sessions=True):
+    '''
+    Search all bank releases matching some formats and types
+
+    Matches production release with at least one of formats and one of types
+    '''
+    filter = {}
+    if formats:
+      filter['production.formats'] = {'$in': formats}
+    if with_sessions:
+      res = MongoConnector.banks.find(filter)
+    else:
+      res = MongoConnector.banks.find(filter,{'sessions': 0})
+    # Now search in which production release formats and types apply
+    search_list = []
+    for r in res:
+      prod_to_delete = []
+      for p in r['production']:
+        # Are formats present in this production release?
+        for f in formats:
+          if f not in p['formats']:
+            prod_to_delete.append(p)
+          else:
+            # Are types present in this production release?
+            is_type = True
+            for t in types:
+              if t not in p['types']:
+                is_type = False
+                break
+            if not is_type:
+              prod_to_delete.append(p)
+      for prod_del in prod_to_delete:
+        r['production'].remove(prod_del)
+      if len(r['production'])>0:
+        search_list.append(r)
+    return search_list
+
   @staticmethod
   def list(with_sessions=False):
     '''
@@ -149,10 +189,14 @@ class Bank:
                       BiomajConfig.global_config.get('GENERAL','db.name'))
 
 
+    bank_list = []
     if with_sessions:
-      return MongoConnector.banks.find({})
+      res = MongoConnector.banks.find({})
     else:
-      return MongoConnector.banks.find({},{'sessions': 0})
+      res = MongoConnector.banks.find({},{'sessions': 0})
+    for r in res:
+      bank_list.append(r)
+    return bank_list
 
   def controls(self):
     '''
@@ -221,7 +265,9 @@ class Bank:
       for release_format in self.session._session['formats']:
         for release_files in self.session._session['formats'][release_format]:
           if release_files['types']:
-            release_types += release_files['types']
+            for rtype in release_files['types']:
+              if rtype not in release_types:
+                release_types.append(rtype)
 
       production = { 'release': self.session.get('release'),
                       'session': self.session._session['id'],

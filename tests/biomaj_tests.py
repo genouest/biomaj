@@ -24,6 +24,7 @@ from biomaj.download.downloadthreads import DownloadThread
 from biomaj.config import BiomajConfig
 from biomaj.process.processfactory import PostProcessFactory,PreProcessFactory,RemoveProcessFactory
 from biomaj.user import BmajUser
+from biomaj.bmajindex import BmajIndex
 
 
 import unittest
@@ -864,6 +865,61 @@ class TestBiomajFunctional(unittest.TestCase):
     self.assertTrue(len(search_res)==1)
     search_res = Bank.search(['blast'],['proteic'])
     self.assertTrue(len(search_res)==0)
+
+@attr('elastic')
+class TestElastic(unittest.TestCase):
+  '''
+  test indexing and search
+  '''
+
+  def setUp(self):
+    self.utils = UtilsForTest()
+    curdir = os.path.dirname(os.path.realpath(__file__))
+    BiomajConfig.load_config(self.utils.global_properties)
+
+  # Delete all banks
+    b = Bank('local')
+    b.banks.remove({})
+
+    self.config = BiomajConfig('local')
+    data_dir = self.config.get('data.dir')
+    lock_file = os.path.join(data_dir,'local.lock')
+    if os.path.exists(lock_file):
+      os.remove(lock_file)
+
+  def tearDown(self):
+    data_dir = self.config.get('data.dir')
+    lock_file = os.path.join(data_dir,'local.lock')
+    if os.path.exists(lock_file):
+      os.remove(lock_file)
+    self.utils.clean()
+    BmajIndex.delete_all_bank('test')
+
+  def test_index(self):
+    BmajIndex.load(index='biomaj_test')
+    prod = {
+			"data_dir" : "/tmp/test/data",
+			"formats" : [
+				"fasta",
+				"blast"
+			],
+			"freeze" : False,
+			"session" : 1416229253.930908,
+			"prod_dir" : "alu-2003-11-26",
+			"release" : "2003-11-26",
+			"types" : [
+				"nucleic"
+			]
+		}
+    BmajIndex.add('test',prod, True)
+    query = {
+      'query' : {
+        'match' : {'bank': 'test'}
+        }
+      }
+    res = BmajIndex.search(query)
+    self.assertTrue(len(res)==1)
+
 
 
 @attr('user')

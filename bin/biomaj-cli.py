@@ -3,6 +3,7 @@
 import os,sys
 #from optparse import OptionParser
 import argparse
+import pkg_resources
 
 from biomaj.bank import Bank
 from biomaj.config import BiomajConfig
@@ -45,8 +46,15 @@ def main():
   parser.add_argument('--formats', dest="formats",help="List of formats to search, comma separated")
   parser.add_argument('--types', dest="types",help="List of types to search, comma separated")
 
+  parser.add_argument('--version', dest="version", help="Show version", action="store_true", default=False)
+
   options = Options()
   parser.parse_args(namespace=options)
+
+  if options.version:
+    version = pkg_resources.require('biomaj')[0].version
+    print 'Version: '+str(version)
+    return
 
   bmaj = None
   if options.config is not None:

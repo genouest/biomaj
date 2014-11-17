@@ -144,6 +144,9 @@ class Bank:
 
     Matches production release with at least one of formats and one of types
     '''
+    if MongoConnector.db is None:
+      MongoConnector(BiomajConfig.global_config.get('GENERAL','db.url'),
+                      BiomajConfig.global_config.get('GENERAL','db.name'))
     filter = {}
     if formats:
       filter['production.formats'] = {'$in': formats}
@@ -156,19 +159,21 @@ class Bank:
     for r in res:
       prod_to_delete = []
       for p in r['production']:
+        is_format = True
         # Are formats present in this production release?
         for f in formats:
           if f not in p['formats']:
-            prod_to_delete.append(p)
-          else:
-            # Are types present in this production release?
-            is_type = True
-            for t in types:
-              if t not in p['types']:
-                is_type = False
-                break
-            if not is_type:
-              prod_to_delete.append(p)
+            is_format = False
+            break
+        # Are types present in this production release?
+        if is_format:
+          is_type = True
+          for t in types:
+            if t not in p['types']:
+              is_type = False
+              break
+        if not is_type or not is_format:
+          prod_to_delete.append(p)
       for prod_del in prod_to_delete:
         r['production'].remove(prod_del)
       if len(r['production'])>0:

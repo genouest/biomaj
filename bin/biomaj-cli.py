@@ -41,12 +41,44 @@ def main():
   parser.add_argument('--unfreeze', dest="unfreeze", help="Unfreeze a bank release", action="store_true", default=False)
   parser.add_argument('--force', dest="force", help="Force action", action="store_true", default=False)
 
+  parser.add_argument('--search', dest="search", help="Search by format and types", action="store_true", default=False)
+  parser.add_argument('--formats', dest="formats",help="List of formats to search, comma separated")
+  parser.add_argument('--types', dest="types",help="List of types to search, comma separated")
+
   options = Options()
   parser.parse_args(namespace=options)
 
   bmaj = None
   if options.config is not None:
     BiomajConfig.load_config(options.config)
+
+  if options.search:
+    formats = []
+    if options.formats:
+      formats = options.formats.split(',')
+    types = []
+    if options.types:
+      types = options.types.split(',')
+    print "Search by formats="+str(formats)+", types="+str(types)
+    res = Bank.search(formats, types, False)
+    print '#' * 80
+    print "# Name\tType\tRelease"
+    for bank in res:
+      '''
+      production = { 'release': self.session.get('release'),
+                      'session': self.session._session['id'],
+                      'data_dir': self.config.get('data.dir'),
+                      'prod_dir': self.session.get_release_directory()}
+      '''
+      if 'current' in bank and bank['current']:
+        for prod in bank['production']:
+          if bank['current'] == prod['session']:
+            release = prod['release']
+      else:
+        release = None
+      print " "+bank['name']+"\t"+','.join(bank['properties']['type'])+"\t"+str(release)
+    print '#' * 80
+    return
 
   if options.status:
     if options.bank:
@@ -89,7 +121,7 @@ def main():
               release = prod['release']
         else:
           release = None
-        print " "+bank['name']+"\t"+bank['properties']['type']+"\t"+str(release)
+        print " "+bank['name']+"\t"+','.join(bank['properties']['type'])+"\t"+str(release)
       print '#' * 80
       return
 

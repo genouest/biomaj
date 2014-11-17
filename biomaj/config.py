@@ -4,6 +4,8 @@ import os
 import ConfigParser
 import time
 
+from biomaj.bmajindex import BmajIndex
+
 class BiomajConfig:
   '''
   Manage Biomaj configuration
@@ -53,16 +55,28 @@ class BiomajConfig:
     if not os.path.exists(config_file) and not os.path.exists(os.path.expanduser('~/.biomaj.cfg')):
       raise Exception('Missing global configuration file')
 
-    if os.path.exists(os.path.expanduser('~/.biomaj.cfg')):
-      Biomaj.user_config = os.path.expanduser('~/.biomaj.cfg')
-
     BiomajConfig.config_file = config_file
 
     BiomajConfig.global_config = ConfigParser.ConfigParser()
+
     if os.path.exists(os.path.expanduser('~/.biomaj.cfg')):
-      BiomajConfig.global_config.read([os.path.expanduser('~/.biomaj.cfg')])
-    else:
-      BiomajConfig.global_config.read([config_file])
+      BiomajConfig.user_config = ConfigParser.ConfigParser()
+      BiomajConfig.user_config.read([os.path.expanduser('~/.biomaj.cfg')])
+
+    BiomajConfig.global_config.read([config_file])
+
+    # ElasticSearch indexation support
+    if BiomajConfig.global_config.get('GENERAL','use_elastic'):
+      if BiomajConfig.global_config.get('GENERAL','elastic_nodes'):
+        elastic_hosts = BiomajConfig.global_config.get('GENERAL','elastic_nodes').split(',')
+      else:
+        elastic_hosts = ['localhost']
+      elastic_index = BiomajConfig.global_config.get('GENERAL','elastic_index')
+      if elastic_index is None:
+        elastic_index = 'biomaj'
+      BmajIndex.load(index=elastic_index, hosts=elastic_hosts)
+
+
 
 
   def __init__(self, bank, options=None):

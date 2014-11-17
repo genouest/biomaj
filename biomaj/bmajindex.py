@@ -39,12 +39,25 @@ class BmajIndex(object):
       BmajIndex.do_index = do_index
       if BmajIndex.es is None:
         BmajIndex.es = Elasticsearch(hosts)
+        mapping = {
+          "mappings": {
+                "production": {
+                  "date_detection": False
+                }
+            }
+
+        }
+        if not BmajIndex.es.indices.exists(index=BmajIndex.index):
+          BmajIndex.es.indices.create(index=BmajIndex.index,body=mapping)
+
 
     @staticmethod
     def delete_all_bank(bank_name):
       '''
       Delete complete index for a bank
       '''
+      if not BmajIndex.do_index:
+        return
       query = {
         "query" : {
           "term" : { "bank" : bank_name }
@@ -62,21 +75,28 @@ class BmajIndex(object):
       :param release: production release
       :type release: str
       '''
-      BmajIndex.es.delete(index=BmajIndex.index, doc_type='production', id=bank_name+'_'+release)
+      if not BmajIndex.do_index:
+        return
+      try:
+        BmajIndex.es.delete(index=BmajIndex.index, doc_type='production', id=bank_name+'_'+release)
+      except Exception as e:
+        logging.error('Index:Remove:'+bank_name+'_'+str(obj['release'])+':Exception:'+str(e))
 
     @staticmethod
     def search(query):
+      if not BmajIndex.do_index:
+        return None
       res = BmajIndex.es.search(index=BmajIndex.index, doc_type='production', body=query)
       return res['hits']['hits']
 
     @staticmethod
-    def add(bank_name, prod, flush):
+    def add(bank_name, prod, flush=False):
       '''
       Index a production release
 
       :param bank_name: Name of the bank
       :type bank_name: str
-      :param prod: production release object
+      :param prod: session release object
       :type prod: dict
       :param flush: Force flushing
       :type flush: bool
@@ -85,6 +105,10 @@ class BmajIndex(object):
         return
       obj = copy.deepcopy(prod)
       obj['bank'] = bank_name
-      res = BmajIndex.es.index(index=BmajIndex.index, doc_type='production', id=bank_name+'_'+obj['release'], body=obj)
-      if flush:
-        BmajIndex.es.indices.flush(index=BmajIndex.index, force=True)
+      try:
+        if obj['release'] is not None and obj['release'] != 'none':
+          res = BmajIndex.es.index(index=BmajIndex.index, doc_type='production', id=bank_name+'_'+str(obj['release']), body=obj)
+          if flush:
+            BmajIndex.es.indices.flush(index=BmajIndex.index, force=True)
+      except Exception as e:
+        logging.error('Index:Add:'+bank_name+'_'+str(obj['release'])+':Exception:'+str(e))

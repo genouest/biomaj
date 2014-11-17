@@ -896,13 +896,39 @@ class TestElastic(unittest.TestCase):
     BmajIndex.delete_all_bank('test')
 
   def test_index(self):
-    BmajIndex.load(index='biomaj_test')
     prod = {
 			"data_dir" : "/tmp/test/data",
-			"formats" : [
-				"fasta",
-				"blast"
-			],
+			"formats" : {
+				"fasta" : [
+					{
+						"files" : [
+							"fasta/chr1.fa",
+							"fasta/chr2.fa"
+						],
+						"types" : [
+							"nucleic"
+						],
+						"tags" : {
+							"organism" : "hg19"
+						}
+					}
+				],
+				"blast": [
+					{
+						"files" : [
+							"blast/chr1/chr1db"
+						],
+						"types" : [
+							"nucleic"
+						],
+						"tags" : {
+							"chr" : "chr1",
+							"organism" : "hg19"
+						}
+					}
+				]
+
+			},
 			"freeze" : False,
 			"session" : 1416229253.930908,
 			"prod_dir" : "alu-2003-11-26",

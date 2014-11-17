@@ -11,6 +11,7 @@ from biomaj.workflow import UpdateWorkflow, RemoveWorkflow, Workflow
 from biomaj.config import BiomajConfig
 from biomaj.options import Options
 from biomaj.process.processfactory import ProcessFactory
+from biomaj.bmajindex import BmajIndex
 
 #from bson.objectid import ObjectId
 
@@ -251,6 +252,7 @@ class Bank:
       },
       '$push' : { 'sessions': self.session._session }
       })
+    BmajIndex.add(self.name, self.session._session)
     if self.session.get('action') == 'update' and self.session.get_status(Workflow.FLOW_OVER) and self.session.get('update'):
       # We expect that a production release has reached the FLOW_OVER status.
       # If no update is needed (same release etc...), the *update* session of the session is set to False
@@ -478,6 +480,10 @@ class Bank:
     :type sid: long
     :return: bool
     '''
+    session_release = None
+    for s in self.bank['sessions']:
+      if s['id'] == sid:
+        session_release = s['release']
     self.banks.update({'name': self.name},{'$pull':{
                                             'sessions': {'id': sid},
                                             'production': {'session': sid}
@@ -485,6 +491,8 @@ class Bank:
                       })
     # Update object
     self.bank = self.banks.find_one({'name': self.name})
+    if session_release is not None:
+      BmajIndex.remove(self.name, session_release)
     return True
 
   def get_data_dir(self):

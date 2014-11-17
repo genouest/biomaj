@@ -41,7 +41,7 @@ class Session:
                       'log_file': self.config.log_file,
                       'status': {},
                       'files': [],
-                      'release': 'none',
+                      'release': None,
                       'formats': formats,
                       'process': {
                                   'postprocess': {},
@@ -109,7 +109,7 @@ class Session:
     '''
     Get release directroy name
     '''
-    return self.name+'-'+self._session['release']
+    return self.name+'-'+str(self._session['release'])
 
   def get_full_release_directory(self):
     '''

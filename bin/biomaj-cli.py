@@ -62,21 +62,13 @@ def main():
     print "Search by formats="+str(formats)+", types="+str(types)
     res = Bank.search(formats, types, False)
     print '#' * 80
-    print "# Name\tType\tRelease"
+    print "# Name\tRelease"
     for bank in res:
-      '''
-      production = { 'release': self.session.get('release'),
-                      'session': self.session._session['id'],
-                      'data_dir': self.config.get('data.dir'),
-                      'prod_dir': self.session.get_release_directory()}
-      '''
-      if 'current' in bank and bank['current']:
-        for prod in bank['production']:
-          if bank['current'] == prod['session']:
-            release = prod['release']
-      else:
-        release = None
-      print " "+bank['name']+"\t"+','.join(bank['properties']['type'])+"\t"+str(release)
+
+      print " "+bank['name']
+      for prod in bank['production']:
+          print " \t"+prod['release']+"\t"+','.join(prod['formats'])+"\t"+','.join(prod['types'])
+
     print '#' * 80
     return
 

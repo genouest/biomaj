@@ -102,18 +102,18 @@ class BmajIndex(object):
 
 
     @staticmethod
-    def _add_stats(bank_name, prod, flush=False):
+    def add_stat(stat_id, stat):
       '''
-      Add some statistics from production
+      Add some statistics, must contain release and bank properties.
       '''
       if not BmajIndex.do_index:
         return
-      obj = copy.deepcopy(prod)
-      if obj['release'] is None:
-        return
+      if stat['release'] is None or stat['bank'] is None:
+        return False
       obj['bank'] = bank_name
 
-      BmajIndex.es.index(index=BmajIndex.index, doc_type='releasestats', id=bank_name+'_'+str(obj['release']), body=obj)
+      BmajIndex.es.index(index=BmajIndex.index, doc_type='releasestats', id=stat_id), body=stat)
+      return True
 
 
     @staticmethod
@@ -144,9 +144,6 @@ class BmajIndex(object):
             if 'status' in obj:
               elt['status'] = obj['status']
             res = BmajIndex.es.index(index=BmajIndex.index, doc_type='production', id=bank_name+'_'+str(obj['release'])+'_'+fkey, body=elt)
-        BmajIndex._add_stats(bank_name, obj)
-        #if obj['release'] is not None and obj['release'] != 'none':
-        #  res = BmajIndex.es.index(index=BmajIndex.index, doc_type='production', id=bank_name+'_'+str(obj['release']), body=obj)
         if flush:
           BmajIndex.es.indices.flush(index=BmajIndex.index, force=True)
       except Exception as e:

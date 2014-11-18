@@ -19,6 +19,25 @@ class Utils:
   mime = None
 
   @staticmethod
+  def get_folder_size(folder):
+    '''
+    Get directory path full size
+
+    :param folder: directory path
+    :type folder: str
+    '''
+    print '??? PARSE '+folder
+    if not os.path.exists(folder):
+      return -1
+    folder_size = 0
+    for (path, dirs, files) in os.walk(folder):
+      for file in files:
+        filename = os.path.join(path, file)
+        folder_size += os.path.getsize(filename)
+    return folder_size
+
+
+  @staticmethod
   def detect_format(filename):
     '''
     try to detect file format by extension

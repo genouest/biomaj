@@ -232,7 +232,7 @@ class UpdateWorkflow(Workflow):
     { 'name': 'preprocess', 'steps': []},
     { 'name': 'release', 'steps': []},
     { 'name': 'download', 'steps': ['uncompress','copy']},
-    { 'name': 'postprocess', 'steps': []},
+    { 'name': 'postprocess', 'steps': ['stats']},
     { 'name': 'publish', 'steps': ['clean_offline', 'delete_old', 'clean_old_sessions']},
     { 'name': 'over', 'steps': []}
   ]
@@ -620,6 +620,20 @@ class UpdateWorkflow(Workflow):
     if len(self.session._session['files']) == 0:
       logging.error('Workflow:wf_copy:No file match in offline dir')
       return False
+    return True
+
+  def wf_stats(self):
+    '''
+    Get some stats from current release data dir
+    '''
+    logging.info('Workflow:wf_stats')
+    do_stats = self.bank.config.get('data.dir.stats')
+    if do_stats is None or do_stats == '0':
+      self.session.set('fullsize', 0)
+      return True
+    prod_dir = self.session.get_full_release_directory()
+    dir_size = Utils.get_folder_size(prod_dir)
+    self.session.set('fullsize', dir_size)
     return True
 
   def wf_postprocess(self):

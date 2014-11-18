@@ -112,7 +112,7 @@ class BmajIndex(object):
         return False
       obj['bank'] = bank_name
 
-      BmajIndex.es.index(index=BmajIndex.index, doc_type='releasestats', id=stat_id), body=stat)
+      BmajIndex.es.index(index=BmajIndex.index, doc_type='releasestats', id=stat_id, body=stat)
       return True
 
 

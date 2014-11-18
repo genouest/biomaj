@@ -43,9 +43,15 @@ class BmajIndex(object):
           "mappings": {
                 "production": {
                   "date_detection": False
+                },
+                "releasestats": {
+                  "date_detection": False,
+                  "_timestamp" : {
+                    "enabled" : True,
+                    "store" : True
+                  }
                 }
             }
-
         }
         if not BmajIndex.es.indices.exists(index=BmajIndex.index):
           BmajIndex.es.indices.create(index=BmajIndex.index,body=mapping)
@@ -78,9 +84,14 @@ class BmajIndex(object):
       if not BmajIndex.do_index:
         return
       try:
-        BmajIndex.es.delete(index=BmajIndex.index, doc_type='production', id=bank_name+'_'+release)
+        query = {
+          "query" : {
+            "term" : { "release" : release }
+            }
+          }
+        BmajIndex.es.delete_by_query(index=BmajIndex.index, body=query)
       except Exception as e:
-        logging.error('Index:Remove:'+bank_name+'_'+str(obj['release'])+':Exception:'+str(e))
+        logging.error('Index:Remove:'+bank_name+'_'+str(release)+':Exception:'+str(e))
 
     @staticmethod
     def search(query):
@@ -88,6 +99,22 @@ class BmajIndex(object):
         return None
       res = BmajIndex.es.search(index=BmajIndex.index, doc_type='production', body=query)
       return res['hits']['hits']
+
+
+    @staticmethod
+    def _add_stats(bank_name, prod, flush=False):
+      '''
+      Add some statistics from production
+      '''
+      if not BmajIndex.do_index:
+        return
+      obj = copy.deepcopy(prod)
+      if obj['release'] is None:
+        return
+      obj['bank'] = bank_name
+
+      BmajIndex.es.index(index=BmajIndex.index, doc_type='releasestats', id=bank_name+'_'+str(obj['release']), body=obj)
+
 
     @staticmethod
     def add(bank_name, prod, flush=False):
@@ -104,11 +131,23 @@ class BmajIndex(object):
       if not BmajIndex.do_index:
         return
       obj = copy.deepcopy(prod)
+      if obj['release'] is None:
+        return
       obj['bank'] = bank_name
+      formats = obj['formats']
       try:
-        if obj['release'] is not None and obj['release'] != 'none':
-          res = BmajIndex.es.index(index=BmajIndex.index, doc_type='production', id=bank_name+'_'+str(obj['release']), body=obj)
-          if flush:
-            BmajIndex.es.indices.flush(index=BmajIndex.index, force=True)
+        for fkey,fvalue in formats.iteritems():
+          for elt in fvalue:
+            elt['format'] = fkey
+            elt['bank'] = bank_name
+            elt['release'] = obj['release']
+            if 'status' in obj:
+              elt['status'] = obj['status']
+            res = BmajIndex.es.index(index=BmajIndex.index, doc_type='production', id=bank_name+'_'+str(obj['release'])+'_'+fkey, body=elt)
+        BmajIndex._add_stats(bank_name, obj)
+        #if obj['release'] is not None and obj['release'] != 'none':
+        #  res = BmajIndex.es.index(index=BmajIndex.index, doc_type='production', id=bank_name+'_'+str(obj['release']), body=obj)
+        if flush:
+          BmajIndex.es.indices.flush(index=BmajIndex.index, force=True)
       except Exception as e:
         logging.error('Index:Add:'+bank_name+'_'+str(obj['release'])+':Exception:'+str(e))

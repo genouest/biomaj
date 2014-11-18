@@ -774,12 +774,10 @@ class TestBiomajFunctional(unittest.TestCase):
     self.assertTrue(b2.session.get_status('postprocess'))
     self.assertEqual(b.session.get_full_release_directory(), b2.session.get_full_release_directory())
 
-
   @attr('process')
   def test_postprocesses_restart_from_proc(self):
     b = Bank('localprocess')
     b.update()
-    print 'RELEASE '+b.session.get_full_release_directory()
     proc1file = os.path.join(b.session.get_full_release_directory(),'proc1.txt')
     proc2file = os.path.join(b.session.get_full_release_directory(),'proc2.txt')
     self.assertTrue(os.path.exists(proc1file))
@@ -944,7 +942,8 @@ class TestElastic(unittest.TestCase):
         }
       }
     res = BmajIndex.search(query)
-    self.assertTrue(len(res)==1)
+    print str(res)
+    self.assertTrue(len(res)==2)
 
 
 

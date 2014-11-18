@@ -70,6 +70,24 @@ class Bank:
     self.session = None
     self.use_last_session = False
 
+  @staticmethod
+  def get_banks_disk_usage():
+    '''
+    Get disk usage per bank and release
+    '''
+    if MongoConnector.db is None:
+      MongoConnector(BiomajConfig.global_config.get('GENERAL','db.url'),
+                      BiomajConfig.global_config.get('GENERAL','db.name'))
+
+    bank_list = []
+    banks = MongoConnector.banks.find({},{'name': 1, 'production': 1})
+    for b in banks:
+      bank_elt = {'name': b['name'], 'size': 0, 'releases': []}
+      for p in b['production']:
+        bank_elt['size'] += p['size']
+        bank_elt['releases'].append({'name': p['release'], 'size': p['size']})
+      bank_list.append(bank_elt)
+    return bank_list
 
   def update_dependencies(self):
     '''

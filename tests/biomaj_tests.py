@@ -843,6 +843,17 @@ class TestBiomajFunctional(unittest.TestCase):
     res = b.remove(rel)
     self.assertTrue(res == True)
 
+  @attr('test')
+  def test_stats(self):
+    b = Bank('local')
+    b.update()
+    rel = b.session.get('release')
+    stats = Bank.get_banks_disk_usage()
+    self.assertTrue(stats[0]['size']>0)
+    for release in stats[0]['releases']:
+      if release['name'] == rel:
+        self.assertTrue(release['size']>0)
+
 
   @attr('process')
   def test_processes_meta_data(self):

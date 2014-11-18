@@ -26,7 +26,6 @@ class Utils:
     :param folder: directory path
     :type folder: str
     '''
-    print '??? PARSE '+folder
     if not os.path.exists(folder):
       return -1
     folder_size = 0

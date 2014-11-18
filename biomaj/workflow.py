@@ -627,7 +627,7 @@ class UpdateWorkflow(Workflow):
     Get some stats from current release data dir
     '''
     logging.info('Workflow:wf_stats')
-    do_stats = self.bank.config.get('data.dir.stats')
+    do_stats = self.bank.config.get('data.stats')
     if do_stats is None or do_stats == '0':
       self.session.set('fullsize', 0)
       return True

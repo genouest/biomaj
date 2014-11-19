@@ -125,9 +125,11 @@ class MetaProcess(threading.Thread):
               self.meta_data[meta_format] = []
             tags = meta_tags.split(',')
             tag_list = {}
-            for tag in tags:
-              t = tag.split(':')
-              tag_list[t[0]] = t[1]
+            if meta_tags != '':
+              print '?????'+str(tags)
+              for tag in tags:
+                t = tag.split(':')
+                tag_list[t[0]] = t[1]
             self.meta_data[meta_format].append({'tags': tag_list,
                                                 'types': meta_type.split(','),
                                                 'files': meta_files.split(',')})

@@ -100,6 +100,21 @@ class BmajIndex(object):
       res = BmajIndex.es.search(index=BmajIndex.index, doc_type='production', body=query)
       return res['hits']['hits']
 
+    @staticmethod
+    def searchq(query,size=1000):
+      '''
+      Lucene syntax search
+
+      :param query: Lucene search string
+      :type query: str
+      :param size: number of results
+      :type size: int
+      :return: list of matches
+      '''
+      if not BmajIndex.do_index:
+        return None
+      res = BmajIndex.es.search(index=BmajIndex.index, doc_type='production', q=query, size=size)
+      return res['hits']['hits']
 
     @staticmethod
     def add_stat(stat_id, stat):

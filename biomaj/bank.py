@@ -70,6 +70,14 @@ class Bank:
     self.session = None
     self.use_last_session = False
 
+  def get_bank(self):
+    '''
+    Get bank stored in db
+
+    :return: bank json object
+    '''
+    return self.bank
+
   @staticmethod
   def get_banks_disk_usage():
     '''
@@ -154,6 +162,10 @@ class Bank:
       'type': self.config.get('db.type').split(','),
       'tags': []
     }
+
+  @staticmethod
+  def searchindex(query):
+    return BmajIndex.searchq(query)
 
 
   @staticmethod

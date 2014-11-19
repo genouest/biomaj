@@ -26,6 +26,7 @@ Contents:
    process
    processfactory
    user
+   bmajindex
 
 Indices and tables
 ==================

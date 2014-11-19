@@ -843,7 +843,7 @@ class TestBiomajFunctional(unittest.TestCase):
     res = b.remove(rel)
     self.assertTrue(res == True)
 
-  @attr('test')
+
   def test_stats(self):
     b = Bank('local')
     b.update()

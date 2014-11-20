@@ -105,19 +105,22 @@ class BiomajConfig:
     else:
       logging.config.fileConfig(BiomajConfig.config_file)
 
-    logger = logging.getLogger()
-    bank_log_dir = os.path.join(self.get('log.dir'),bank,str(time.time()))
-    if not os.path.exists(bank_log_dir):
-      os.makedirs(bank_log_dir)
-    hdlr = logging.FileHandler(os.path.join(bank_log_dir,bank+'.log'))
-    self.log_file = os.path.join(bank_log_dir,bank+'.log')
-    if options is not None and options.get_option('log') is not None:
-      hdlr.setLevel(BiomajConfig.LOGLEVEL[options.get_option('log')])
+    if (hasattr(options,'no_log') and not options.no_log) or ('no_log' in options and not options['no_log']):
+      logger = logging.getLogger()
+      bank_log_dir = os.path.join(self.get('log.dir'),bank,str(time.time()))
+      if not os.path.exists(bank_log_dir):
+        os.makedirs(bank_log_dir)
+      hdlr = logging.FileHandler(os.path.join(bank_log_dir,bank+'.log'))
+      self.log_file = os.path.join(bank_log_dir,bank+'.log')
+      if options is not None and options.get_option('log') is not None:
+        hdlr.setLevel(BiomajConfig.LOGLEVEL[options.get_option('log')])
+      else:
+        hdlr.setLevel(BiomajConfig.LOGLEVEL[self.get('historic.logfile.level')])
+      formatter = logging.Formatter('%(asctime)s %(levelname)-5.5s [%(name)s][%(threadName)s] %(message)s')
+      hdlr.setFormatter(formatter)
+      logger.addHandler(hdlr)
     else:
-      hdlr.setLevel(BiomajConfig.LOGLEVEL[self.get('historic.logfile.level')])
-    formatter = logging.Formatter('%(asctime)s %(levelname)-5.5s [%(name)s][%(threadName)s] %(message)s')
-    hdlr.setFormatter(formatter)
-    logger.addHandler(hdlr)
+       self.log_file='none'
 
 
   def set(self, prop, value, section='GENERAL'):

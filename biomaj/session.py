@@ -47,7 +47,8 @@ class Session:
                                   'postprocess': {},
                                   'preprocess': {},
                                   'removeprocess': {}
-                                  }
+                                  },
+                      'per_process_metadata': {}
                     }
     for flow in self.flow:
         self._session['status'][flow['name']] = False

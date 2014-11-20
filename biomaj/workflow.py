@@ -232,7 +232,7 @@ class UpdateWorkflow(Workflow):
     { 'name': 'preprocess', 'steps': []},
     { 'name': 'release', 'steps': []},
     { 'name': 'download', 'steps': ['uncompress','copy']},
-    { 'name': 'postprocess', 'steps': ['stats']},
+    { 'name': 'postprocess', 'steps': ['metadata', 'stats']},
     { 'name': 'publish', 'steps': ['clean_offline', 'delete_old', 'clean_old_sessions']},
     { 'name': 'over', 'steps': []}
   ]
@@ -620,6 +620,24 @@ class UpdateWorkflow(Workflow):
     if len(self.session._session['files']) == 0:
       logging.error('Workflow:wf_copy:No file match in offline dir')
       return False
+    return True
+
+  def wf_metadata(self):
+    '''
+    Update metadata with info gathered from processes
+    '''
+    logging.info('Workflow:wf_metadata')
+    self.bank.session.set('formats', {})
+    per_process_meta_data = self.session.get('per_process_metadata')
+    for proc in per_process_meta_data.keys():
+      for meta_data in per_process_meta_data[proc].keys():
+        session_formats = self.bank.session.get('formats')
+        if meta_data not in session_formats:
+          #session_formats[meta_data] = [meta_thread.meta_data[meta_data]]
+          session_formats[meta_data] = per_process_meta_data[proc][meta_data]
+        else:
+          #session_formats[meta_data].append(meta_thread.meta_data[meta_data])
+          session_formats[meta_data] += per_process_meta_data[proc][meta_data]
     return True
 
   def wf_stats(self):

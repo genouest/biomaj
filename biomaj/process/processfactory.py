@@ -12,6 +12,10 @@ class ProcessFactory:
   def __init__(self, bank):
     self.bank = bank
     self.threads_tasks = []
+    if self.bank.session:
+      self.meta_data = self.bank.session.get('per_process_metadata')
+    else:
+      self.meta_data = {}
 
   def run(self, simulate=False):
     '''
@@ -34,7 +38,7 @@ class ProcessFactory:
     logging.debug('Start meta threads')
     threads = []
     for thread_tasks in self.threads_tasks:
-      meta_thread = MetaProcess(self.bank, thread_tasks, self.meta_status, simulate)
+      meta_thread = MetaProcess(self.bank, thread_tasks, self.meta_status, self.meta_data, simulate)
       meta_thread.start()
       threads.append(meta_thread)
     # Wait for the end of the threads
@@ -44,16 +48,6 @@ class ProcessFactory:
     global_status = True
 
     for meta_thread in threads:
-      if self.bank.session:
-        for meta_data in meta_thread.meta_data.keys():
-          session_formats = self.bank.session.get('formats')
-          if meta_data not in session_formats:
-            #session_formats[meta_data] = [meta_thread.meta_data[meta_data]]
-            session_formats[meta_data] = meta_thread.meta_data[meta_data]
-          else:
-            #session_formats[meta_data].append(meta_thread.meta_data[meta_data])
-            session_formats[meta_data] += meta_thread.meta_data[meta_data]
-
       for meta in meta_thread.meta_status:
         global_meta_status[meta] = meta_thread.meta_status[meta]
       if not meta_thread.global_status:

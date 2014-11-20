@@ -21,7 +21,7 @@ class Bank:
   BioMAJ bank
   '''
 
-  def __init__(self, name, options=None):
+  def __init__(self, name, options=None, no_log=False):
     '''
     Get a bank from db or creates a new one
 
@@ -29,6 +29,8 @@ class Bank:
     :type name: str
     :param options: bank options
     :type options: argparse
+    :param no_log: create a log file for the bank
+    :type no_log: bool
     '''
     logging.debug('Initialize '+name)
     if BiomajConfig.global_config is None:
@@ -36,6 +38,10 @@ class Bank:
 
     self.name = name
     self.depends = []
+
+    if no_log:
+      if options is None:
+        options = {'no_log': True}
 
     self.config = BiomajConfig(self.name, options)
 
@@ -554,6 +560,7 @@ class Bank:
         return False
 
     self.banks.remove({'name': self.name})
+    BmajIndex.delete_all_bank(self.name)
     bank_data_dir = self.get_data_dir()
     logging.warn('DELETE '+bank_data_dir)
     if os.path.exists(bank_data_dir):

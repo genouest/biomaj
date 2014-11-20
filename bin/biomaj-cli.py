@@ -51,6 +51,8 @@ def main():
   options = Options()
   parser.parse_args(namespace=options)
 
+  options.no_log = False
+
   if options.version:
     version = pkg_resources.require('biomaj')[0].version
     print 'Version: '+str(version)

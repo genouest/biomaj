@@ -11,7 +11,7 @@ class MetaProcess(threading.Thread):
     Each meta process defined a list of Process to execute sequentially
     '''
 
-    def __init__(self, bank, metas, meta_status=None, simulate=False):
+    def __init__(self, bank, metas, meta_status=None, meta_data={}, simulate=False):
       '''
       Creates a meta process thread
 
@@ -28,7 +28,7 @@ class MetaProcess(threading.Thread):
       self.simulate = simulate
       self.bank = bank
       self.metas = metas
-      self.meta_data = {}
+      self.meta_data = meta_data
       self.meta_status = {}
       for meta in self.metas:
         self.meta_status[meta] = {}
@@ -101,16 +101,19 @@ class MetaProcess(threading.Thread):
               self.global_status = False
               break
             if not self.simulate:
-              self._get_metata_from_outputfile(bmaj_process.output_file)
+              self._get_metata_from_outputfile(meta+'_'+name, bmaj_process.output_file)
         self.meta_status[meta] = processes_status
 
-    def _get_metata_from_outputfile(self, output_file):
+    def _get_metata_from_outputfile(self, proc_name, output_file):
       '''
       Extract metadata given by process on stdout. Store metadata in self.metadata
 
+      :param proc_name: process name
+      :type proc_name: str
       :param output_file: path to process output file
       :type output_file: str
       '''
+      self.meta_data[proc_name] = {}
       with open(output_file) as f:
         for line in f:
           if line.startswith('##BIOMAJ#'):
@@ -121,16 +124,15 @@ class MetaProcess(threading.Thread):
             meta_type = metas[1]
             meta_tags = metas[2]
             meta_files = metas[3]
-            if not meta_format in self.meta_data:
-              self.meta_data[meta_format] = []
+            if not meta_format in self.meta_data[proc_name]:
+              self.meta_data[proc_name][meta_format] = []
             tags = meta_tags.split(',')
             tag_list = {}
             if meta_tags != '':
-              print '?????'+str(tags)
               for tag in tags:
                 t = tag.split(':')
                 tag_list[t[0]] = t[1]
-            self.meta_data[meta_format].append({'tags': tag_list,
+            self.meta_data[proc_name][meta_format].append({'tags': tag_list,
                                                 'types': meta_type.split(','),
                                                 'files': meta_files.split(',')})
 

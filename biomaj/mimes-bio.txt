@@ -5,3 +5,14 @@ application/gff           gff gff3
 application/bed           bed
 application/fastq         fastq
 application/gtf           gtf
+application/octet-stream  ab1 scf
+application/axt           axt
+application/csFasta       csfasta
+application/FasttqSolexa  fastqsolexa
+application/Interval      interval
+application/Laj           laj
+application/Lav           lav
+application/Maf           maf
+application/QualityScore  qual
+application/BlastXml      blastxml
+application/Wiggle        wig

@@ -105,7 +105,7 @@ class BiomajConfig:
     else:
       logging.config.fileConfig(BiomajConfig.config_file)
 
-    if (hasattr(options,'no_log') and not options.no_log) or ('no_log' in options and not options['no_log']):
+    if options is None or (( hasattr(options,'no_log') and not options.no_log) or ('no_log' in options and not options['no_log'])):
       logger = logging.getLogger()
       bank_log_dir = os.path.join(self.get('log.dir'),bank,str(time.time()))
       if not os.path.exists(bank_log_dir):

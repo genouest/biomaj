@@ -12,17 +12,6 @@ from biomaj.options import Options
 
 def main():
 
-  #parser = OptionParser()
-  #parser.add_option('-c', '--config', dest="config",help="Configuration file")
-  #parser.add_option('-u', '--update', dest="update", help="Update action", action="store_true", default=False)
-  #parser.add_option('--fromscratch', dest="fromscratch", help="Force a new cycle update", action="store_true", default=False)
-  #parser.add_option('--publish', dest="publish", help="Publish", action="store_true", default=False)
-  #parser.add_option('--release', dest="release",help="release of the bank")
-  #parser.add_option('-r', '--remove', dest="remove", help="Update action", action="store_true", default=False)
-  #parser.add_option('-s', '--status', dest="status", help="Get status", action="store_true", default=False)
-  #parser.add_option('-b', '--bank', dest="bank",help="bank name")
-  #(options, args) = parser.parse_args()
-
   parser = argparse.ArgumentParser()
   parser.add_argument('-c', '--config', dest="config",help="Configuration file")
   parser.add_argument('-u', '--update', dest="update", help="Update action", action="store_true", default=False)

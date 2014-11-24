@@ -3,6 +3,7 @@ import logging.config
 import os
 import ConfigParser
 import time
+import sys
 
 from biomaj.bmajindex import BmajIndex
 
@@ -96,8 +97,13 @@ class BiomajConfig:
     if not os.path.exists(os.path.join(conf_dir,bank+'.properties')):
       logging.error('Bank configuration file does not exists')
       raise Exception('Configuration file '+bank+'.properties does not exists')
+    try:
+      self.config_bank.read([os.path.join(conf_dir,bank+'.properties')])
+    except Exception as e:
+      print "Configuration file error: "+str(e)
+      logging.error("Configuration file error "+str(e))
+      sys.exit(1)
 
-    self.config_bank.read([os.path.join(conf_dir,bank+'.properties')])
     self.last_modified = long(os.stat(os.path.join(conf_dir,bank+'.properties')).st_mtime)
 
     if os.path.exists(os.path.expanduser('~/.biomaj.cfg')):

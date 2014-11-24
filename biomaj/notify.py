@@ -31,7 +31,7 @@ class Notify:
       #server.set_debuglevel(1)
       if bank.config.get('mail.tls') is not None and str(bank.config.get('mail.tls')) == 'true':
         server.starttls()
-      if bank.config.get('mail.user') is not None str(bank.config.get('mail.user')) != '':
+      if bank.config.get('mail.user') is not None and str(bank.config.get('mail.user')) != '':
         server.login(bank.config.get('mail.user'),bank.config.get('mail.password'))
       server.sendmail(mfrom, [mto], msg.as_string())
     except Exception as e:

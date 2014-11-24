@@ -178,7 +178,7 @@ class PostProcessFactory(ProcessFactory):
     '''
     logging.info('PROC:POST:BLOCK')
     blocks = self.bank.config.get('BLOCKS')
-    if blocks is None:
+    if blocks is None or blocks == '':
       process_blocks = []
     else:
       process_blocks = blocks.split(',')

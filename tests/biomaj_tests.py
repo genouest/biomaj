@@ -819,11 +819,11 @@ class TestBiomajFunctional(unittest.TestCase):
   def test_multi(self):
     b = Bank('multi')
     res = b.update()
-    with open(os.path.join(b.session.get_full_release_directory(),'test1.json'), 'r') as content_file:
+    with open(os.path.join(b.session.get_full_release_directory(),'flat/test1.json'), 'r') as content_file:
       content = content_file.read()
       my_json = json.loads(content)
       self.assertTrue(my_json['args']['key1'] == 'value1')
-    with open(os.path.join(b.session.get_full_release_directory(),'test2.json'), 'r') as content_file:
+    with open(os.path.join(b.session.get_full_release_directory(),'flat/test2.json'), 'r') as content_file:
       content = content_file.read()
       my_json = json.loads(content)
       self.assertTrue(my_json['form']['key1'] == 'value1')

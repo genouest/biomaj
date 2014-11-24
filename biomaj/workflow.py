@@ -614,7 +614,7 @@ class UpdateWorkflow(Workflow):
     regexp = self.session.config.get('local.files').split()
     to_dir = os.path.join(self.session.config.get('data.dir'),
                   self.session.config.get('dir.version'),
-                  self.session.get_release_directory())
+                  self.session.get_release_directory(), 'flat')
 
     local_files = Utils.copy_files_with_regexp(from_dir,to_dir,regexp, True)
     self.session._session['files'] = local_files

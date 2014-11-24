@@ -95,24 +95,31 @@ class MetaProcess(threading.Thread):
             args = self.bank.config.get(bprocess+'.args')
             expand = self.bank.config.get_bool(bprocess+'.expand', default=True)
             bmaj_process = Process(meta+'_'+name, exe, args, desc, proc_type, cluster, expand, self.bmaj_env, os.path.dirname(self.bank.config.log_file))
+            if self.bank.config.get(bprocess+'.format'):
+              bmaj_process.format =  self.bank.config.get(bprocess+'.format')
+            if self.bank.config.get(bprocess+'.types'):
+              bmaj_process.types =  self.bank.config.get(bprocess+'.types')
+            if self.bank.config.get(bprocess+'.tags'):
+              bmaj_process.tags =  self.bank.config.get(bprocess+'.tags')
             res = bmaj_process.run(self.simulate)
             processes_status[bprocess] = res
             if not res:
               self.global_status = False
               break
             if not self.simulate:
-              self._get_metata_from_outputfile(meta+'_'+name, bmaj_process.output_file)
+              self._get_metata_from_outputfile(bmaj_process)
         self.meta_status[meta] = processes_status
 
-    def _get_metata_from_outputfile(self, proc_name, output_file):
+    def _get_metata_from_outputfile(self, proc):
       '''
       Extract metadata given by process on stdout. Store metadata in self.metadata
 
-      :param proc_name: process name
-      :type proc_name: str
-      :param output_file: path to process output file
-      :type output_file: str
+      :param proc: process
+      :type proc_name: :class:`biomaj.process.Process`
       '''
+      proc_name = proc.name
+      output_file = proc.output_file
+
       self.meta_data[proc_name] = {}
       with open(output_file) as f:
         for line in f:
@@ -121,8 +128,14 @@ class MetaProcess(threading.Thread):
             line = line.strip('\n\r')
             metas = line.split('#')
             meta_format = metas[0]
+            if meta_format == '':
+              meta_format = proc.format
             meta_type = metas[1]
+            if meta_type == '':
+              meta_type = proc.types
             meta_tags = metas[2]
+            if meta_tags == '':
+              meta_tags = proc.tags
             meta_files = metas[3]
             if not meta_format in self.meta_data[proc_name]:
               self.meta_data[proc_name][meta_format] = []

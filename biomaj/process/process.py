@@ -37,6 +37,10 @@ class Process:
       self.output_file = name+'.out'
       self.error_file = name+'.err'
 
+    self.types = ''
+    self.format = ''
+    self.tags = ''
+
   def run(self, simulate=False):
     '''
     Execute process

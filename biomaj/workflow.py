@@ -120,6 +120,7 @@ class Workflow(object):
             res = getattr(self, 'wf_'+step)()
             if not res:
               logging.error('Error during '+flow['name']+' subtask: wf_' + step)
+              self.wf_over()
               return False
       if self.options.get_option(Options.STOP_AFTER) == flow['name']:
         self.wf_over()

@@ -35,7 +35,10 @@ def main():
   parser.add_argument('--formats', dest="formats",help="List of formats to search, comma separated")
   parser.add_argument('--types', dest="types",help="List of types to search, comma separated")
 
+  parser.add_argument('--show', dest="show", help="Show format files for selected bank", action="store_true", default=False)
+
   parser.add_argument('--version', dest="version", help="Show version", action="store_true", default=False)
+
 
   options = Options()
   parser.parse_args(namespace=options)
@@ -70,6 +73,37 @@ def main():
 
     print '#' * 80
     return
+
+  if options.show:
+    if not options.bank:
+      print "Bank option is required"
+      sys.exit(1)
+
+    bank = Bank(options.bank, no_log=False)
+    for prod in bank.bank['production']:
+      include = True
+      if options.release and (prod['release'] != options.release and prod['prod_dir'] != options.release):
+        include =False
+      if include:
+        session = bank.get_session_from_release(prod['release'])
+        print '#' * 80
+        print "# Name:\t"+bank.bank['name']
+        print "# Release:\t"+prod['release']
+        formats = session['formats']
+        for fformat in formats.keys():
+          print "# \tFormat:\t"+fformat
+          for elt in formats[fformat]:
+            print "# \t\tTypes:\t"+','.join(elt['types'])
+            print "# \t\tTags:"
+            for tag in elt['tags'].keys():
+              print "# \t\t\t"+tag+":"+elt['tags'][tag]
+            print "# \t\tFiles:"
+            for file in elt['files']:
+              print "# \t\t\t"+file
+    sys.exit(1)
+
+
+
 
   if options.status:
     if options.bank:

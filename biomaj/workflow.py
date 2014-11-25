@@ -137,6 +137,7 @@ class Workflow(object):
     status = {}
     #self.wf_progress('log_file', self.session._session['log_file'])
     status['log_file'] = {'status': self.session._session['log_file'], 'progress': 0}
+    status['session'] = self.session._session['id']
     for flow in self.session.flow:
       if flow['name'] == 'download':
         status[flow['name']] = {'status': None, 'progress': 0, 'total': 0}

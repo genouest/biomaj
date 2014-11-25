@@ -135,7 +135,6 @@ class Workflow(object):
     Set up new progress status
     '''
     status = {}
-    #self.wf_progress('log_file', self.session._session['log_file'])
     status['log_file'] = {'status': self.session._session['log_file'], 'progress': 0}
     status['session'] = self.session._session['id']
     for flow in self.session.flow:
@@ -143,6 +142,8 @@ class Workflow(object):
         status[flow['name']] = {'status': None, 'progress': 0, 'total': 0}
       elif flow['name'].endswith('process'):
         status[flow['name']] = {'status': None, 'progress': {}}
+      elif flow['name'] == 'release':
+        status[flow['name']] = {'status': None, 'progress': ''}
       else:
         status[flow['name']] = {'status': None, 'progress': 0}
     MongoConnector.banks.update({'name': self.name},{'$set': {'status': status}})
@@ -364,6 +365,9 @@ class UpdateWorkflow(Workflow):
         return False
 
     self.session.set('release', release)
+
+    MongoConnector.banks.update({'name': self.bank.name},{'$set': {'status.release.progress': str(release)}})
+
     # We restart from scratch, a directory with this release already exists
     if self.options.get_option(Options.FROMSCRATCH) and os.path.exists(self.session.get_full_release_directory()):
       index = 1
@@ -505,6 +509,7 @@ class UpdateWorkflow(Workflow):
             index += 1
           self.session.set('release', release+'_'+str(index))
         logging.debug('Workflow:wf_release:release:'+release)
+        MongoConnector.banks.update({'name': self.bank.name},{'$set': {'status.release.progress': str(release)}})
         self.download_go_ahead = False
         if self.options.get_option(Options.FROM_TASK) == 'download':
           # We want to download again in same release, that's fine, we do not care it is the same release

@@ -8,6 +8,8 @@ import zipfile
 
 from biomaj.utils import Utils
 
+from biomaj.mongo_connector import MongoConnector
+
 
 class DownloadInterface:
   '''
@@ -21,6 +23,25 @@ class DownloadInterface:
     self.files_to_copy = []
     self.error = False
     self.credentials = None
+    #bank name
+    self.bank = None
+
+
+  def set_progress(self, val, max):
+    '''
+    Update progress on download
+
+    :param val: number of downloaded files since last progress
+    :type val: int
+    :param max: number of files to download
+    :type max: int
+    '''
+    logging.debug('Download:progress:'+str(val)+'/'+str(max))
+    if not self.bank:
+      logging.debug('bank not specified, skipping record of download progress')
+      return
+
+    MongoConnector.banks.update({'name': self.bank},{'$inc': {'status.download.progress': val}, '$set': {'status.download.total': max}})
 
   def match(self, patterns, file_list, dir_list=[], prefix=''):
     '''

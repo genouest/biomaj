@@ -39,6 +39,7 @@ class ProcessFactory:
     threads = []
     for thread_tasks in self.threads_tasks:
       meta_thread = MetaProcess(self.bank, thread_tasks, self.meta_status, self.meta_data, simulate)
+      meta_thread.workflow = self.workflow
       meta_thread.start()
       threads.append(meta_thread)
     # Wait for the end of the threads
@@ -91,6 +92,7 @@ class PreProcessFactory(ProcessFactory):
     self.meta_status = None
     if metas is not None:
       self.meta_status = metas
+    self.workflow = 'preprocess'
 
   def run(self, simulate=False):
     '''
@@ -127,6 +129,7 @@ class RemoveProcessFactory(ProcessFactory):
     self.meta_status = None
     if metas is not None:
       self.meta_status = metas
+    self.workflow = 'removeprocess'
 
 
   def run(self, simulate=False):
@@ -167,6 +170,7 @@ class PostProcessFactory(ProcessFactory):
     self.blocks = {}
     if blocks is not None:
       self.blocks = blocks
+    self.workflow = 'postprocess'
 
   def run(self, simulate=False):
     '''

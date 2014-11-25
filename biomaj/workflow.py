@@ -75,6 +75,8 @@ class Workflow(object):
       downloader = DirectFTPDownload('ftp', server, remote_dir, list_file)
     if protocol == 'directhttp':
       downloader = DirectHttpDownload('http', server, remote_dir, list_file)
+    if downloader is not None:
+      downloader.bank = self.bank.name
     return downloader
 
 
@@ -88,7 +90,6 @@ class Workflow(object):
     Start the workflow
     '''
     logging.info('Workflow:Start')
-    self.wf_progress('log_file', self.session._session['log_file'])
     for flow in self.session.flow:
       if self.skip_all:
         self.session._session['status'][flow['name']] = None
@@ -134,22 +135,29 @@ class Workflow(object):
     Set up new progress status
     '''
     status = {}
+    #self.wf_progress('log_file', self.session._session['log_file'])
+    status['log_file'] = {'status': self.session._session['log_file'], 'progress': 0}
     for flow in self.session.flow:
-      status[flow['name']] = False
+      if flow['name'] == 'download':
+        status[flow['name']] = {'status': None, 'progress': 0, 'total': 0}
+      elif flow['name'].endswith('process'):
+        status[flow['name']] = {'status': None, 'progress': {}}
+      else:
+        status[flow['name']] = {'status': None, 'progress': 0}
     MongoConnector.banks.update({'name': self.name},{'$set': {'status': status}})
 
   def wf_progress_end(self):
     '''
     Reset progress status when workflow is over
     '''
-    MongoConnector.banks.update({'name': self.name},{'$set': {'status': None}})
+    #MongoConnector.banks.update({'name': self.name},{'$set': {'status': None}})
 
   def wf_progress(self, task, status):
     '''
     Update bank status
     '''
-    subtask = 'status.'+task
-    MongoConnector.banks.update({'name': self.name},{'$set': {subtask: {'status': status}}})
+    subtask = 'status.'+task+'.status'
+    MongoConnector.banks.update({'name': self.name},{'$set': {subtask: status}})
 
   def wf_init(self):
     '''

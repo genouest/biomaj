@@ -173,7 +173,7 @@ class DirectHttpDownload(DirectFTPDownload):
       logging.debug('downloaded!')
       rfile['name'] = self.save_as
       self.set_permissions(file_path, rfile)
-
+      self.set_progress(1, nb_files)
     return self.files_to_download
 
   def list(self, directory=''):

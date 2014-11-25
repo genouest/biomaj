@@ -114,6 +114,21 @@ class FTPDownload(DownloadInterface):
       fp.close()
       logging.debug('downloaded!')
       self.set_permissions(file_path, rfile)
+      # Add progress only per 10 files to limit db requests
+      if nb_files < 10:
+        nb = 1
+        do_progress = True
+      else:
+        if cur_files == nb_files:
+          do_progress = True
+          nb = cur_files % 10
+        elif cur_files > 0 and cur_files % 10 == 0:
+          nb = 10
+          do_progress= True
+        else:
+          do_progress = False
+      if do_progress:
+        self.set_progress(nb, nb_files)
     return self.files_to_download
 
   def list(self, directory=''):

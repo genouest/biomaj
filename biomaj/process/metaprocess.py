@@ -3,6 +3,7 @@ import logging
 import os
 
 from biomaj.process.process import Process
+from biomaj.mongo_connector import MongoConnector
 
 class MetaProcess(threading.Thread):
     '''
@@ -25,6 +26,7 @@ class MetaProcess(threading.Thread):
       :type simulate: bool
       '''
       threading.Thread.__init__(self)
+      self.workflow = None
       self.simulate = simulate
       self.bank = bank
       self.metas = metas
@@ -71,6 +73,18 @@ class MetaProcess(threading.Thread):
       for bdep in self.bank.depends:
         self.bmaj_env[bdep.name+'source'] = bdep.session.get_full_release_directory()
 
+    def set_progress(self, name, status=None):
+      '''
+      Update progress on download
+
+      :param name: name of process
+      :type name: str
+      :param status: status of process
+      :type status: bool or None
+      '''
+      logging.debug('Process:progress:'+name+"="+str(status))
+      if self.workflow is not None:
+        MongoConnector.banks.update({'name': self.bank.name},{'$set': {'status.'+self.workflow+'.progress.'+name: status}})
 
     def run(self):
       # Run meta processes
@@ -95,6 +109,7 @@ class MetaProcess(threading.Thread):
             args = self.bank.config.get(bprocess+'.args')
             expand = self.bank.config.get_bool(bprocess+'.expand', default=True)
             bmaj_process = Process(meta+'_'+name, exe, args, desc, proc_type, cluster, expand, self.bmaj_env, os.path.dirname(self.bank.config.log_file))
+            self.set_progress(bmaj_process.name, None)
             if self.bank.config.get(bprocess+'.format'):
               bmaj_process.format =  self.bank.config.get(bprocess+'.format')
             if self.bank.config.get(bprocess+'.types'):
@@ -103,6 +118,7 @@ class MetaProcess(threading.Thread):
               bmaj_process.tags =  self.bank.config.get(bprocess+'.tags')
             res = bmaj_process.run(self.simulate)
             processes_status[bprocess] = res
+            self.set_progress(bmaj_process.name, res)
             if not res:
               self.global_status = False
               break

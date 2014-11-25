@@ -17,10 +17,11 @@ install:
   - "pip install coverage"
   - "pip install python-coveralls"
   - "python setup.py -q install"
-  - "echo data_file=$TRAVIS_BUILD_DIR/.coverage >> .coveragerc"
+#  - "echo data_file=$TRAVIS_BUILD_DIR/.coverage >> .coveragerc"
 # command to run tests
 #script: nosetests --with-coverage --cover-package=biomaj -a '!network'
-script: nosetests --with-coverage --cover-package=biomaj
-after_success:
-  - coveralls
+#script: nosetests --with-coverage --cover-package=biomaj
+script: nosetests
+#after_success:
+#  - coveralls
 

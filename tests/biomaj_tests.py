@@ -982,3 +982,9 @@ class TestUser(unittest.TestCase):
     user.create('test', 'test@no-reply.org')
     self.assertTrue(user.user['email'] == 'test@no-reply.org')
     user.remove()
+
+  def test_check_password(self):
+    user = BmajUser('biomaj')
+    user.create('test', 'test@no-reply.org')
+    self.assertTrue(user.check_password('test'))
+    user.remove()

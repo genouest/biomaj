@@ -69,7 +69,7 @@ class BiomajConfig:
     # ElasticSearch indexation support
     do_index = False
     if BiomajConfig.global_config.get('GENERAL','use_elastic') and \
-      BiomajConfig.global_config.get('GENERAL','use_elastic') == 1:
+      BiomajConfig.global_config.get('GENERAL','use_elastic') == "1":
       do_index = True
     if do_index:
       if BiomajConfig.global_config.get('GENERAL','elastic_nodes'):

@@ -148,7 +148,8 @@ class Workflow(object):
     '''
     Update bank status
     '''
-    MongoConnector.banks.update({'name': self.name},{'$set': {'status': {task: {'status': status}}}})
+    subtask = 'status.'+task
+    MongoConnector.banks.update({'name': self.name},{'$set': {subtask: {'status': status}}})
 
   def wf_init(self):
     '''

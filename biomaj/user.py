@@ -19,6 +19,13 @@ class BmajUser(object):
     self.id = user
     self.user = self.users.find_one({'id': user})
 
+  @staticmethod
+  def list():
+    '''
+    Get users
+    '''
+    return self.users.find()
+
   def check_password(self, password):
     if self.user is None:
       return False

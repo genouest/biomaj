@@ -24,7 +24,7 @@ class BmajUser(object):
     '''
     Get users
     '''
-    return self.users.find()
+    return MongoConnector.users.find()
 
   def check_password(self, password):
     if self.user is None:

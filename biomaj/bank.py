@@ -48,7 +48,7 @@ class Bank:
     if self.config.get('bank.num.threads') is not None:
       ProcessFactory.NB_THREAD = int(self.config.get('bank.num.threads'))
 
-    if self.config.log_file is not None:
+    if self.config.log_file is not None and self.config.log_file != 'none':
       logging.info("Log file: "+self.config.log_file)
 
     #self.options = Options(options)

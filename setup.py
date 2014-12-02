@@ -13,6 +13,7 @@ config = {
     'install_requires': ['nose',
                             'pymongo',
                             'pycurl',
+                            'python-ldap',
                             'mock',
                             'py-bcrypt',
                             'elasticsearch'],

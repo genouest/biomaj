@@ -9,6 +9,8 @@ import logging
 import copy
 import stat
 
+from mock import patch
+
 from optparse import OptionParser
 
 
@@ -539,7 +541,6 @@ class TestBiomajSetup(unittest.TestCase):
     banks = Bank.list()
     self.assertTrue(len(banks) == 2)
 
-  @attr('test')
   @attr('network')
   def test_get_release(self):
     '''
@@ -954,10 +955,35 @@ class TestElastic(unittest.TestCase):
         }
       }
     res = BmajIndex.search(query)
-    print str(res)
     self.assertTrue(len(res)==2)
 
 
+class MockLdapConn(object):
+
+  ldap_user = 'biomajldap'
+  ldap_user_email = 'bldap@no-reply.org'
+
+  def __init__(self, url=None):
+    #self.ldap_user = 'biomajldap'
+    #self.ldap_user_email = 'bldap@no-reply.org'
+    pass
+
+  def search_s(self, base_dn, scope, filter, attrs):
+    if MockLdapConn.ldap_user in filter:
+      return [(MockLdapConn.ldap_user, {'mail': [MockLdapConn.ldap_user_email]})]
+    else:
+      raise Exception('no match')
+
+  def simple_bind_s(self, user_dn=None, password=None):
+    if user_dn is None and password is None:
+      return
+    if user_dn == MockLdapConn.ldap_user and password == 'test':
+      pass
+    else:
+      raise Exception('no match')
+
+  def unbind_s(self):
+    pass
 
 @attr('user')
 class TestUser(unittest.TestCase):
@@ -988,4 +1014,16 @@ class TestUser(unittest.TestCase):
     user = BmajUser('biomaj')
     user.create('test', 'test@no-reply.org')
     self.assertTrue(user.check_password('test'))
+    user.remove()
+
+  @patch('ldap.initialize')
+  @attr('test')
+  def test_ldap_user(self, initialize_mock):
+    mockldap = MockLdapConn()
+    initialize_mock.return_value = mockldap
+    user = BmajUser('biomajldap')
+    self.assertTrue(user.user['is_ldap'] == True)
+    self.assertTrue(user.user['_id'] is not None)
+    self.assertTrue(user.check_password('test'))
+    self.assertFalse(user.check_password('notest'))
     user.remove()

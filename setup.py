@@ -16,6 +16,7 @@ config = {
                             'python-ldap',
                             'mock',
                             'py-bcrypt',
+                            'mock',
                             'elasticsearch'],
     'packages': find_packages(),
     'include_package_data': True,

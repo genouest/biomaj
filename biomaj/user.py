@@ -18,7 +18,8 @@ class BmajUser(object):
     self.users = MongoConnector.users
     self.id = user
     self.user = self.users.find_one({'id': user})
-    if !self.user && BiomajConfig.global_config.get('GENERAL','use_ldap') == '1':
+    con = None
+    if not self.user and BiomajConfig.global_config.get('GENERAL','use_ldap') == '1':
       # Check if in ldap
       import ldap
       try:
@@ -36,6 +37,7 @@ class BmajUser(object):
           attrs = ['mail']
           results = con.search_s(base_dn, ldap.SCOPE_SUBTREE, filter, attrs)
           if results:
+            ldapMail = None
             for dn, entry in results:
               user_dn = str(dn)
               ldapMail = entry['mail'][0]
@@ -84,8 +86,9 @@ class BmajUser(object):
     if self.user is None:
       return False
 
-    if user.is_ldap:
+    if self.user['is_ldap']:
       import ldap
+      con = None
       try:
           ldap_host = BiomajConfig.global_config.get('GENERAL','ldap.host')
           ldap_port = BiomajConfig.global_config.get('GENERAL','ldap.port')
@@ -95,11 +98,11 @@ class BmajUser(object):
               return False
       ldap_dn = BiomajConfig.global_config.get('GENERAL','ldap.dn')
       base_dn = 'ou=People,' + ldap_dn
-      filter = "(&(|(uid=" + user.id + ")(mail=" + user.id + ")))"
+      filter = "(&(|(uid=" + self.user['id'] + ")(mail=" + self.user['id'] + ")))"
       try:
           con.simple_bind_s()
-      except Exception, err:
-        logging.error(str(err)
+      except Exception as err:
+        logging.error(str(err))
         return False
       try:
         attrs = ['mail']

@@ -10,6 +10,10 @@ Dependencies
 
 libcurl-dev
 
+mongodb, elasticsearch (use_elastic=1)
+
+ElasticSearch add advanced search features to biomaj.
+
 Status
 ======
 

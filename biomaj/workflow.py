@@ -524,7 +524,7 @@ class UpdateWorkflow(Workflow):
           return self.no_need_to_update()
 
     self.banks = MongoConnector.banks
-    self.bank.bank = self.banks.find_one({'name': self.name},{ 'production': 1})
+    self.bank.bank = self.banks.find_one({'name': self.name})
 
     nb_prod_dir = len(self.bank.bank['production'])
     offline_dir = self.session.get_offline_directory()
@@ -750,6 +750,9 @@ class UpdateWorkflow(Workflow):
       for prod in self.bank.bank['production']:
         if 'freeze' in prod and prod['freeze']:
           continue
+        #print 'OSALLOU '+str(self.bank.bank)
+        if self.bank.bank['current'] == prod['session']:
+          continue
         if nb_prod - keep > 0:
           nb_prod -= 1
           session = self.bank.get_new_session(RemoveWorkflow.FLOW)
@@ -770,6 +773,7 @@ class UpdateWorkflow(Workflow):
           session.set('action', 'remove')
           session.set('release', prod['release'])
           session.set('update_session_id', prod['session'])
+          logging.info('Workflow:wf_delete_old:Delete:'+prod['release'])
           res = self.bank.start_remove(session)
           if not res:
             logging.error('Workflow:wf_delete_old:ErrorDelete:'+prod['release'])

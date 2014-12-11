@@ -43,6 +43,11 @@ class MetaProcess(threading.Thread):
       self.bmaj_env = os.environ.copy();
       #self.bmaj_env = {}
       # Copy all config from bank
+
+
+      #The root directory where all databases are stored.
+      #If your data is not stored under one directory hirearchy
+      #you can override this value in the database properties file.
       for conf in dict(self.bank.config.config_bank.items('GENERAL')):
         self.bmaj_env[conf] = self.bank.config.config_bank.get('GENERAL', conf)
         if self.bmaj_env[conf] is None:
@@ -50,6 +55,7 @@ class MetaProcess(threading.Thread):
 
       self.bmaj_env['dbname'] = self.bank.name
       self.bmaj_env['datadir'] = self.bank.config.get('data.dir')
+      self.bmaj_env['data.dir'] = self.bmaj_env['datadir']
       self.bmaj_env['mailadmin'] = self.bank.config.get('mail.admin')
       self.bmaj_env['mailsmtp'] = self.bank.config.get('mail.smtp.host')
       self.bmaj_env['processdir'] = self.bank.config.get('process.dir',default='')
@@ -73,7 +79,6 @@ class MetaProcess(threading.Thread):
       for bdep in self.bank.depends:
         self.bmaj_env[bdep.name+'source'] = bdep.session.get_full_release_directory()
 
-      print str(self.bmaj_env)
 
     def set_progress(self, name, status=None):
       '''

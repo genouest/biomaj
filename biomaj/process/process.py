@@ -22,6 +22,11 @@ class Process:
     :param log_dir: directroy to place process stdout and stderr
     :type log_dir: str
     '''
+
+    # Replace env vars in args
+    for key,value in bank_env.iteritems():
+      args = args.replace('${'+key+'}', value)
+
     self.name = name
     self.exe = exe
     self.desc= desc

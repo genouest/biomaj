@@ -90,9 +90,11 @@ class Workflow(object):
     Start the workflow
     '''
     logging.info('Workflow:Start')
+    print str(self.session._session['status'])
     for flow in self.session.flow:
       if self.skip_all:
         self.session._session['status'][flow['name']] = None
+        self.session._session['status'][Workflow.FLOW_OVER] = True
         continue
 
       if self.options.get_option(Options.STOP_BEFORE) == flow['name']:

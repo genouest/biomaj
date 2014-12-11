@@ -90,7 +90,7 @@ class Workflow(object):
     Start the workflow
     '''
     logging.info('Workflow:Start')
-    print str(self.session._session['status'])
+    #print str(self.session._session['status'])
     for flow in self.session.flow:
       if self.skip_all:
         self.session._session['status'][flow['name']] = None
@@ -222,7 +222,9 @@ class RemoveWorkflow(Workflow):
     if not self.session.get('update_session_id'):
       logging.error('Bug: update_session_id not set in session')
       return False
-    shutil.rmtree(self.session.get_full_release_directory())
+
+    if os.path.exists(self.session.get_full_release_directory()):
+      shutil.rmtree(self.session.get_full_release_directory())
     return self.bank.remove_session(self.session.get('update_session_id'))
 
   def wf_removeprocess(self):
@@ -247,7 +249,7 @@ class UpdateWorkflow(Workflow):
     { 'name': 'release', 'steps': []},
     { 'name': 'download', 'steps': ['uncompress','copy']},
     { 'name': 'postprocess', 'steps': ['metadata', 'stats']},
-    { 'name': 'publish', 'steps': ['clean_offline', 'delete_old', 'clean_old_sessions']},
+    { 'name': 'publish', 'steps': ['clean_offline', 'delete_old']},
     { 'name': 'over', 'steps': []}
   ]
 
@@ -510,6 +512,7 @@ class UpdateWorkflow(Workflow):
           while os.path.exists(self.session.get_full_release_directory()+'_'+str(index)):
             index += 1
           self.session.set('release', release+'_'+str(index))
+          release = release+'_'+str(index)
         logging.debug('Workflow:wf_release:release:'+release)
         MongoConnector.banks.update({'name': self.bank.name},{'$set': {'status.release.progress': str(release)}})
         self.download_go_ahead = False
@@ -555,7 +558,7 @@ class UpdateWorkflow(Workflow):
       # We want to download again in same release, that's fine, we do not care it is the same release
       self.download_go_ahead = True
 
-    if not self.download_go_ahead and nb_prod_dir > 0:
+    if not self.options.get_option(Options.FROMSCRATCH) and not self.download_go_ahead and nb_prod_dir > 0:
       for prod in self.bank.bank['production']:
         if self.session.get('release') == prod['release']:
           logging.debug('Workflow:wf_release:same_as_previous_production_dir')
@@ -689,7 +692,7 @@ class UpdateWorkflow(Workflow):
     if os.path.lexists(future_link):
       os.remove(future_link)
     os.chdir(to_dir)
-    os.symlink(prod_dir,'future_release')
+    os.symlink(self.session.get_release_directory(),'future_release')
 
     logging.info('Workflow:wf_postprocess')
     blocks = self.session._session['process']['postprocess']

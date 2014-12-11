@@ -73,6 +73,8 @@ class MetaProcess(threading.Thread):
       for bdep in self.bank.depends:
         self.bmaj_env[bdep.name+'source'] = bdep.session.get_full_release_directory()
 
+      print str(self.bmaj_env)
+
     def set_progress(self, name, status=None):
       '''
       Update progress on download

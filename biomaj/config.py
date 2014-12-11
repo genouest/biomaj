@@ -56,7 +56,7 @@ class BiomajConfig:
     if not os.path.exists(config_file) and not os.path.exists(os.path.expanduser('~/.biomaj.cfg')):
       raise Exception('Missing global configuration file')
 
-    BiomajConfig.config_file = config_file
+    BiomajConfig.config_file = os.path.abspath(config_file)
 
     BiomajConfig.global_config = ConfigParser.ConfigParser()
 

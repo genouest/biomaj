@@ -373,7 +373,7 @@ class Bank:
     if os.path.lexists(current_link):
       os.remove(current_link)
     os.chdir(to_dir)
-    os.symlink(prod_dir,'current')
+    os.symlink(self.session.get_release_directory(),'current')
     self.bank['current'] = self.session._session['id']
     self.banks.update({'name': self.name},
                       {
@@ -519,7 +519,8 @@ class Bank:
     :return: bool
     '''
     session_release = None
-    for s in self.bank['sessions']:
+    _tmpbank = self.banks.find_one({'name': self.name})
+    for s in _tmpbank['sessions']:
       if s['id'] == sid:
         session_release = s['release']
     self.banks.update({'name': self.name},{'$pull':{

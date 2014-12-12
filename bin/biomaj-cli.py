@@ -15,12 +15,12 @@ def main():
   parser = argparse.ArgumentParser()
   parser.add_argument('-c', '--config', dest="config",help="Configuration file")
   parser.add_argument('-u', '--update', dest="update", help="Update action", action="store_true", default=False)
-  parser.add_argument('--fromscratch', dest="fromscratch", help="Force a new cycle update", action="store_true", default=False)
-  parser.add_argument('--publish', dest="publish", help="Publish", action="store_true", default=False)
+  parser.add_argument('-z', '--fromscratch', dest="fromscratch", help="Force a new cycle update", action="store_true", default=False)
+  parser.add_argument('-p', '--publish', dest="publish", help="Publish", action="store_true", default=False)
   parser.add_argument('--release', dest="release",help="release of the bank")
   parser.add_argument('--from-task', dest="from_task",help="Start cycle at a specific task (init always executed)")
   parser.add_argument('--process', dest="process",help="Linked to from-task, optionally specify a block, meta or process name to start from")
-  parser.add_argument('--log', dest="log",help="log level")
+  parser.add_argument('-l', '--log', dest="log",help="log level")
   parser.add_argument('-r', '--remove', dest="remove", help="Remove a bank release", action="store_true", default=False)
   parser.add_argument('--remove-all', dest="removeall", help="Remove all bank releases and database records", action="store_true", default=False)
   parser.add_argument('-s', '--status', dest="status", help="Get status", action="store_true", default=False)
@@ -29,7 +29,7 @@ def main():
   parser.add_argument('--stop-after', dest="stop_after",help="Store workflow after task")
   parser.add_argument('--freeze', dest="freeze", help="Freeze a bank release", action="store_true", default=False)
   parser.add_argument('--unfreeze', dest="unfreeze", help="Unfreeze a bank release", action="store_true", default=False)
-  parser.add_argument('--force', dest="force", help="Force action", action="store_true", default=False)
+  parser.add_argument('-f', '--force', dest="force", help="Force action", action="store_true", default=False)
 
   parser.add_argument('--search', dest="search", help="Search by format and types", action="store_true", default=False)
   parser.add_argument('--formats', dest="formats",help="List of formats to search, comma separated")
@@ -122,6 +122,7 @@ def main():
       for prod in _bank['production']:
         if 'freeze' in prod:
           print "#\tFreeze:\t"+str(prod['freeze'])
+        print "#\tRemote release:\t"+prod['remoterelease']
         print "#\tRelease:\t"+prod['release']
         print "#\t\tSession:\t"+str(prod['session'])
         release_dir = os.path.join(bank.config.get('data.dir'),

@@ -660,7 +660,7 @@ class TestBiomajFunctional(unittest.TestCase):
                                 b.config.get('dir.version'),
                                 'current')
     self.assertFalse(os.path.exists(current_link))
-    self.assertTrue('current' not in b.bank)
+    self.assertTrue(b.bank['current'] is None)
     b.publish()
     self.assertTrue(os.path.exists(current_link))
     self.assertTrue(b.bank['current'] == b.session._session['id'])

@@ -12,7 +12,7 @@ from biomaj.options import Options
 
 def main():
 
-  parser = argparse.ArgumentParser()
+  parser = argparse.ArgumentParser(add_help=False)
   parser.add_argument('-c', '--config', dest="config",help="Configuration file")
   parser.add_argument('-u', '--update', dest="update", help="Update action", action="store_true", default=False)
   parser.add_argument('-z', '--fromscratch', dest="fromscratch", help="Force a new cycle update", action="store_true", default=False)
@@ -30,6 +30,7 @@ def main():
   parser.add_argument('--freeze', dest="freeze", help="Freeze a bank release", action="store_true", default=False)
   parser.add_argument('--unfreeze', dest="unfreeze", help="Unfreeze a bank release", action="store_true", default=False)
   parser.add_argument('-f', '--force', dest="force", help="Force action", action="store_true", default=False)
+  parser.add_argument('-h', '--help', dest="help", help="Show usage", action="store_true", default=False)
 
   parser.add_argument('--search', dest="search", help="Search by format and types", action="store_true", default=False)
   parser.add_argument('--formats', dest="formats",help="List of formats to search, comma separated")
@@ -44,6 +45,65 @@ def main():
   parser.parse_args(namespace=options)
 
   options.no_log = False
+
+  if options.help:
+    print '''
+--config: global.properties file path
+
+--status: list of banks with published release
+    [OPTIONAL]
+    --bank xx / bank: Get status details of bank
+
+--log DEBUG|INFO|WARN|ERR  [OPTIONAL]: set log level in logs for this run, default is set in global.properties file
+
+--update: Update bank
+    [MANDATORY]
+    --bank xx: name of the bank to update
+    [OPTIONAL]
+    --publish: after update set as *current* version
+    --fromscratch: force a new update cycle, even if release is identical, release will be incremented like (myrel_1)
+    --stop-before xx: stop update cycle before the start of step xx
+    --stop-after xx: stop update cycle after step xx has completed
+    --from-task xx --release yy: Force an re-update cycle for bank release *yy* or from current cycle (in production directories), skipping steps up to *xx*
+--publish / publish: Publish bank as current release to use
+    [MANDATORY]
+    --bank xx: name of the bank to update
+    --release xx: release of the bank to publish
+
+--remove-all: Remove all bank releases and database records
+    [MANDATORY]
+    --bank xx: name of the bank to update
+    [OPTIONAL]
+    --force: remove freezed releases
+--remove: Remove bank release (files and database release)
+    [MANDATORY]
+    --bank xx: name of the bank to update
+    --release xx: release of the bank to remove
+
+    Release must not be the *current* version. If this is the case, publish a new release before.
+
+--freeze: Freeze bank release (cannot be removed)
+    [MANDATORY]
+    --bank xx: name of the bank to update
+    --release xx: release of the bank to remove
+
+--unfreeze: Unfreeze bank release (can be removed)
+    [MANDATORY]
+    --bank xx: name of the bank to update
+    --release xx: release of the bank to remove
+
+--search: basic search in bank production releases, return list of banks
+   --formats xx,yy : list of comma separated format
+  AND/OR
+   --types xx,yy : list of comma separated type
+
+--show: Show bank files per format
+  [MANDATORY]
+  --bank xx: name of the bank to show
+  [OPTIONAL]
+  --release xx: release of the bank to show
+    '''
+    return
 
   if options.version:
     version = pkg_resources.require('biomaj')[0].version

@@ -249,7 +249,7 @@ class UpdateWorkflow(Workflow):
     { 'name': 'release', 'steps': []},
     { 'name': 'download', 'steps': ['uncompress','copy']},
     { 'name': 'postprocess', 'steps': ['metadata', 'stats']},
-    { 'name': 'publish', 'steps': ['clean_offline', 'delete_old']},
+    { 'name': 'publish', 'steps': ['clean_offline', 'delete_old', 'clean_old_sessions']},
     { 'name': 'over', 'steps': []}
   ]
 
@@ -308,8 +308,8 @@ class UpdateWorkflow(Workflow):
     '''
     logging.info('Workflow:wf_release')
     cf = self.session.config
-    self.session.previous_release = self.session.get('release')
-    logging.debug('Workflow:wf_release:previous_session:'+str(self.session.previous_release))
+    self.session.previous_release = self.session.get('previous_release')
+    logging.info('Workflow:wf_release:previous_session:'+str(self.session.previous_release))
     if self.session.config.get('release.file') == '':
       logging.debug('Workflow:wf_release:norelease')
       self.session.set('release',None)
@@ -369,6 +369,7 @@ class UpdateWorkflow(Workflow):
         return False
 
     self.session.set('release', release)
+    self.session.set('remoterelease', release)
 
     MongoConnector.banks.update({'name': self.bank.name},{'$set': {'status.release.progress': str(release)}})
 
@@ -382,10 +383,11 @@ class UpdateWorkflow(Workflow):
     if self.options.get_option(Options.FROM_TASK) == 'download':
       # We want to download again in same release, that's fine, we do not care it is the same release
       self.download_go_ahead = True
-    if not self.download_go_ahead and self.session.previous_release == release:
-      logging.debug('Workflow:wf_release:same_as_previous_session')
+    if not self.download_go_ahead and self.session.previous_release == self.session.get('remoterelease'):
+      logging.info('Workflow:wf_release:same_as_previous_session')
       return self.no_need_to_update()
 
+    logging.info('Session:RemoteRelease:'+self.session.get('remoterelease'))
     logging.info('Session:Release:'+self.session.get('release'))
     return True
 
@@ -506,6 +508,7 @@ class UpdateWorkflow(Workflow):
         release_dict = Utils.get_more_recent_file(downloader.files_to_download)
         release = str(release_dict['year']) + '-' + str(release_dict['month']) + '-' + str(release_dict['day'])
         self.session.set('release', release)
+        self.session.set('remoterelease', release)
         # We restart from scratch, a directory with this release already exists
         if self.options.get_option(Options.FROMSCRATCH) and os.path.exists(self.session.get_full_release_directory()):
           index = 1
@@ -513,14 +516,15 @@ class UpdateWorkflow(Workflow):
             index += 1
           self.session.set('release', release+'_'+str(index))
           release = release+'_'+str(index)
-        logging.debug('Workflow:wf_release:release:'+release)
+        logging.info('Workflow:wf_download:release:remoterelease:'+self.session.get('remoterelease'))
+        logging.info('Workflow:wf_download:release:release:'+release)
         MongoConnector.banks.update({'name': self.bank.name},{'$set': {'status.release.progress': str(release)}})
         self.download_go_ahead = False
         if self.options.get_option(Options.FROM_TASK) == 'download':
           # We want to download again in same release, that's fine, we do not care it is the same release
           self.download_go_ahead = True
-        if not self.download_go_ahead and self.session.previous_release == release:
-          logging.debug('Workflow:wf_release:same_as_previous_session')
+        if not self.download_go_ahead and self.session.previous_release == self.session.get('remoterelease'):
+          logging.info('Workflow:wf_release:same_as_previous_session')
           return self.no_need_to_update()
 
     self.banks = MongoConnector.banks
@@ -560,7 +564,7 @@ class UpdateWorkflow(Workflow):
 
     if not self.options.get_option(Options.FROMSCRATCH) and not self.download_go_ahead and nb_prod_dir > 0:
       for prod in self.bank.bank['production']:
-        if self.session.get('release') == prod['release']:
+        if self.session.get('remoterelease') == prod['remoterelease']:
           logging.debug('Workflow:wf_release:same_as_previous_production_dir')
           return self.no_need_to_update()
 

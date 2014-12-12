@@ -42,6 +42,7 @@ class Session:
                       'status': {},
                       'files': [],
                       'release': None,
+                      'remoterelease': None,
                       'formats': formats,
                       'process': {
                                   'postprocess': {},

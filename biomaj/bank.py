@@ -68,6 +68,7 @@ class Bank:
     if self.bank is None:
         self.bank = {
                       'name' : self.name,
+                      'current': None,
                       'sessions': [],
                       'production': [],
                       'properties': self.get_properties()
@@ -314,6 +315,7 @@ class Bank:
                 release_types.append(rtype)
 
       production = { 'release': self.session.get('release'),
+                      'remoterelease': self.session.get('remoterelease'),
                       'session': self.session._session['id'],
                       'formats': self.session._session['formats'].keys(),
                       'types': release_types,
@@ -503,7 +505,9 @@ class Bank:
               self.session = Session(self.name, self.config, flow)
               logging.info('Configuration file has been modified since last session, restart in any case a new session')
             if self.session.get_status(Workflow.FLOW_OVER):
+              previous_release = self.session.get('remoterelease')
               self.session = Session(self.name, self.config, flow)
+              self.session.set('previous_release', previous_release)
               logging.debug('Start new session')
             else:
               logging.debug('Load previous session '+str(self.session.get('id')))

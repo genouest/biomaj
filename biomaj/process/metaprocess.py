@@ -73,7 +73,7 @@ class MetaProcess(threading.Thread):
           self.bmaj_env['noextract'] = ''
         self.bmaj_env['localrelease'] = self.bank.session.get_release_directory()
         if self.bank.session.get('release') is not None:
-          self.bmaj_env['remoterelease'] = self.bank.session.get('release')
+          self.bmaj_env['remoterelease'] = self.bank.session.get('remoterelease')
           self.bmaj_env['removedrelease'] = self.bank.session.get('release')
 
       for bdep in self.bank.depends:

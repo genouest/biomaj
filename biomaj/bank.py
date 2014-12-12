@@ -78,6 +78,17 @@ class Bank:
     self.session = None
     self.use_last_session = False
 
+  def is_locked(self):
+    '''
+    Checks if bank is locked ie action is in progress
+    '''
+    data_dir = self.config.get('data.dir')
+    lock_file = os.path.join(data_dir,self.name+'.lock')
+    if os.path.exists(lock_file):
+      return True
+    else:
+      return False
+
   def get_bank(self):
     '''
     Get bank stored in db

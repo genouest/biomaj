@@ -147,6 +147,8 @@ class Session:
     '''
     Return status for a flow event
     '''
+    if status not in  self._session['status']:
+      return False
     return self._session['status'][status]
 
   def set_status(self, status, value):

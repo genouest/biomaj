@@ -173,11 +173,10 @@ class FTPDownload(DownloadInterface):
           rfile['year'] = datetime.now().year
         rfile['name'] = parts[8]
         if len(parts) >= 10 and parts[9] == '->':
-          # Symlink, add to files AND dirs as we don't know....
+          # Symlink, add to files AND dirs as we don't know the type of the link
           rdirs.append(rfile)
 
         is_dir = False
-        print 'OSALLOU '+str(parts)
         if re.match('^d', rfile['permissions']):
           is_dir = True
 

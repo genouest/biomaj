@@ -856,13 +856,14 @@ class TestBiomajFunctional(unittest.TestCase):
       if release['name'] == rel:
         self.assertTrue(release['size']>0)
 
-
+  @attr('test')
   @attr('process')
   def test_processes_meta_data(self):
     b = Bank('localprocess')
     b.update()
     formats = b.session.get('formats')
     self.assertTrue(len(formats['blast'])==2)
+    self.assertTrue(len(formats['test'][0]['files'])==3)
 
   @attr('process')
   def test_search(self):

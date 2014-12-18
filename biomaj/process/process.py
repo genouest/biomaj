@@ -45,6 +45,7 @@ class Process:
     self.types = ''
     self.format = ''
     self.tags = ''
+    self.files = ''
 
   def run(self, simulate=False):
     '''

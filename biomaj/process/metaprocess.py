@@ -125,6 +125,8 @@ class MetaProcess(threading.Thread):
               bmaj_process.types =  self.bank.config.get(bprocess+'.types')
             if self.bank.config.get(bprocess+'.tags'):
               bmaj_process.tags =  self.bank.config.get(bprocess+'.tags')
+            if self.bank.config.get(bprocess+'.files'):
+              bmaj_process.files =  self.bank.config.get(bprocess+'.files')
             res = bmaj_process.run(self.simulate)
             processes_status[bprocess] = res
             self.set_progress(bmaj_process.name, res)
@@ -157,10 +159,10 @@ class MetaProcess(threading.Thread):
               meta_format = proc.format
             meta_type = metas[1]
             if meta_type == '':
-              meta_type = proc.types
+              meta_type = proc.types.split(',')
             meta_tags = metas[2]
             if meta_tags == '':
-              meta_tags = proc.tags
+              meta_tags = proc.tags.split(',')
             meta_files = metas[3]
             if not meta_format in self.meta_data[proc_name]:
               self.meta_data[proc_name][meta_format] = []
@@ -173,6 +175,17 @@ class MetaProcess(threading.Thread):
             self.meta_data[proc_name][meta_format].append({'tags': tag_list,
                                                 'types': meta_type.split(','),
                                                 'files': meta_files.split(',')})
+      if proc.files and proc.format:
+        tag_list = {}
+        if proc.tags != '':
+          for tag in proc.tags.split(','):
+              t = tag.split(':')
+              tag_list[t[0]] = t[1]
+        self.meta_data[proc_name][proc.format] = []
+        self.meta_data[proc_name][proc.format].append({'tags': tag_list,
+                                            'types': proc.types.split(','),
+                                            'files': proc.files.split(',')})
+
 
     def stop(self):
       self._stopevent.set( )

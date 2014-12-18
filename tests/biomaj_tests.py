@@ -1018,7 +1018,6 @@ class TestUser(unittest.TestCase):
     user.remove()
 
   @patch('ldap.initialize')
-  @attr('test')
   def test_ldap_user(self, initialize_mock):
     mockldap = MockLdapConn()
     initialize_mock.return_value = mockldap

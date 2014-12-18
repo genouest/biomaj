@@ -99,7 +99,9 @@ class MetaProcess(threading.Thread):
       for meta in self.metas:
         if not self._stopevent.isSet():
           logging.info("PROC:META:RUN:"+meta)
-          processes = self.bank.config.get(meta).split(',')
+          processes = []
+          if self.bank.config.get(meta) is not None:
+            processes = self.bank.config.get(meta).split(',')
           processes_status = {}
           for bprocess in processes:
             # Process status already ok, do not replay

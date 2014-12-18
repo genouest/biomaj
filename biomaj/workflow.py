@@ -341,7 +341,6 @@ class UpdateWorkflow(Workflow):
       if len(release_downloader.files_to_download) > 1:
         logging.error('release.file defined but matches multiple files')
         return False
-
       if cf.get('release.regexp') is None or not cf.get('release.regexp'):
         # Try to get from regexp in file name
         rel = re.search(cf.get('release.file'), release_downloader.files_to_download[0]['name'])

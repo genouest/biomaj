@@ -3,6 +3,7 @@ import pycurl
 import StringIO
 import re
 import os
+from datetime import datetime
 
 from biomaj.utils import Utils
 from biomaj.download.interface import DownloadInterface
@@ -166,9 +167,17 @@ class FTPDownload(DownloadInterface):
         rfile['size'] = parts[4]
         rfile['month'] = Utils.month_to_num(parts[5])
         rfile['day'] = parts[6]
-        rfile['year'] = parts[7]
+        try:
+          rfile['year'] = int(parts[7])
+        except Exception as e:
+          rfile['year'] = datetime.now().year
         rfile['name'] = parts[8]
+        if len(parts) >= 10 and parts[9] == '->':
+          # Symlink, add to files AND dirs as we don't know....
+          rdirs.append(rfile)
+
         is_dir = False
+        print 'OSALLOU '+str(parts)
         if re.match('^d', rfile['permissions']):
           is_dir = True
 

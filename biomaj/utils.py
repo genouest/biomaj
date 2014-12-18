@@ -113,6 +113,7 @@ class Utils:
       from_file = file_to_copy['root'] + '/' + file_to_copy['name']
       to_file = to_dir + '/' + file_to_copy['name']
       if lock is not None:
+        lock.acquire()
         try:
           if not os.path.exists(os.path.dirname(to_file)):
             os.makedirs(os.path.dirname(to_file))
@@ -134,7 +135,7 @@ class Utils:
         shutil.copystat(from_file, to_file)
 
   @staticmethod
-  def copy_files_with_regexp(from_dir, to_dir, regexps, move=False):
+  def copy_files_with_regexp(from_dir, to_dir, regexps, move=False, lock=None):
     '''
     Copy or move files from from_dir to to_dir matching regexps.
     Copy keeps the original file stats.
@@ -147,6 +148,8 @@ class Utils:
     :type regexps: list
     :param move: move instead of copy
     :type move: bool
+    :param lock: thread lock object for multi-threads
+    :type lock: Lock
     :return: list of copied files with their size
     '''
     #os.chdir(from_dir)
@@ -164,8 +167,19 @@ class Utils:
     for file_to_copy in files_to_copy:
       from_file = from_dir +'/' + file_to_copy['name']
       to_file = to_dir + '/' + file_to_copy['name']
-      if not os.path.exists(os.path.dirname(to_file)):
-        os.makedirs(os.path.dirname(to_file))
+
+      if lock is not None:
+        lock.acquire()
+        try:
+          if not os.path.exists(os.path.dirname(to_file)):
+            os.makedirs(os.path.dirname(to_file))
+        except Exception as  e:
+          logging.error(e)
+        finally:
+          lock.release()
+      else:
+        if not os.path.exists(os.path.dirname(to_file)):
+          os.makedirs(os.path.dirname(to_file))
       if move:
         shutil.move(from_file, to_file)
       else:

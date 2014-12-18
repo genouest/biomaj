@@ -540,18 +540,23 @@ class UpdateWorkflow(Workflow):
       for file_to_download in downloader.files_to_download:
         # If file is in offline dir and has same date and size, do not download again
         if os.path.exists(offline_dir + '/' + file_to_download['name']):
-          file_stat = os.stat(offline_dir + '/' + file_to_download['name'])
-          f_stat = datetime.datetime.fromtimestamp(os.path.getmtime(offline_dir + '/' + file_to_download['name']))
-          year = str(f_stat.year)
-          month = str(f_stat.month)
-          day = str(f_stat.day)
-          if file_stat.ST_SIZE != file_to_download['size'] or \
-             year != file_to_download['year'] or \
-             month != file_to_download['month'] or \
-             day != file_to_download['day']:
+          try:
+            file_stat = os.stat(offline_dir + '/' + file_to_download['name'])
+            f_stat = datetime.datetime.fromtimestamp(os.path.getmtime(offline_dir + '/' + file_to_download['name']))
+            year = str(f_stat.year)
+            month = str(f_stat.month)
+            day = str(f_stat.day)
+            if file_stat.ST_SIZE != file_to_download['size'] or \
+               year != file_to_download['year'] or \
+               month != file_to_download['month'] or \
+               day != file_to_download['day']:
+              keep_files.append(file_to_download)
+            else:
+              logging.debug('Workflow:wf_download:offline:'+file_to_download['name'])
+          except Exception as e:
+            # Could not get stats on file
+            os.remove(offline_dir + '/' + file_to_download['name'])
             keep_files.append(file_to_download)
-          else:
-            logging.debug('Workflow:wf_download:offline:'+file_to_download['name'])
         else:
           keep_files.append(file_to_download)
       downloader.files_to_download = keep_files

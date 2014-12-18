@@ -111,7 +111,10 @@ class Utils:
       from_file = file_to_copy['root'] + '/' + file_to_copy['name']
       to_file = to_dir + '/' + file_to_copy['name']
       if not os.path.exists(os.path.dirname(to_file)):
-        os.makedirs(os.path.dirname(to_file))
+        try:
+          os.makedirs(os.path.dirname(to_file))
+        except Exception as  e:
+          pass
       if move:
         shutil.move(from_file, to_file)
       else:

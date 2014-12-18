@@ -142,7 +142,10 @@ class DirectHttpDownload(DirectFTPDownload):
         file_dir = local_dir + os.path.dirname(self.save_as)
       file_path = file_dir + '/' + os.path.basename(self.save_as)
       if not os.path.exists(file_dir):
-        os.makedirs(file_dir)
+        try:
+          os.makedirs(file_dir)
+        except Exception as e:
+          pass
       logging.debug(str(cur_files)+'/'+str(nb_files)+' downloading file '+rfile['name']+', save as '+self.save_as)
       cur_files += 1
       if not 'url' in rfile:

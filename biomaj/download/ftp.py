@@ -95,7 +95,10 @@ class FTPDownload(DownloadInterface):
         file_dir = local_dir + os.path.dirname(rfile['name'])
       file_path = file_dir + '/' + os.path.basename(rfile['name'])
       if not os.path.exists(file_dir):
-        os.makedirs(file_dir)
+        try:
+          os.makedirs(file_dir)
+        except Exception as e:
+          pass
       logging.debug(str(cur_files)+'/'+str(nb_files)+' downloading file '+rfile['name'])
       cur_files += 1
       if not 'url' in rfile:

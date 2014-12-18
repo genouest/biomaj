@@ -37,7 +37,7 @@ class LocalDownload(DownloadInterface):
     '''
     logging.debug('Local:Download')
 
-    Utils.copy_files(self.files_to_download, local_dir)
+    Utils.copy_files(self.files_to_download, local_dir, lock=self.mkdir_lock)
 
     return self.files_to_download
 

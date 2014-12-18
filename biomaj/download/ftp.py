@@ -94,11 +94,15 @@ class FTPDownload(DownloadInterface):
       if keep_dirs:
         file_dir = local_dir + os.path.dirname(rfile['name'])
       file_path = file_dir + '/' + os.path.basename(rfile['name'])
-      if not os.path.exists(file_dir):
-        try:
+
+      self.mkdir_lock.acquire()
+      try:
+        if not os.path.exists(file_dir):
           os.makedirs(file_dir)
-        except Exception as e:
-          pass
+      except Exception as e:
+        logging.error(e)
+      finally:
+        self.mkdir_lock.release() # release lock, no matter what
       logging.debug(str(cur_files)+'/'+str(nb_files)+' downloading file '+rfile['name'])
       cur_files += 1
       if not 'url' in rfile:

@@ -351,6 +351,7 @@ class UpdateWorkflow(Workflow):
       else:
         # Download and extract
         tmp_dir = tempfile.mkdtemp('biomaj')
+        release_downloader.mkdir_lock = DownloadThread.MKDIR_LOCK
         rel_files = release_downloader.download(tmp_dir)
         rel_file = open(tmp_dir + '/' + rel_files[0]['name'])
         rel_content = rel_file.read()

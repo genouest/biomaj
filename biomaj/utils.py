@@ -85,7 +85,7 @@ class Utils:
           }[date]
 
   @staticmethod
-  def copy_files(files_to_copy, to_dir, move=False):
+  def copy_files(files_to_copy, to_dir, move=False, lock=None):
     '''
     Copy or move files to to_dir, keeping directory structure.
 
@@ -102,6 +102,8 @@ class Utils:
     :type to_dir: str
     :param move: move instead of copy
     :type move: bool
+    :param lock: thread lock object for multi-threads
+    :type lock: Lock
     '''
     nb_files = len(files_to_copy)
     cur_files = 1
@@ -110,11 +112,21 @@ class Utils:
       cur_files += 1
       from_file = file_to_copy['root'] + '/' + file_to_copy['name']
       to_file = to_dir + '/' + file_to_copy['name']
-      if not os.path.exists(os.path.dirname(to_file)):
+      if lock is not None:
         try:
-          os.makedirs(os.path.dirname(to_file))
+          if not os.path.exists(os.path.dirname(to_file)):
+            os.makedirs(os.path.dirname(to_file))
         except Exception as  e:
-          pass
+          logging.error(e)
+        finally:
+          lock.release()
+
+      else:
+        if not os.path.exists(os.path.dirname(to_file)):
+          try:
+            os.makedirs(os.path.dirname(to_file))
+          except Exception as  e:
+            logging.error(e)
       if move:
         shutil.move(from_file, to_file)
       else:

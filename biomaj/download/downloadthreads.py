@@ -13,6 +13,7 @@ class DownloadThread(threading.Thread):
 
   NB_THREAD = 2
 
+
   @staticmethod
   def get_threads(downloader, local_dir):
     '''
@@ -73,6 +74,7 @@ class DownloadThread(threading.Thread):
     '''
     threading.Thread.__init__(self)
     self.downloader = downloader
+    self.downloader.mkdir_lock = DownloadThread.MKDIR_LOCK
     self.local_dir = local_dir
     self.error = False
     self._stopevent = threading.Event( )
@@ -92,3 +94,6 @@ class DownloadThread(threading.Thread):
 
   def stop(self):
     self._stopevent.set( )
+
+
+DownloadThread.MKDIR_LOCK = threading.Lock()

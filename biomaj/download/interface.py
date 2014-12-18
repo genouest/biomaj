@@ -25,6 +25,7 @@ class DownloadInterface:
     self.credentials = None
     #bank name
     self.bank = None
+    self.mkdir_lock = None
 
 
   def set_progress(self, val, max):

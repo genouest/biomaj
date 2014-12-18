@@ -19,7 +19,7 @@ class _FakeLock:
   def __init__(self):
     pass
 
-  def aquire(self):
+  def acquire(self):
     pass
 
   def release(self):

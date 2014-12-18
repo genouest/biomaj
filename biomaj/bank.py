@@ -582,6 +582,12 @@ class Bank:
     logging.warn('DELETE '+bank_data_dir)
     if os.path.exists(bank_data_dir):
       shutil.rmtree(bank_data_dir)
+    bank_offline_dir = os.path.join(self.config.get('data.dir'),self.config.get('offline.dir.name'))
+    if os.path.exists(bank_offline_dir):
+      shutil.rmtree(bank_offline_dir)
+    bank_log_dir = os.path.join(self.get('log.dir'),self.name)
+    if os.path.exists(bank_log_dir):
+      shutil.rmtree(bank_log_dir)
     return True
 
   def get_status(self):

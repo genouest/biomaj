@@ -11,6 +11,20 @@ from biomaj.utils import Utils
 from biomaj.mongo_connector import MongoConnector
 
 
+class _FakeLock:
+  '''
+  Fake lock for downloaders not called by a Downloadthread
+  '''
+
+  def __init__(self):
+    pass
+
+  def aquire(self):
+    pass
+
+  def release(self):
+    pass
+
 class DownloadInterface:
   '''
   Main interface that all downloaders must extend
@@ -25,7 +39,7 @@ class DownloadInterface:
     self.credentials = None
     #bank name
     self.bank = None
-    self.mkdir_lock = None
+    self.mkdir_lock = _FakeLock()
 
 
   def set_progress(self, val, max):

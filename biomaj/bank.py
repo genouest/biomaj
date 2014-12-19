@@ -353,8 +353,10 @@ class Bank:
       return
     #'last_update_session' in self.bank and self.bank['last_update_session']
     old_sessions = []
+    prod_releases = []
     for session in self.bank['sessions']:
       if session['id'] == self.session.get('last_update_session'):
+        prod_release.append(session['release'])
         continue
       if session['id'] == self.session.get('last_remove_session'):
         continue
@@ -364,11 +366,21 @@ class Bank:
           is_prod_session = True
           break
       if is_prod_session:
+        prod_releases.append(session['release'])
         continue
-      old_sessions.append(session['id'])
+      old_sessions.append(session)
     if len(old_sessions) > 0:
-      for session_id in old_sessions:
+      for session in old_sessions:
+        session_id = session['id']
         self.banks.update({'name': self.name}, {'$pull' : { 'sessions': { 'id': session_id }}})
+        if session['release'] not in prod_releases:
+          # There might be unfinished releases linked to session, delete them
+          # if they are not related to a production directory or latest run
+          session_dir = os.path.join(self.config.get('data.dir'),
+                                      self.config.get('dir.version'),
+                                      self.name+'-'+str(session['release']))
+          if os.path.exists(session_dir):
+            shutil.rmtree(session_dir)
       self.bank = self.banks.find_one({'name': self.name})
 
   def publish(self):

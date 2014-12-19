@@ -551,10 +551,11 @@ class UpdateWorkflow(Workflow):
             year = str(f_stat.year)
             month = str(f_stat.month)
             day = str(f_stat.day)
-            if file_stat.ST_SIZE != file_to_download['size'] or \
-               year != file_to_download['year'] or \
-               month != file_to_download['month'] or \
-               day != file_to_download['day']:
+            if str(file_stat.st_size) != str(file_to_download['size']) or \
+               str(year) != str(file_to_download['year']) or \
+               str(month) != str(file_to_download['month']) or \
+               str(day) != str(file_to_download['day']):
+              logging.debug('Workflow:wf_download:different_from_offline:'+file_to_download['name'])
               keep_files.append(file_to_download)
             else:
               logging.debug('Workflow:wf_download:offline:'+file_to_download['name'])

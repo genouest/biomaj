@@ -65,6 +65,7 @@ def main():
     --stop-before xx: stop update cycle before the start of step xx
     --stop-after xx: stop update cycle after step xx has completed
     --from-task xx --release yy: Force an re-update cycle for bank release *yy* or from current cycle (in production directories), skipping steps up to *xx*
+    --process xx: linked to from-task, optionally specify a block, meta or process name to start from
 --publish / publish: Publish bank as current release to use
     [MANDATORY]
     --bank xx: name of the bank to update

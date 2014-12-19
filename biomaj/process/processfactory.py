@@ -37,12 +37,25 @@ class ProcessFactory:
     '''
     logging.debug('Start meta threads')
     threads = []
+    running_th = []
     for thread_tasks in self.threads_tasks:
       meta_thread = MetaProcess(self.bank, thread_tasks, self.meta_status, self.meta_data, simulate)
       meta_thread.workflow = self.workflow
       meta_thread.start()
       threads.append(meta_thread)
+      running_th.append(meta_thread)
     # Wait for the end of the threads
+    while len(running_th) > 0:
+      try:
+          # Join all threads using a timeout so it doesn't block
+          # Filter out threads which have been joined or are None
+          running_th = [t.join(1000) for t in running_th if t is not None and t.isAlive()]
+      except KeyboardInterrupt:
+          logging.warn("Ctrl-c received! Sending kill to threads...")
+          logging.warn("Running tasks will continue and process will stop.")
+          for t in running_th:
+              t.kill_received = True
+
     for meta_thread in threads:
       meta_thread.join()
     global_meta_status = {}

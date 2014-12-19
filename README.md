@@ -8,7 +8,7 @@ It is in development
 Dependencies
 ============
 
-libcurl-dev
+libcurl-dev, libldap2-dev, gcc
 
 mongodb, elasticsearch (use_elastic=1)
 

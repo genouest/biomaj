@@ -39,6 +39,8 @@ class MultiDownload(DownloadInterface):
   def download(self, local_dir):
     self.files_to_download = []
     for d in self.downloaders:
+      if self.kill_received:
+        raise Exception('Kill request received, exiting')
       d.download(local_dir)
     self.files_to_download = []
     for d in self.downloaders:
@@ -135,6 +137,9 @@ class DirectHttpDownload(DirectFTPDownload):
     cur_files = 1
 
     for rfile in self.files_to_download:
+      if self.kill_received:
+        raise Exception('Kill request received, exiting')
+
       if self.save_as is None:
         self.save_as = rfile['name']
       file_dir = local_dir

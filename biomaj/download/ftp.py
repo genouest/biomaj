@@ -90,6 +90,8 @@ class FTPDownload(DownloadInterface):
     cur_files = 1
 
     for rfile in self.files_to_download:
+      if self.kill_received:
+        raise Exception('Kill request received, exiting')
       file_dir = local_dir
       if keep_dirs:
         file_dir = local_dir + os.path.dirname(rfile['name'])

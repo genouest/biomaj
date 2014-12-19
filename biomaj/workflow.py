@@ -601,10 +601,24 @@ class UpdateWorkflow(Workflow):
     else:
       thlist = DownloadThread.get_threads(downloader, offline_dir)
 
+    running_th = []
     for th in thlist:
+      running_th.append(th)
       th.start()
-    for th in thlist:
-      th.join()
+
+    while len(running_th) > 0:
+      try:
+          # Join all threads using a timeout so it doesn't block
+          # Filter out threads which have been joined or are None
+          running_th = [t.join(1000) for t in running_th if t is not None and t.isAlive()]
+      except KeyboardInterrupt:
+          logging.warn("Ctrl-c received! Sending kill to threads...")
+          logging.warn("Running tasks will continue and process will stop.")
+          for t in running_th:
+              t.downloader.kill_received = True
+
+    #for th in thlist:
+    #  th.join()
     is_error = False
     for th in thlist:
       if th.error:

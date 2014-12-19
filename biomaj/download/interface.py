@@ -40,6 +40,7 @@ class DownloadInterface:
     #bank name
     self.bank = None
     self.mkdir_lock = _FakeLock()
+    self.kill_received = False
 
 
   def set_progress(self, val, max):

@@ -75,6 +75,7 @@ class DownloadThread(threading.Thread):
     threading.Thread.__init__(self)
     self.downloader = downloader
     self.downloader.mkdir_lock = DownloadThread.MKDIR_LOCK
+    self.downloader.kill_received = False
     self.local_dir = local_dir
     self.error = False
     self._stopevent = threading.Event( )

@@ -26,6 +26,7 @@ class MetaProcess(threading.Thread):
       :type simulate: bool
       '''
       threading.Thread.__init__(self)
+      self.kill_received = False
       self.workflow = None
       self.simulate = simulate
       self.bank = bank
@@ -104,6 +105,8 @@ class MetaProcess(threading.Thread):
             processes = self.bank.config.get(meta).split(',')
           processes_status = {}
           for bprocess in processes:
+            if self.kill_received:
+              raise Exception('Kill request received, exiting')
             # Process status already ok, do not replay
             if meta in self.meta_status and bprocess in self.meta_status[meta] and self.meta_status[meta][bprocess]:
               logging.info("PROC:META:SKIP:PROCESS:"+bprocess)

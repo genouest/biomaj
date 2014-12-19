@@ -45,6 +45,7 @@ class ProcessFactory:
       threads.append(meta_thread)
       running_th.append(meta_thread)
     # Wait for the end of the threads
+    kill_received = False
     while len(running_th) > 0:
       try:
           # Join all threads using a timeout so it doesn't block
@@ -53,6 +54,7 @@ class ProcessFactory:
       except KeyboardInterrupt:
           logging.warn("Ctrl-c received! Sending kill to threads...")
           logging.warn("Running tasks will continue and process will stop.")
+          kill_received = True
           for t in running_th:
               t.kill_received = True
 
@@ -66,6 +68,9 @@ class ProcessFactory:
         global_meta_status[meta] = meta_thread.meta_status[meta]
       if not meta_thread.global_status:
         global_status = False
+
+    if kill_received:
+      global_status = False
 
     logging.debug('Meta threads are over')
     return (global_status, global_meta_status)
@@ -203,6 +208,8 @@ class PostProcessFactory(ProcessFactory):
     self.meta_status = None
     global_status = True
     for process_block in process_blocks:
+      if not global_status:
+        continue
       logging.info('PROC:POST:BLOCK:'+process_block)
       if process_block in self.blocks:
         self.meta_status = self.blocks[process_block]

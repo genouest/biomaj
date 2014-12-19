@@ -105,7 +105,7 @@ class FTPDownload(DownloadInterface):
         logging.error(e)
       finally:
         self.mkdir_lock.release() # release lock, no matter what
-      logging.debug(str(cur_files)+'/'+str(nb_files)+' downloading file '+rfile['name'])
+      logging.debug('FTP:Download:Progress'+str(cur_files)+'/'+str(nb_files)+' downloading file '+rfile['name'])
       cur_files += 1
       if not 'url' in rfile:
         rfile['url'] = self.url
@@ -122,7 +122,7 @@ class FTPDownload(DownloadInterface):
       #  logging.error('Error while downloading '+rfile['name']+' - '+str(errcode))
       curl.close()
       fp.close()
-      logging.debug('downloaded!')
+      #logging.debug('downloaded!')
       self.set_permissions(file_path, rfile)
       # Add progress only per 10 files to limit db requests
       if nb_files < 10:

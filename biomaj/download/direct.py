@@ -154,7 +154,7 @@ class DirectHttpDownload(DirectFTPDownload):
         logging.error(e)
       finally:
         self.mkdir_lock.release() # release lock, no matter what
-      logging.debug(str(cur_files)+'/'+str(nb_files)+' downloading file '+rfile['name']+', save as '+self.save_as)
+      logging.debug('DirectHTTP:Download:Progress'+str(cur_files)+'/'+str(nb_files)+' downloading file '+rfile['name']+', save as '+self.save_as)
       cur_files += 1
       if not 'url' in rfile:
         rfile['url'] = self.url

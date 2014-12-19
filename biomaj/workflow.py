@@ -616,7 +616,6 @@ class UpdateWorkflow(Workflow):
           logging.warn("Running tasks will continue and process will stop.")
           for t in running_th:
               t.downloader.kill_received = True
-
     #for th in thlist:
     #  th.join()
     is_error = False

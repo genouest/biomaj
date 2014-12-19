@@ -237,7 +237,7 @@ def main():
         sys.exit(1)
 
     if ((options.remove and options.release) or options.removeall) and options.bank:
-      bmaj = Bank(options.bank, options)
+      bmaj = Bank(options.bank, options, no_log=True)
       print 'Log file: '+bmaj.config.log_file
       if options.removeall:
         res = bmaj.removeAll(options.force)

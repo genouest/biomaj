@@ -856,7 +856,6 @@ class TestBiomajFunctional(unittest.TestCase):
       if release['name'] == rel:
         self.assertTrue(release['size']>0)
 
-  @attr('test')
   @attr('process')
   def test_processes_meta_data(self):
     b = Bank('localprocess')
@@ -1000,22 +999,33 @@ class TestUser(unittest.TestCase):
   def tearDown(self):
     self.utils.clean()
 
-  def test_get_user(self):
+  @patch('ldap.initialize')
+  def test_get_user(self, initialize_mock):
+    mockldap = MockLdapConn()
+    initialize_mock.return_value = mockldap
     user = BmajUser('biomaj')
     self.assertTrue(user.user is None)
     user.remove()
 
-  def test_create_user(self):
+  @patch('ldap.initialize')
+  def test_create_user(self, initialize_mock):
+    mockldap = MockLdapConn()
+    initialize_mock.return_value = mockldap
     user = BmajUser('biomaj')
     user.create('test', 'test@no-reply.org')
     self.assertTrue(user.user['email'] == 'test@no-reply.org')
     user.remove()
 
-  def test_check_password(self):
+
+  @patch('ldap.initialize')
+  def test_check_password(self, initialize_mock):
+    mockldap = MockLdapConn()
+    initialize_mock.return_value = mockldap
     user = BmajUser('biomaj')
     user.create('test', 'test@no-reply.org')
     self.assertTrue(user.check_password('test'))
     user.remove()
+
 
   @patch('ldap.initialize')
   def test_ldap_user(self, initialize_mock):

@@ -118,7 +118,7 @@ class BmajUser(object):
         if user_dn:
           return True
       except Exception, err:
-        logging.error('Bind error'+str(err))
+        logging.error('Bind error: '+str(err))
 
     else:
       hashed = bcrypt.hashpw(password, self.user['hashed_password'])

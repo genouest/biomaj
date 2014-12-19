@@ -173,6 +173,9 @@ def main():
         print '#' * 80
         print "# Name:\t"+_bank['name']
         print "# Type:\t"+str(_bank['properties']['type'])
+        # Get last update session
+        if 'status' in _bank:
+          print "# Last update status:\t"+str(_bank['status']['over']['status'])
         release = None
         if 'current' in _bank and _bank['current']:
           for prod in _bank['production']:

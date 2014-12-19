@@ -83,7 +83,8 @@ class Bank:
     Checks if bank is locked ie action is in progress
     '''
     data_dir = self.config.get('data.dir')
-    lock_file = os.path.join(data_dir,self.name+'.lock')
+    lock_dir = self.config.get('lock.dir',default=data_dir)
+    lock_file = os.path.join(lock_dir,self.name+'.lock')
     if os.path.exists(lock_file):
       return True
     else:

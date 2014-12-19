@@ -58,6 +58,9 @@ class UtilsForTest():
     self.process_dir =os.path.join(self.test_dir,'process')
     if not os.path.exists(self.process_dir):
       os.makedirs(self.process_dir)
+    self.lock_dir =os.path.join(self.test_dir,'lock')
+    if not os.path.exists(self.lock_dir):
+      os.makedirs(self.lock_dir)
 
 
     if self.global_properties is None:
@@ -123,6 +126,8 @@ class UtilsForTest():
             fout.write("data.dir="+self.data_dir+"\n")
           elif line.startswith('process.dir'):
             fout.write("process.dir="+self.process_dir+"\n")
+          elif line.startswith('lock.dir'):
+            fout.write("lock.dir="+self.lock_dir+"\n")
           else:
             fout.write(line)
     fout.close()

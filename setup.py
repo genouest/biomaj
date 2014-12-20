@@ -17,6 +17,7 @@ config = {
                             'mock',
                             'py-bcrypt',
                             'mock',
+                            'drmaa',
                             'elasticsearch'],
     'packages': find_packages(),
     'include_package_data': True,

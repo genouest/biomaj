@@ -112,8 +112,14 @@ def main():
     return
 
   bmaj = None
-  if options.config is not None:
-    BiomajConfig.load_config(options.config)
+  try:
+    if options.config is not None:
+      BiomajConfig.load_config(options.config)
+    else:
+      BiomajConfig.load_config()
+  except Exception as e:
+    print str(e)
+    sys.exit(1)
 
   try:
     if options.search:

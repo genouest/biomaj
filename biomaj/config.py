@@ -46,14 +46,23 @@ class BiomajConfig:
   user_config = None
 
   @staticmethod
-  def load_config(config_file='global.properties'):
+  def load_config(config_file=None):
     '''
     Loads general config
 
     :param config_file: global.properties file path
     :type config_file: str
     '''
-    if not os.path.exists(config_file) and not os.path.exists(os.path.expanduser('~/.biomaj.cfg')):
+    if config_file is None:
+      env_file = os.environ.get('BIOMAJ_CONF')
+      if env_file is not None and os.path.exists(env_file):
+        config_file = env_file
+      else:
+        env_file = 'global.properties'
+        if os.path.exists(env_file):
+          config_file = env_file
+
+    if config_file is None or not os.path.exists(config_file):
       raise Exception('Missing global configuration file')
 
     BiomajConfig.config_file = os.path.abspath(config_file)

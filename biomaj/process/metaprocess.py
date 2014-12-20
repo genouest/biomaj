@@ -162,10 +162,10 @@ class MetaProcess(threading.Thread):
               meta_format = proc.format
             meta_type = metas[1]
             if meta_type == '':
-              meta_type = proc.types.split(',')
+              meta_type = proc.types
             meta_tags = metas[2]
             if meta_tags == '':
-              meta_tags = proc.tags.split(',')
+              meta_tags = proc.tags
             meta_files = metas[3]
             if not meta_format in self.meta_data[proc_name]:
               self.meta_data[proc_name][meta_format] = []

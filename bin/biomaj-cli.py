@@ -35,6 +35,7 @@ def main():
   parser.add_argument('--search', dest="search", help="Search by format and types", action="store_true", default=False)
   parser.add_argument('--formats', dest="formats",help="List of formats to search, comma separated")
   parser.add_argument('--types', dest="types",help="List of types to search, comma separated")
+  parser.add_argument('--query', dest="query",help="Lucene query syntax to search in index")
 
   parser.add_argument('--show', dest="show", help="Show format files for selected bank", action="store_true", default=False)
 
@@ -98,6 +99,8 @@ def main():
   AND/OR
    --types xx,yy : list of comma separated type
 
+   --query "LUCENE query syntax": search in index (if activated)
+
 --show: Show bank files per format
   [MANDATORY]
   --bank xx: name of the bank to show
@@ -123,24 +126,35 @@ def main():
 
   try:
     if options.search:
-      formats = []
-      if options.formats:
-        formats = options.formats.split(',')
-      types = []
-      if options.types:
-        types = options.types.split(',')
-      print "Search by formats="+str(formats)+", types="+str(types)
-      res = Bank.search(formats, types, False)
-      print '#' * 80
-      print "# Name\tRelease"
-      for bank in res:
+      if options.query:
+        res = Bank.searchindex(options.query)
+        print "Query matches for :"+options.query
+        print "Release\tFormat\tType\tFiles\n"
+        for match in res:
+          print match['_source']['release'] + "\t" + \
+                str(match['_source']['format']) + "\t" + \
+                str(match['_source']['types']) + "\n"
+          for f in match['_source']['files']:
+            print "\t\t\t"+f+"\n"
+      else:
+        formats = []
+        if options.formats:
+          formats = options.formats.split(',')
+        types = []
+        if options.types:
+          types = options.types.split(',')
+        print "Search by formats="+str(formats)+", types="+str(types)
+        res = Bank.search(formats, types, False)
+        print '#' * 80
+        print "# Name\tRelease"
+        for bank in res:
 
-        print " "+bank['name']
-        for prod in bank['production']:
-            print " \t"+prod['release']+"\t"+','.join(prod['formats'])+"\t"+','.join(prod['types'])
+          print " "+bank['name']
+          for prod in bank['production']:
+              print " \t"+prod['release']+"\t"+','.join(prod['formats'])+"\t"+','.join(prod['types'])
 
-      print '#' * 80
-      return
+        print '#' * 80
+        return
 
     if options.show:
       if not options.bank:

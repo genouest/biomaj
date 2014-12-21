@@ -14,6 +14,7 @@ def main():
 
   parser = argparse.ArgumentParser(add_help=False)
   parser.add_argument('-c', '--config', dest="config",help="Configuration file")
+  parser.add_argument('--check', dest="check", help="Check bank property file", action="store_true", default=False)
   parser.add_argument('-u', '--update', dest="update", help="Update action", action="store_true", default=False)
   parser.add_argument('-z', '--fromscratch', dest="fromscratch", help="Force a new cycle update", action="store_true", default=False)
   parser.add_argument('-p', '--publish', dest="publish", help="Publish", action="store_true", default=False)
@@ -56,7 +57,9 @@ def main():
     --bank xx / bank: Get status details of bank
 
 --log DEBUG|INFO|WARN|ERR  [OPTIONAL]: set log level in logs for this run, default is set in global.properties file
-
+--check: Check bank property file
+    [MANDATORY]
+    --bank xx: name of the bank to check (will check xx.properties)
 --update: Update bank
     [MANDATORY]
     --bank xx: name of the bank to update
@@ -184,7 +187,10 @@ def main():
                 print "# \t\t\t"+file
       sys.exit(1)
 
-
+    if options.check and options.bank:
+      bank = Bank(options.bank, no_log=False)
+      print options.bank+" check: "+str(bank.check())+"\n"
+      sys.exit(0)
 
 
     if options.status:

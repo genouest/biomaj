@@ -78,6 +78,55 @@ class Bank:
     self.session = None
     self.use_last_session = False
 
+  def check(self):
+    '''
+    Checks bank configuration
+    '''
+    status = True
+    if not self.config.get('offline.dir.name'):
+      logging.error('offline.dir.name is not set')
+      status = False
+    if not self.config.get('dir.version'):
+      logging.error('dir.version is not set')
+      status = False
+    if not self.config.get('protocol'):
+      logging.error('protocol is not set')
+      status = False
+    else:
+      protocol = self.config.get('protocol')
+      allowed_protocols = ['multi', 'local', 'ftp', 'sftp', 'http', 'directftp', 'directhttp']
+      if protocol not in allowed_protocols:
+        logging.error('Protocol not supported: '+protocol)
+        status = False
+      if protocol != 'multi':
+        if protocol != 'local' and not self.config.get('server'):
+          logging.error('server not set')
+          status = False
+        if not self.config.get('remote.dir'):
+          logging.error('remote.dir not set')
+          status = False
+        if not self.config.get('remote.files'):
+          logging.error('remote.files not set')
+          status = False
+    if not self.config.get('local.files'):
+      logging.error('local.files is not set')
+      status = False
+
+    return status
+
+    '''
+    offline.dir.name=offline/ncbi/blast/alu_tmp
+    dir.version=ncbi/blast/alu
+    protocol=ftp
+    server=ftp.ncbi.nih.gov
+    remote.dir=/blast/db/FASTA/
+
+    remote.files=^alu.*\.gz$
+    local.files=^alu\.(a|n).*
+    '''
+
+    return 'Not yet implemented'
+
   def is_locked(self):
     '''
     Checks if bank is locked ie action is in progress

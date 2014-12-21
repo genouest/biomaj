@@ -54,8 +54,12 @@ class BmajIndex(object):
                 }
             }
         }
-        if not BmajIndex.es.indices.exists(index=BmajIndex.index):
+        try:
+          if not BmajIndex.es.indices.exists(index=BmajIndex.index):
             BmajIndex.es.indices.create(index=BmajIndex.index,body=mapping)
+        except Exception as e:
+          logging.error('ElasticSearch connection error, check server is running and configuration')
+          raise e
 
 
     @staticmethod

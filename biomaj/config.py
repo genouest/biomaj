@@ -232,6 +232,9 @@ class BiomajConfig:
     if not self.get('dir.version'):
       logging.error('dir.version is not set')
       status = False
+    if self.get('dir.version').startswith('/'):
+      logging.error('dir.version must be relative to data.dir and should not start with a /')
+      status = False
     if not self.get('protocol'):
       logging.error('protocol is not set')
       status = False

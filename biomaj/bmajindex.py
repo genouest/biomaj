@@ -39,6 +39,7 @@ class BmajIndex(object):
       BmajIndex.do_index = do_index
       if BmajIndex.es is None:
         BmajIndex.es = Elasticsearch(hosts)
+
         mapping = {
           "mappings": {
                 "production": {
@@ -54,7 +55,7 @@ class BmajIndex(object):
             }
         }
         if not BmajIndex.es.indices.exists(index=BmajIndex.index):
-          BmajIndex.es.indices.create(index=BmajIndex.index,body=mapping)
+            BmajIndex.es.indices.create(index=BmajIndex.index,body=mapping)
 
 
     @staticmethod

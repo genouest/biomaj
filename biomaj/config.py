@@ -184,3 +184,116 @@ class BiomajConfig:
     Return last modification time of config files
     '''
     return self.last_modified
+
+
+
+  def check(self):
+    '''
+    Check configuration
+    '''
+    status = True
+    if not self.get('data.dir'):
+      logging.error('data.dir is not set')
+      status = False
+    if not self.get('conf.dir'):
+      logging.error('conf.dir is not set')
+      status = False
+    if not self.get('log.dir'):
+      logging.error('log.dir is not set')
+      status = False
+    if not self.get('process.dir'):
+      logging.error('process.dir is not set')
+      status = False
+    if self.get('use_ldap'):
+      if not self.get('ldap.host') or not self.get('ldap.port') or not self.get('ldap.dn'):
+        logging.error('use_ldap set to 1 but missing configuration')
+        status = False
+    if self.get('use_elastic'):
+      if not self.get('elastic_nodes') or not self.get('elastic_index'):
+        logging.error('use_elastic set to 1 but missing configuration')
+        status = False
+
+    if not self.get('celery.queue') or not self.get('celery.broker'):
+      logging.warn('celery config is not set, that\'s fine if you do not use Celery for background tasks')
+
+    if not self.get('mail.smtp.host'):
+      logging.error('SMTP mail config not set, you will not be able to send emails')
+      status = False
+    if not self.get('mail.from'):
+      logging.error('Mail origin mail.from not set')
+      status = False
+
+    if not self.get('offline.dir.name'):
+      logging.error('offline.dir.name is not set')
+      status = False
+    if self.get('offline.dir.name').startswith('/'):
+      logging.error('offline dir must be relative to data.dir and should not start with a /')
+      status = False
+    if not self.get('dir.version'):
+      logging.error('dir.version is not set')
+      status = False
+    if not self.get('protocol'):
+      logging.error('protocol is not set')
+      status = False
+    else:
+      protocol = self.get('protocol')
+      allowed_protocols = ['multi', 'local', 'ftp', 'sftp', 'http', 'directftp', 'directhttp']
+      if protocol not in allowed_protocols:
+        logging.error('Protocol not supported: '+protocol)
+        status = False
+      if protocol != 'multi':
+        if protocol != 'local' and not self.get('server'):
+          logging.error('server not set')
+          status = False
+        if not self.get('remote.dir'):
+          logging.error('remote.dir not set')
+          status = False
+        if not self.get('remote.files'):
+          logging.error('remote.files not set')
+          status = False
+    if not self.get('local.files'):
+      logging.error('local.files is not set')
+      status = False
+    # Remove processes
+    processes = ['db.remove.process','db.pre.process']
+    for process in processes:
+      if self.get(process):
+        metas = self.get(process).split(',')
+        for meta in metas:
+          if not self.get(meta):
+            logging.error('Metaprocess ' + meta + ' not defined')
+            status = False
+          else:
+            procs = self.get(meta).split(',')
+            for proc in procs:
+              if not self.get(proc+'.name'):
+                logging.error('Process '+proc+' not defined')
+                status = False
+              else:
+                if not self.get(proc+'.exe'):
+                  logging.error('Process exe for '+proc+' not defined')
+                  status = False
+    # Check blocks
+    if self.get('BLOCKS'):
+      blocks = self.get('BLOCKS').split(',')
+      for block in blocks:
+        if not self.get(block+'.db.post.process'):
+          logging.error('Block '+block+' not defined')
+          status = False
+        else:
+          metas = self.get(block+'.db.post.process').split(',')
+          for meta in metas:
+            if not self.get(meta):
+              logging.error('Metaprocess ' + meta + ' not defined')
+              status = False
+            else:
+              procs = self.get(meta).split(',')
+              for proc in procs:
+                if not self.get(proc+'.name'):
+                  logging.error('Process '+proc+' not defined')
+                  status = False
+                else:
+                  if not self.get(proc+'.exe'):
+                    logging.error('Process exe for '+proc+' not defined')
+                    status = False
+    return status

@@ -543,10 +543,10 @@ class Bank:
           if load_session is not None:
             #self.session.load(self.bank['sessions'][len(self.bank['sessions'])-1])
             self.session.load(session)
-            if self.config.last_modified > self.session.get('last_modified'):
-              # Config has changed, need to restart
-              self.session = Session(self.name, self.config, flow)
-              logging.info('Configuration file has been modified since last session, restart in any case a new session')
+            #if self.config.last_modified > self.session.get('last_modified'):
+            #  # Config has changed, need to restart
+            #  self.session = Session(self.name, self.config, flow)
+            #  logging.info('Configuration file has been modified since last session, restart in any case a new session')
             if self.session.get_status(Workflow.FLOW_OVER):
               previous_release = self.session.get('remoterelease')
               self.session = Session(self.name, self.config, flow)

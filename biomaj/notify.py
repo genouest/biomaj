@@ -24,6 +24,8 @@ class Notify:
     msg['To'] = email.utils.formataddr(('Recipient', mto))
     msg['From'] = email.utils.formataddr(('Author', mfrom))
     msg['Subject'] = 'BANK['+bank.name+'] - STATUS['+str(bank.session.get_status(Workflow.FLOW_OVER))+'] - UPDATE['+str(bank.session.get('update'))+'] - REMOVE['+str(bank.session.get('remove'))+']'
+    if bank.session.get('update'):
+      msg['Subject'] += ' - RELEASE['+str(bank.session.get('release'))+']'
 
     server = None
     try:

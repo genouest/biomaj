@@ -377,10 +377,10 @@ class Bank:
     for session in self.bank['sessions']:
       if session['id'] == self.session.get('id'):
         # Current session
-        prod_release.append(session['release'])
+        prod_releases.append(session['release'])
         continue
       if session['id'] == self.session.get('last_update_session'):
-        prod_release.append(session['release'])
+        prod_releases.append(session['release'])
         continue
       if session['id'] == self.session.get('last_remove_session'):
         continue

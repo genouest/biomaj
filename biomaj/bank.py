@@ -400,7 +400,7 @@ class Bank:
                                       self.config.get('dir.version'),
                                       self.name+'-'+str(session['release']))
           if os.path.exists(session_dir):
-            logging.info('Bank:DeleteOldSessionDir:'+self.name+'-'+str(session['release'])
+            logging.info('Bank:DeleteOldSessionDir:'+self.name+'-'+str(session['release']))
             shutil.rmtree(session_dir)
       self.bank = self.banks.find_one({'name': self.name})
 

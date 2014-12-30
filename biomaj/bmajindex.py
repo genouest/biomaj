@@ -91,7 +91,7 @@ class BmajIndex(object):
       try:
         query = {
           "query" : {
-            "term" : { "release" : release }
+            "term" : { "release" : release, "bank": bank_name }
             }
           }
         BmajIndex.es.delete_by_query(index=BmajIndex.index, body=query)
@@ -163,7 +163,7 @@ class BmajIndex(object):
             elt['release'] = obj['release']
             if 'status' in obj:
               elt['status'] = obj['status']
-            res = BmajIndex.es.index(index=BmajIndex.index, doc_type='production', id=bank_name+'_'+str(obj['release'])+'_'+fkey, body=elt)
+            res = BmajIndex.es.index(index=BmajIndex.index, doc_type='production', body=elt)
         if flush:
           BmajIndex.es.indices.flush(index=BmajIndex.index, force=True)
       except Exception as e:

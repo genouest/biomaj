@@ -40,6 +40,7 @@ class ProcessFactory:
     running_th = []
     for thread_tasks in self.threads_tasks:
       meta_thread = MetaProcess(self.bank, thread_tasks, self.meta_status, self.meta_data, simulate)
+      meta_thread._lock = ProcessFactory._LOCK
       meta_thread.workflow = self.workflow
       meta_thread.start()
       threads.append(meta_thread)
@@ -220,3 +221,6 @@ class PostProcessFactory(ProcessFactory):
       if not status:
         global_status = False
     return global_status
+
+
+ProcessFactory._LOCK = threading.Lock()

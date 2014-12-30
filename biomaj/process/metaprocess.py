@@ -26,6 +26,7 @@ class MetaProcess(threading.Thread):
       :type simulate: bool
       '''
       threading.Thread.__init__(self)
+      self._lock = None
       self.kill_received = False
       self.workflow = None
       self.simulate = simulate
@@ -113,7 +114,9 @@ class MetaProcess(threading.Thread):
               processes_status[bprocess] = True
               continue
             logging.info("PROC:META:RUN:PROCESS:"+bprocess)
-            name = self.bank.config.get(bprocess+'.name')
+            # bprocess.name may not be unique
+            #name = self.bank.config.get(bprocess+'.name')
+            name = bprocess
             desc = self.bank.config.get(bprocess+'.desc')
             cluster = self.bank.config.get(bprocess+'.cluster')
             proc_type = self.bank.config.get(bprocess+'.type')
@@ -137,7 +140,16 @@ class MetaProcess(threading.Thread):
               self.global_status = False
               break
             if not self.simulate:
-              self._get_metata_from_outputfile(bmaj_process)
+              if self._lock:
+                self._lock.acquire()
+                try:
+                  self._get_metata_from_outputfile(bmaj_process)
+                except Exception as e:
+                  logging.error(e)
+                finally:
+                  self._lock.release() # release lock, no matter what
+              else:
+                self._get_metata_from_outputfile(bmaj_process)
         self.meta_status[meta] = processes_status
 
     def _get_metata_from_outputfile(self, proc):

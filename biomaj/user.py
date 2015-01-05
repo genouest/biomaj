@@ -40,7 +40,10 @@ class BmajUser(object):
             ldapMail = None
             for dn, entry in results:
               user_dn = str(dn)
-              ldapMail = entry['mail'][0]
+              if 'mail' not in entry:
+                logging.error('Mail not set for user '+user)
+              else:
+                ldapMail = entry['mail'][0]
             self.user = {
                           'id' : user,
                           'email': ldapMail,

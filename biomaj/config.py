@@ -48,7 +48,7 @@ class BiomajConfig:
   user_config = None
 
   @staticmethod
-  def load_config(config_file=None):
+  def load_config(config_file=None, allow_user_config=True):
     '''
     Loads general config
 
@@ -71,7 +71,7 @@ class BiomajConfig:
 
     BiomajConfig.global_config = ConfigParser.SafeConfigParser()
 
-    if os.path.exists(os.path.expanduser('~/.biomaj.cfg')):
+    if allow_user_config and os.path.exists(os.path.expanduser('~/.biomaj.cfg')):
       BiomajConfig.user_config = ConfigParser.SafeConfigParser()
       BiomajConfig.user_config.read([os.path.expanduser('~/.biomaj.cfg')])
 

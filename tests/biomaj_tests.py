@@ -182,7 +182,7 @@ class TestBiomajLocalDownload(unittest.TestCase):
     self.curdir = os.path.dirname(os.path.realpath(__file__))
     self.examples = os.path.join(self.curdir,'bank') + '/'
 
-    BiomajConfig.load_config(self.utils.global_properties)
+    BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
 
     '''
     if not os.path.exists('/tmp/biomaj/config'):
@@ -252,7 +252,7 @@ class TestBiomajHTTPDownload(unittest.TestCase):
   '''
   def setUp(self):
     self.utils = UtilsForTest()
-    BiomajConfig.load_config(self.utils.global_properties)
+    BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
     self.config = BiomajConfig('testhttp')
 
   def tearDown(self):
@@ -459,7 +459,7 @@ class TestBiomajSetup(unittest.TestCase):
   def setUp(self):
     self.utils = UtilsForTest()
     curdir = os.path.dirname(os.path.realpath(__file__))
-    BiomajConfig.load_config(self.utils.global_properties)
+    BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
 
     # Delete all banks
     b = Bank('alu')
@@ -618,7 +618,7 @@ class TestBiomajFunctional(unittest.TestCase):
   def setUp(self):
     self.utils = UtilsForTest()
     curdir = os.path.dirname(os.path.realpath(__file__))
-    BiomajConfig.load_config(self.utils.global_properties)
+    BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
 
   # Delete all banks
     b = Bank('local')
@@ -891,7 +891,7 @@ class TestElastic(unittest.TestCase):
   def setUp(self):
     self.utils = UtilsForTest()
     curdir = os.path.dirname(os.path.realpath(__file__))
-    BiomajConfig.load_config(self.utils.global_properties)
+    BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
 
   # Delete all banks
     b = Bank('local')
@@ -999,7 +999,7 @@ class TestUser(unittest.TestCase):
   def setUp(self):
     self.utils = UtilsForTest()
     self.curdir = os.path.dirname(os.path.realpath(__file__))
-    BiomajConfig.load_config(self.utils.global_properties)
+    BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
 
   def tearDown(self):
     self.utils.clean()

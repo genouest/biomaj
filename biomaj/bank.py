@@ -38,6 +38,7 @@ class Bank:
 
     self.name = name
     self.depends = []
+    self.no_log = no_log
 
     if no_log:
       if options is None:
@@ -623,7 +624,7 @@ class Bank:
     if os.path.exists(bank_offline_dir):
       shutil.rmtree(bank_offline_dir)
     bank_log_dir = os.path.join(self.config.get('log.dir'),self.name)
-    if os.path.exists(bank_log_dir):
+    if os.path.exists(bank_log_dir) and self.no_log:
       shutil.rmtree(bank_log_dir)
     return True
 

@@ -54,6 +54,8 @@ class BiomajConfig:
 
     :param config_file: global.properties file path
     :type config_file: str
+    :param allow_user_config: use ~/.biomaj.cfg if present
+    :type allow_user_config: bool
     '''
     if config_file is None:
       env_file = os.environ.get('BIOMAJ_CONF')

@@ -43,6 +43,8 @@ class Bank:
     if no_log:
       if options is None:
         options = {'no_log': True}
+      else:
+        options.no_log = no_log
 
     self.config = BiomajConfig(self.name, options)
 

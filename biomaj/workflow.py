@@ -513,13 +513,22 @@ class UpdateWorkflow(Workflow):
         release = str(release_dict['year']) + '-' + str(release_dict['month']) + '-' + str(release_dict['day'])
         self.session.set('release', release)
         self.session.set('remoterelease', release)
-        # We restart from scratch, a directory with this release already exists
-        if self.options.get_option(Options.FROMSCRATCH) and os.path.exists(self.session.get_full_release_directory()):
-          index = 1
-          while os.path.exists(self.session.get_full_release_directory()+'_'+str(index)):
-            index += 1
-          self.session.set('release', release+'_'+str(index))
-          release = release+'_'+str(index)
+        # We restart from scratch, check if directory with this release already exists
+        if self.options.get_option(Options.FROMSCRATCH):
+          index = 0
+          # Release directory exits, set index to 1
+          if os.path.exists(self.session.get_full_release_directory()):
+            index = 1
+          for x in range(1, 100):
+            if os.path.exists(self.session.get_full_release_directory()+'__'+str(x)):
+              index = x + 1
+
+          #while os.path.exists(self.session.get_full_release_directory()+'__'+str(index)):
+          #  index += 1
+          # If we found a directory for this release:   XX or XX__Y
+          if index > 0:
+            self.session.set('release', release+'__'+str(index))
+            release = release+'_'+str(index)
         logging.info('Workflow:wf_download:release:remoterelease:'+self.session.get('remoterelease'))
         logging.info('Workflow:wf_download:release:release:'+release)
         MongoConnector.banks.update({'name': self.bank.name},{'$set': {'status.release.progress': str(release)}})

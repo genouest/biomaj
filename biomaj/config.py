@@ -27,7 +27,8 @@ class BiomajConfig:
   'use_elastic': 0,
   'use_drmaa': 0,
   'db.type': '',
-  'db.formats': ''
+  'db.formats': '',
+  'keep.old.version': 1
   }
 
   # Old biomaj level compatibility

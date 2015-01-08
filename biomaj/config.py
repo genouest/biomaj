@@ -25,7 +25,9 @@ class BiomajConfig:
   'bank.num.threads': 2,
   'files.num.threads': 4,
   'use_elastic': 0,
-  'use_drmaa': 0
+  'use_drmaa': 0,
+  'db.type': '',
+  'db.formats': ''
   }
 
   # Old biomaj level compatibility
@@ -208,6 +210,10 @@ class BiomajConfig:
     if not self.get('process.dir'):
       logging.error('process.dir is not set')
       status = False
+    if not self.get('db.fullname'):
+      logging.warn('db.fullname is not set')
+    if not self.get('db.formats'):
+      logging.warn('db.formats is not set')
     if self.get('use_ldap'):
       if not self.get('ldap.host') or not self.get('ldap.port') or not self.get('ldap.dn'):
         logging.error('use_ldap set to 1 but missing configuration')
@@ -230,13 +236,13 @@ class BiomajConfig:
     if not self.get('offline.dir.name'):
       logging.error('offline.dir.name is not set')
       status = False
-    if self.get('offline.dir.name').startswith('/'):
+    elif self.get('offline.dir.name').startswith('/'):
       logging.error('offline dir must be relative to data.dir and should not start with a /')
       status = False
     if not self.get('dir.version'):
       logging.error('dir.version is not set')
       status = False
-    if self.get('dir.version').startswith('/'):
+    elif self.get('dir.version').startswith('/'):
       logging.error('dir.version must be relative to data.dir and should not start with a /')
       status = False
     if not self.get('protocol'):

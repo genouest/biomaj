@@ -528,7 +528,7 @@ class UpdateWorkflow(Workflow):
           # If we found a directory for this release:   XX or XX__Y
           if index > 0:
             self.session.set('release', release+'__'+str(index))
-            release = release+'_'+str(index)
+            release = release+'__'+str(index)
         logging.info('Workflow:wf_download:release:remoterelease:'+self.session.get('remoterelease'))
         logging.info('Workflow:wf_download:release:release:'+release)
         MongoConnector.banks.update({'name': self.bank.name},{'$set': {'status.release.progress': str(release)}})

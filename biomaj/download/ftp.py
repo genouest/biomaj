@@ -184,8 +184,12 @@ class FTPDownload(DownloadInterface):
           date_error = True
           curdate = datetime.now()
           rfile['year'] = curdate.year
-          rfile['month'] = curdate.month
-          rfile['day'] = curdate.day
+          # Year not precised, month feater than current means previous year
+          if rfile['month'] > curdate.month:
+            rfile['year'] = curdate.year - 1
+          # Same month but later day => previous year
+          if rfile['month'] == curdate.month and rfile['day'] > curdate.day:
+            rfile['year'] = curdate.year - 1
         rfile['name'] = parts[8]
         if len(parts) >= 10 and parts[9] == '->':
           # Symlink, add to files AND dirs as we don't know the type of the link

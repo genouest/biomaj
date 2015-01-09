@@ -164,7 +164,6 @@ class FTPDownload(DownloadInterface):
     # lets walk through each line
     rfiles = []
     rdirs = []
-    date_error = False
     for line in lines:
         rfile = {}
         # lets print each part separately
@@ -181,7 +180,6 @@ class FTPDownload(DownloadInterface):
           rfile['year'] = int(parts[7])
         except Exception as e:
           # specific ftp case issues at getting date info
-          date_error = True
           curdate = datetime.now()
           rfile['year'] = curdate.year
           # Year not precised, month feater than current means previous year
@@ -203,8 +201,6 @@ class FTPDownload(DownloadInterface):
           rfiles.append(rfile)
         else:
           rdirs.append(rfile)
-    if date_error:
-      logging.warn('Download:List:Cannot determine date of files from remote server, using current date')
     return (rfiles, rdirs)
 
 

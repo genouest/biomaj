@@ -18,6 +18,8 @@ def main():
   parser.add_argument('-u', '--update', dest="update", help="Update action", action="store_true", default=False)
   parser.add_argument('-z', '--fromscratch', dest="fromscratch", help="Force a new cycle update", action="store_true", default=False)
   parser.add_argument('-p', '--publish', dest="publish", help="Publish", action="store_true", default=False)
+  parser.add_argument('--unpublish', dest="unpublish", help="Unpublish", action="store_true", default=False)
+
   parser.add_argument('--release', dest="release",help="release of the bank")
   parser.add_argument('--from-task', dest="from_task",help="Start cycle at a specific task (init always executed)")
   parser.add_argument('--process', dest="process",help="Linked to from-task, optionally specify a block, meta or process name to start from")
@@ -70,11 +72,13 @@ def main():
     --stop-after xx: stop update cycle after step xx has completed
     --from-task xx --release yy: Force an re-update cycle for bank release *yy* or from current cycle (in production directories), skipping steps up to *xx*
     --process xx: linked to from-task, optionally specify a block, meta or process name to start from
---publish / publish: Publish bank as current release to use
+--publish: Publish bank as current release to use
     [MANDATORY]
     --bank xx: name of the bank to update
     --release xx: release of the bank to publish
-
+--unpublish: Unpublish bank (remove current)
+    [MANDATORY]
+    --bank xx: name of the bank to update
 --remove-all: Remove all bank releases and database records
     [MANDATORY]
     --bank xx: name of the bank to update
@@ -272,6 +276,15 @@ def main():
         Notify.notifyBankAction(bmaj)
       if not res:
         sys.exit(1)
+
+    if options.unpublish:
+      if not options.bank:
+        print "Bank name is missing"
+        sys.exit(1)
+      bmaj = Bank(options.bank, options)
+      bmaj.load_session()
+      bmaj.unpublish()
+      sys.exit(0)
 
     if options.publish:
       if not options.bank:

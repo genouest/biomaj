@@ -433,6 +433,21 @@ class Bank:
                       '$set': {'current': self.session._session['id']}
                       })
 
+  def unpublish(self):
+    '''
+    Unset *current*
+    '''
+    current_link = os.path.join(self.config.get('data.dir'),
+                                self.config.get('dir.version'),
+                                'current')
+
+    if os.path.lexists(current_link):
+      os.remove(current_link)
+    self.banks.update({'name': self.name},
+                      {
+                      '$set': {'current': None}
+                      })
+
 
   def get_production(self, release):
     '''

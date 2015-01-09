@@ -378,11 +378,24 @@ class UpdateWorkflow(Workflow):
     MongoConnector.banks.update({'name': self.bank.name},{'$set': {'status.release.progress': str(release)}})
 
     # We restart from scratch, a directory with this release already exists
-    if self.options.get_option(Options.FROMSCRATCH) and os.path.exists(self.session.get_full_release_directory()):
-      index = 1
-      while os.path.exists(self.session.get_full_release_directory()+'_'+str(index)):
-        index += 1
-      self.session.set('release', release+'_'+str(index))
+    # Check directory existence if from scratch to change local release
+    if self.options.get_option(Options.FROMSCRATCH):
+      index = 0
+      # Release directory exits, set index to 1
+      if os.path.exists(self.session.get_full_release_directory()):
+        index = 1
+      for x in range(1, 100):
+        if os.path.exists(self.session.get_full_release_directory()+'__'+str(x)):
+          index = x + 1
+      if index > 0:
+        self.session.set('release', release+'__'+str(index))
+        release = release+'__'+str(index)
+
+    #if self.options.get_option(Options.FROMSCRATCH) and os.path.exists(self.session.get_full_release_directory()):
+    #  index = 1
+    #  while os.path.exists(self.session.get_full_release_directory()+'_'+str(index)):
+    #    index += 1
+    #  self.session.set('release', release+'_'+str(index))
     self.download_go_ahead = False
     if self.options.get_option(Options.FROM_TASK) == 'download':
       # We want to download again in same release, that's fine, we do not care it is the same release

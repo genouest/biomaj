@@ -123,7 +123,7 @@ class MetaProcess(threading.Thread):
             exe = self.bank.config.get(bprocess+'.exe')
             args = self.bank.config.get(bprocess+'.args')
             expand = self.bank.config.get_bool(bprocess+'.expand', default=True)
-            bmaj_process = Process(meta+'_'+name, exe, args, desc, proc_type, cluster, expand, self.bmaj_env, os.path.dirname(self.bank.config.log_file))
+            bmaj_process = Process(meta+'_'+name, exe, args, desc, proc_type, expand, self.bmaj_env, os.path.dirname(self.bank.config.log_file))
             self.set_progress(bmaj_process.name, None)
             if self.bank.config.get(bprocess+'.format'):
               bmaj_process.format =  self.bank.config.get(bprocess+'.format')

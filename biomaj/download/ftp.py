@@ -164,6 +164,7 @@ class FTPDownload(DownloadInterface):
     # lets walk through each line
     rfiles = []
     rdirs = []
+    date_error = False
     for line in lines:
         rfile = {}
         # lets print each part separately
@@ -179,7 +180,12 @@ class FTPDownload(DownloadInterface):
         try:
           rfile['year'] = int(parts[7])
         except Exception as e:
-          rfile['year'] = datetime.now().year
+          # specific ftp case issues at getting date info
+          date_error = True
+          curdate = datetime.now()
+          rfile['year'] = curdate.year
+          rfile['month'] = curdate.month
+          rfile['day'] = curdate.day
         rfile['name'] = parts[8]
         if len(parts) >= 10 and parts[9] == '->':
           # Symlink, add to files AND dirs as we don't know the type of the link
@@ -193,6 +199,8 @@ class FTPDownload(DownloadInterface):
           rfiles.append(rfile)
         else:
           rdirs.append(rfile)
+    if date_error:
+      logging.warn('Download:List:Cannot determine date of files from remote server, using current date')
     return (rfiles, rdirs)
 
 

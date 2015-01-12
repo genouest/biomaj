@@ -86,9 +86,9 @@ class Process(object):
 
 
 class DrmaaProcess(Process):
-  def __init__(self, name, exe, args, desc=None, proc_type=None, native='', expand=True, bank_env=None, log_dir=None):
+  def __init__(self, name, exe, args, desc=None, proc_type=None, native=None, expand=True, bank_env=None, log_dir=None):
     Process.__init__(self, name, exe, args, desc, proc_type, expand, bank_env, log_dir)
-    self.native = native
+    self.native = " "+native+" "
 
 
   def run(self, simulate=False):
@@ -115,7 +115,7 @@ class DrmaaProcess(Process):
           jt.workingDirectory = os.path.dirname(os.path.realpath(self.output_file))
           jt.jobEnvironment = self.bank_env
           if self.native:
-            job_template.nativeSpecification = self.native
+            jt.nativeSpecification = self.native
           jt.outputPath = self.output_file
           jt.errorPath = self.error_file
           jobid = s.runJob(jt)

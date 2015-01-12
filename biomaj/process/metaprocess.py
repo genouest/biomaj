@@ -42,7 +42,7 @@ class MetaProcess(threading.Thread):
 
       self._stopevent = threading.Event( )
 
-      self.bmaj_env = os.environ.copy();
+      self.bmaj_env = os.environ.copy()
       #self.bmaj_env = {}
       # Copy all config from bank
 
@@ -118,12 +118,16 @@ class MetaProcess(threading.Thread):
             #name = self.bank.config.get(bprocess+'.name')
             name = bprocess
             desc = self.bank.config.get(bprocess+'.desc')
-            cluster = self.bank.config.get(bprocess+'.cluster')
+            cluster = self.bank.config.get_bool(bprocess+'.cluster', default=False)
             proc_type = self.bank.config.get(bprocess+'.type')
             exe = self.bank.config.get(bprocess+'.exe')
             args = self.bank.config.get(bprocess+'.args')
             expand = self.bank.config.get_bool(bprocess+'.expand', default=True)
-            bmaj_process = Process(meta+'_'+name, exe, args, desc, proc_type, expand, self.bmaj_env, os.path.dirname(self.bank.config.log_file))
+            if cluster:
+              native = self.bank.config.get(bprocess+'.native')
+              bmaj_process = DrmaaProcess(meta+'_'+name, exe, args, desc, proc_type, native, expand, self.bmaj_env, os.path.dirname(self.bank.config.log_file))
+            else:
+              bmaj_process = Process(meta+'_'+name, exe, args, desc, proc_type, expand, self.bmaj_env, os.path.dirname(self.bank.config.log_file))
             self.set_progress(bmaj_process.name, None)
             if self.bank.config.get(bprocess+'.format'):
               bmaj_process.format =  self.bank.config.get(bprocess+'.format')

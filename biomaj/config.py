@@ -166,7 +166,7 @@ class BiomajConfig:
     Get a boolean property from bank or general configration. Optionally in section.
     '''
     value = self.get(prop,section,escape,default)
-    if value or value == 'true' or value == '1':
+    if value and (value == 'true' or value == '1'):
       return True
     else:
       return False

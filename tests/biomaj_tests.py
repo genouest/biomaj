@@ -323,6 +323,7 @@ class TestBiomajDirectHTTPDownload(unittest.TestCase):
   def tearDown(self):
     self.utils.clean()
 
+  @attr('test')
   def test_http_list(self):
     file_list = ['/debian/README.html']
     ftpd = DirectHttpDownload('http', 'ftp2.fr.debian.org', '', file_list)
@@ -333,9 +334,7 @@ class TestBiomajDirectHTTPDownload(unittest.TestCase):
     ftpd.close()
     self.assertTrue(len(file_list) == 1)
     self.assertTrue(file_list[0]['size']!=0)
-    self.assertFalse(fday == ftpd.files_to_download[0]['day'])
-    self.assertFalse(fmonth == ftpd.files_to_download[0]['month'])
-    self.assertFalse(fyear == ftpd.files_to_download[0]['year'])
+    self.assertFalse(fyear == ftpd.files_to_download[0]['year'] and fmonth == ftpd.files_to_download[0]['month'] and fday == ftpd.files_to_download[0]['day'])
 
   def test_download(self):
     file_list = ['/debian/README.html']

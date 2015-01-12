@@ -685,14 +685,36 @@ class TestBiomajFunctional(unittest.TestCase):
 
   def test_fromscratch_update(self):
       '''
-      Try updating twice, at second time, bank should not be updated
+      Try updating twice, at second time, bank should  be updated (force with fromscratc)
       '''
       b = Bank('local')
       b.update()
       self.assertTrue(b.session.get('update'))
+      sess = b.session.get('release')
       b.options.fromscratch = True
       b.update()
       self.assertTrue(b.session.get('update'))
+      self.assertEqual(b.session.get('release'), sess+'__1')
+
+
+  def test_fromscratch_update_with_release(self):
+      '''
+      Try updating twice, at second time, bank should  be updated (force with fromscratch)
+
+      Use case with release defined in release file
+      '''
+      b = Bank('local')
+      b.load_session(UpdateWorkflow.FLOW)
+      b.session.config.set('release.file', 'test_(\d+)\.txt')
+      b.session.config.set('release.regexp', '')
+      w = UpdateWorkflow(b)
+      w.wf_release()
+      self.assertTrue(b.session.get('release') == '100')
+      os.makedirs(b.session.get_full_release_directory())
+      w = UpdateWorkflow(b)
+      w.options.fromscratch = True
+      w.wf_release()
+      self.assertTrue(b.session.get('release') == '100__1')
 
   def test_delete_old_dirs(self):
       '''

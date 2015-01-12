@@ -16,7 +16,8 @@ def main():
   parser.add_argument('-c', '--config', dest="config",help="Configuration file")
   parser.add_argument('--check', dest="check", help="Check bank property file", action="store_true", default=False)
   parser.add_argument('-u', '--update', dest="update", help="Update action", action="store_true", default=False)
-  parser.add_argument('-z', '--fromscratch', dest="fromscratch", help="Force a new cycle update", action="store_true", default=False)
+  parser.add_argument('--fromscratch', dest="fromscratch", help="Force a new cycle update", action="store_true", default=False)
+  parser.add_argument('-z', '--from-scratch', dest="fromscratch", help="Force a new cycle update", action="store_true", default=False)
   parser.add_argument('-p', '--publish', dest="publish", help="Publish", action="store_true", default=False)
   parser.add_argument('--unpublish', dest="unpublish", help="Unpublish", action="store_true", default=False)
 
@@ -67,7 +68,7 @@ def main():
     --bank xx: name of the bank to update
     [OPTIONAL]
     --publish: after update set as *current* version
-    --fromscratch: force a new update cycle, even if release is identical, release will be incremented like (myrel_1)
+    --from-scratch: force a new update cycle, even if release is identical, release will be incremented like (myrel_1)
     --stop-before xx: stop update cycle before the start of step xx
     --stop-after xx: stop update cycle after step xx has completed
     --from-task xx --release yy: Force an re-update cycle for bank release *yy* or from current cycle (in production directories), skipping steps up to *xx*

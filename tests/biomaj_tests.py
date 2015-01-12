@@ -323,7 +323,6 @@ class TestBiomajDirectHTTPDownload(unittest.TestCase):
   def tearDown(self):
     self.utils.clean()
 
-  @attr('test')
   def test_http_list(self):
     file_list = ['/debian/README.html']
     ftpd = DirectHttpDownload('http', 'ftp2.fr.debian.org', '', file_list)
@@ -881,6 +880,7 @@ class TestBiomajFunctional(unittest.TestCase):
     for release in stats[0]['releases']:
       if release['name'] == rel:
         self.assertTrue(release['size']>0)
+
 
   @attr('process')
   def test_processes_meta_data(self):

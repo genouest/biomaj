@@ -2,7 +2,7 @@ import threading
 import logging
 import os
 
-from biomaj.process.process import Process
+from biomaj.process.process import Process, DrmaaProcess
 from biomaj.mongo_connector import MongoConnector
 
 class MetaProcess(threading.Thread):

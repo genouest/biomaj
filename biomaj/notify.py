@@ -18,9 +18,11 @@ class Notify:
     mfrom = bank.config.get('mail.from')
     mto = bank.config.get('mail.admin')
     log_file = bank.config.log_file
-    fp = open(log_file, 'rb')
-    msg = MIMEText(fp.read())
-    fp.close()
+    msg = MIMEText('')
+    if log_file:
+      fp = open(log_file, 'rb')
+      msg = MIMEText(fp.read())
+      fp.close()
     msg['To'] = email.utils.formataddr(('Recipient', mto))
     msg['From'] = email.utils.formataddr(('Author', mfrom))
     #msg['Subject'] = 'BANK['+bank.name+'] - STATUS['+str(bank.session.get_status(Workflow.FLOW_OVER))+'] - UPDATE['+str(bank.session.get('update'))+'] - REMOVE['+str(bank.session.get('remove'))+']'

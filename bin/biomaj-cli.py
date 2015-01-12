@@ -191,7 +191,10 @@ def main():
                 print "# \t\t\t"+file
       sys.exit(1)
 
-    if options.check and options.bank:
+    if options.check:
+      if not options.bank:
+        print "Bank name is missing"
+        sys.exit(1)
       bank = Bank(options.bank, no_log=False)
       print options.bank+" check: "+str(bank.check())+"\n"
       sys.exit(0)
@@ -246,7 +249,10 @@ def main():
         print '#' * 80
         return
 
-    if options.update and options.bank:
+    if options.update:
+      if not options.bank:
+        print "Bank name is missing"
+        sys.exit(1)
       bmaj = Bank(options.bank, options)
       print 'Log file: '+bmaj.config.log_file
       res = bmaj.update()
@@ -254,24 +260,44 @@ def main():
       if not res:
         sys.exit(1)
 
-    if options.freeze and options.release and options.bank:
+    if options.freeze:
+      if not options.bank:
+        print "Bank name is missing"
+        sys.exit(1)
+      if not options.release:
+        print "Bank release is missing"
+        sys.exit(1)
       bmaj = Bank(options.bank, options)
       res = bmaj.freeze(options.release)
       if not res:
         sys.exit(1)
 
-    if options.unfreeze and options.release and options.bank:
+    if options.unfreeze:
+      if not options.bank:
+        print "Bank name is missing"
+        sys.exit(1)
+      if not options.release:
+        print "Bank release is missing"
+        sys.exit(1)
       bmaj = Bank(options.bank, options)
       res = bmaj.unfreeze(options.release)
       if not res:
         sys.exit(1)
 
-    if ((options.remove and options.release) or options.removeall) and options.bank:
-      bmaj = Bank(options.bank, options, no_log=True)
-      print 'Log file: '+bmaj.config.log_file
+    if options.remove or options.removeall:
+      if not options.bank:
+        print "Bank name is missing"
+        sys.exit(1)
+      if options.remove and not options.release:
+        print "Bank release is missing"
+        sys.exit(1)
       if options.removeall:
+        bmaj = Bank(options.bank, options, no_log=True)
+        print 'Log file: '+bmaj.config.log_file
         res = bmaj.removeAll(options.force)
       else:
+        bmaj = Bank(options.bank, options)
+        print 'Log file: '+bmaj.config.log_file
         res = bmaj.remove(options.release)
         Notify.notifyBankAction(bmaj)
       if not res:

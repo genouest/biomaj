@@ -618,7 +618,7 @@ class TestBiomajFunctional(unittest.TestCase):
     curdir = os.path.dirname(os.path.realpath(__file__))
     BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
 
-  # Delete all banks
+    #Delete all banks
     b = Bank('local')
     b.banks.remove({})
 
@@ -787,7 +787,6 @@ class TestBiomajFunctional(unittest.TestCase):
     b.update()
     self.assertTrue(b.session.get_status('download'))
     self.assertFalse(b.session.get_status('postprocess'))
-
 
   def test_reupdate_from_task(self):
     b = Bank('local')

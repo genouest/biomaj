@@ -357,7 +357,6 @@ class Bank:
                       'data_dir': self.config.get('data.dir'),
                       'prod_dir': self.session.get_release_directory(),
                       'freeze': False }
-
       self.bank['production'].append(production)
 
       self.banks.update({'name': self.name},
@@ -530,6 +529,11 @@ class Bank:
             oldsession = s
             break
         break
+    if oldsession is None:
+      # No prod session, try to find a session for this release, session may have failed or be stopped
+      for s in self.bank['sessions']:
+        if release.endswith(s['release']):
+          oldsession = s
     if oldsession is None:
       logging.error('No production session could be found for this release')
     return oldsession
@@ -713,6 +717,7 @@ class Bank:
     if self.options.get_option('release'):
       logging.info('Bank:'+self.name+':Release:'+self.options.get_option('release'))
       s = self.get_session_from_release(self.options.get_option('release'))
+      # No session in prod
       if s is None:
         logging.error('Release does not exists: '+self.options.get_option('release'))
         return False

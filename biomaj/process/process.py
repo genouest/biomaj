@@ -64,7 +64,7 @@ class Process(object):
     logging.debug('PROCESS:EXEC:'+str(self.args))
     err= False
     if not simulate:
-      logging.info('Run process '+self.name)
+      logging.info('PROCESS:RUN:'+self.name)
       with open(self.output_file,'w') as fout:
         with open(self.error_file,'w') as ferr:
           if self.expand:

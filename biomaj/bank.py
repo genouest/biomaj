@@ -570,7 +570,7 @@ class Bank:
             #  # Config has changed, need to restart
             #  self.session = Session(self.name, self.config, flow)
             #  logging.info('Configuration file has been modified since last session, restart in any case a new session')
-            if self.session.get_status(Workflow.FLOW_OVER):
+            if self.session.get_status(Workflow.FLOW_OVER) and self.options.get_option(Options.FROM_TASK) is None:
               previous_release = self.session.get('remoterelease')
               self.session = Session(self.name, self.config, flow)
               self.session.set('previous_release', previous_release)
@@ -663,7 +663,7 @@ class Bank:
     :type release: str
     :return: bool
     '''
-
+    logging.warning('Bank:'+self.name+':Remove')
     self.session = self.get_new_session(RemoveWorkflow.FLOW)
     oldsession = None
     # Search production release matching release
@@ -705,15 +705,17 @@ class Bank:
     :type depends: bool
     :return: bool
     '''
-    logging.warning('UPDATE BANK: '+self.name)
+    logging.warning('Bank:'+self.name+':Update')
 
     self.run_depends = depends
 
     self.controls()
     if self.options.get_option('release'):
+      logging.info('Bank:'+self.name+':Release:'+self.options.get_option('release'))
       s = self.get_session_from_release(self.options.get_option('release'))
       self.load_session(UpdateWorkflow.FLOW, s)
     else:
+      logging.info('Bank:'+self.name+':Release:latest')
       self.load_session(UpdateWorkflow.FLOW)
     # if from task, reset workflow status in session.
     if self.options.get_option('from_task'):

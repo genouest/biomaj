@@ -93,6 +93,7 @@ class Workflow(object):
     #print str(self.session._session['status'])
     for flow in self.session.flow:
       if self.skip_all:
+        logging.info('Workflow:Skip:'+flow['name'])
         self.session._session['status'][flow['name']] = None
         self.session._session['status'][Workflow.FLOW_OVER] = True
         continue
@@ -101,6 +102,8 @@ class Workflow(object):
         self.wf_over()
         break
       # Always run INIT
+      if flow['name'] != Workflow.FLOW_INIT and self.session.get_status(flow['name']):
+        logging.info('Workflow:Skip:'+flow['name'])
       if flow['name'] == Workflow.FLOW_INIT or not self.session.get_status(flow['name']):
         logging.info('Workflow:Start:'+flow['name'])
         try:
@@ -789,6 +792,10 @@ class UpdateWorkflow(Workflow):
     Delete old production dirs
     '''
     logging.info('Workflow:wf_delete_old')
+    if self.options.get_option(Options.FROM_TASK) is not None:
+      # This is a run on an already present release, skip delete
+      logging.info('Workflow:wf_delete_old:Skip')
+      return True
     keep = int(self.session.config.get('keep.old.version'))
     # Current production dir is not yet in list
     nb_prod = len(self.bank.bank['production'])
@@ -799,7 +806,6 @@ class UpdateWorkflow(Workflow):
       for prod in self.bank.bank['production']:
         if 'freeze' in prod and prod['freeze']:
           continue
-        #print 'OSALLOU '+str(self.bank.bank)
         if self.bank.bank['current'] == prod['session']:
           continue
         if nb_prod - keep > 0:

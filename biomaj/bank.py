@@ -713,6 +713,9 @@ class Bank:
     if self.options.get_option('release'):
       logging.info('Bank:'+self.name+':Release:'+self.options.get_option('release'))
       s = self.get_session_from_release(self.options.get_option('release'))
+      if s is None:
+        logging.error('Release does not exists: '+self.options.get_option('release'))
+        return False
       self.load_session(UpdateWorkflow.FLOW, s)
     else:
       logging.info('Bank:'+self.name+':Release:latest')

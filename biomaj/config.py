@@ -168,7 +168,6 @@ class BiomajConfig:
     value = self.get(prop,section,escape,default)
     if value is None:
       return False
-    print prop+" = "+str(value)
     if value is True or value == 'true' or value == '1':
       return True
     else:

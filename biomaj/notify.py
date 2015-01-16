@@ -11,7 +11,7 @@ class Notify:
 
   @staticmethod
   def notifyBankAction(bank):
-    if not bank.config.get('mail.smtp.host'):
+    if not bank.config.get('mail.smtp.host') or bank.session is None:
       logging.info('Notify:none')
       return
     logging.info('Notify:'+bank.config.get('mail.admin'))

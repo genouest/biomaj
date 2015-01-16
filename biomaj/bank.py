@@ -729,6 +729,10 @@ class Bank:
     if self.options.get_option('from_task'):
       set_to_false = False
       for task in self.session.flow:
+        # If task was in False status (KO) and we ask to start after this task, exit
+        if not set_to_false and not self.session.get_status(task['name']) and  task['name'] != self.options.get_option('from_task'):
+          logging.error('Previous task '+task['name']+' was not successful, cannot restart after this task')
+          return False
         if task['name'] == self.options.get_option('from_task'):
           set_to_false = True
         if set_to_false:

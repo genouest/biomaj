@@ -223,7 +223,6 @@ class RemoveWorkflow(Workflow):
     self.session._session['remove'] = True
 
 
-
   def wf_remove_release(self):
     logging.info('Workflow:wf_remove_release')
     if not self.session.get('update_session_id'):

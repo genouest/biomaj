@@ -399,7 +399,7 @@ class Bank:
       for session in old_sessions:
         session_id = session['id']
         self.banks.update({'name': self.name}, {'$pull' : { 'sessions': { 'id': session_id }}})
-        if session['release'] not in prod_releases:
+        if session['release'] not in prod_releases and session['release'] != self.session.get('release'):
           # There might be unfinished releases linked to session, delete them
           # if they are not related to a production directory or latest run
           session_dir = os.path.join(self.config.get('data.dir'),
@@ -694,11 +694,11 @@ class Bank:
     session.set('action', 'remove')
     session.set('release', oldsession['release'])
     session.set('update_session_id', oldsession['id'])
-
+    self.session = session
     # Reset status, we take an update session
     res = self.start_remove(session)
-
     self.save_session()
+
     return res
 
   def update(self, depends=False):

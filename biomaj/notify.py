@@ -26,10 +26,12 @@ class Notify:
     msg['To'] = email.utils.formataddr(('Recipient', mto))
     msg['From'] = email.utils.formataddr(('Author', mfrom))
     #msg['Subject'] = 'BANK['+bank.name+'] - STATUS['+str(bank.session.get_status(Workflow.FLOW_OVER))+'] - UPDATE['+str(bank.session.get('update'))+'] - REMOVE['+str(bank.session.get('remove'))+']'
-    if bank.session.get('action') == 'update':
-      msg['Subject'] = 'BANK['+bank.name+'] - STATUS['+str(bank.session.get_status(Workflow.FLOW_OVER))+'] - UPDATE['+str(bank.session.get('update'))+'] - REMOVE['+str(bank.session.get('remove'))+']' + ' - RELEASE['+str(bank.session.get('release'))+']'
-    else:
-      msg['Subject'] = 'BANK['+bank.name+'] - STATUS['+str(bank.session.get_status(Workflow.FLOW_OVER))+'] - UPDATE['+str(bank.session.get('update'))+'] - REMOVE['+str(bank.session.get('remove'))+']'
+    msg['Subject'] = 'BANK['+bank.name+'] - STATUS['+str(bank.session.get_status(Workflow.FLOW_OVER))+'] - UPDATE['+str(bank.session.get('update'))+'] - REMOVE['+str(bank.session.get('remove'))+']' + ' - RELEASE['+str(bank.session.get('release'))+']'
+    #if bank.session.get('action') == 'update':
+    #  msg['Subject'] = 'BANK['+bank.name+'] - STATUS['+str(bank.session.get_status(Workflow.FLOW_OVER))+'] - UPDATE['+str(bank.session.get('update'))+'] - REMOVE['+str(bank.session.get('remove'))+']' + ' - RELEASE['+str(bank.session.get('release'))+']'
+    #else:
+    #  msg['Subject'] = 'BANK['+bank.name+'] - STATUS['+str(bank.session.get_status(Workflow.FLOW_OVER))+'] - UPDATE['+str(bank.session.get('update'))+'] - REMOVE['+str(bank.session.get('remove'))+']'
+    logging.info(msg['subject'])
     server = None
     try:
       server = smtplib.SMTP(bank.config.get('mail.smtp.host'))

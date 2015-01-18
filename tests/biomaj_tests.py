@@ -800,6 +800,17 @@ class TestBiomajFunctional(unittest.TestCase):
     self.assertTrue(b2.session.get_status('postprocess'))
     self.assertEqual(b.session.get_full_release_directory(), b2.session.get_full_release_directory())
 
+  def test_reupdate_from_task_error(self):
+    b = Bank('local')
+    b.options.stop_after = 'check'
+    b.update()
+    self.assertFalse(b.session.get_status('postprocess'))
+    b2 = Bank('local')
+    b2.options.from_task = 'postprocess'
+    b2.options.release = b.session.get('release')
+    res = b2.update()
+    self.assertFalse(res)
+
   def test_reupdate_from_task_wrong_release(self):
     b = Bank('local')
     b.options.stop_after = 'download'

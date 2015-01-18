@@ -532,7 +532,7 @@ class Bank:
     if oldsession is None:
       # No prod session, try to find a session for this release, session may have failed or be stopped
       for s in self.bank['sessions']:
-        if release.endswith(s['release']):
+        if s['release'] and release.endswith(s['release']):
           oldsession = s
     if oldsession is None:
       logging.error('No production session could be found for this release')

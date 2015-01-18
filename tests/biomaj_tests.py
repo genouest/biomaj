@@ -694,7 +694,7 @@ class TestBiomajFunctional(unittest.TestCase):
       self.assertTrue(b.session.get('update'))
       self.assertEqual(b.session.get('release'), sess+'__1')
 
-
+  @attr('test')
   def test_fromscratch_update_with_release(self):
       '''
       Try updating twice, at second time, bank should  be updated (force with fromscratch)
@@ -710,6 +710,8 @@ class TestBiomajFunctional(unittest.TestCase):
       self.assertTrue(b.session.get('release') == '100')
       os.makedirs(b.session.get_full_release_directory())
       w = UpdateWorkflow(b)
+      # Reset release
+      b.session.set('release', None)
       w.options.fromscratch = True
       w.wf_release()
       self.assertTrue(b.session.get('release') == '100__1')

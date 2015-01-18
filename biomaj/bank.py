@@ -551,6 +551,7 @@ class Bank:
       logging.debug('Load specified session '+str(session['id']))
       self.session = Session(self.name, self.config, flow)
       self.session.load(session)
+      self.use_last_session = True
       return
     if len(self.bank['sessions']) == 0 or self.options.get_option(Options.FROMSCRATCH):
         self.session = Session(self.name, self.config, flow)

@@ -316,6 +316,10 @@ class UpdateWorkflow(Workflow):
     cf = self.session.config
     self.session.previous_release = self.session.get('previous_release')
     logging.info('Workflow:wf_release:previous_session:'+str(self.session.previous_release))
+    if self.session.get('release'):
+      # Release already set from a previous run
+      logging.info('Workflow:wf_release:session:'+str(self.session.get('release')))
+      return True
     if self.session.config.get('release.file') == '':
       logging.debug('Workflow:wf_release:norelease')
       self.session.set('release',None)
@@ -597,10 +601,10 @@ class UpdateWorkflow(Workflow):
       self.download_go_ahead = True
 
     if not self.options.get_option(Options.FROMSCRATCH) and not self.download_go_ahead and nb_prod_dir > 0:
-      for prod in self.bank.bank['production']:
-        if self.session.get('remoterelease') == prod['remoterelease']:
-          logging.debug('Workflow:wf_release:same_as_previous_production_dir')
-          return self.no_need_to_update()
+      #for prod in self.bank.bank['production']:
+      #  if self.session.get('release') == prod['release']:
+      #    logging.info('Workflow:wf_release:same_as_previous_production_dir')
+      #    return self.no_need_to_update()
 
 
       # Get last production

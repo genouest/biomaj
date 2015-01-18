@@ -31,7 +31,8 @@ class Process(object):
     '''
     # Replace env vars in args
     for key,value in bank_env.iteritems():
-      args = args.replace('${'+key+'}', value)
+      if value is not None:
+        args = args.replace('${'+key+'}', value)
 
     self.name = name
     self.exe = exe

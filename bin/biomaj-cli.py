@@ -228,6 +228,9 @@ def main():
                         bank.config.get('dir.version'),
                         prod['prod_dir'])
           print "#\t\tDirectory:\t"+release_dir
+        print "# Pending directories"
+        for pending in _bank['pending'].keys():
+          print "#\tRelease:\t"+pending
         print '#' * 80
       else:
         print '#' * 80

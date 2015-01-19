@@ -325,6 +325,8 @@ class Bank:
       '$push' : { 'sessions': self.session._session }
       })
     BmajIndex.add(self.name, self.session._session)
+    if self.session.get('action') == 'update' and not self.session.get_status(Workflow.FLOW_OVER) and self.session.get('release'):
+      self.banks.update({'name': self.name},{'$set': {'pending.'+self.session.get('release'): self.session._session['id']}})
     if self.session.get('action') == 'update' and self.session.get_status(Workflow.FLOW_OVER) and self.session.get('update'):
       # We expect that a production release has reached the FLOW_OVER status.
       # If no update is needed (same release etc...), the *update* session of the session is set to False
@@ -360,7 +362,13 @@ class Bank:
       self.bank['production'].append(production)
 
       self.banks.update({'name': self.name},
-                        {'$push': {'production': production}})
+                        {'$push': {'production': production},
+                         '$unset': {'pending.'+self.session.get('release'): ''}
+                        })
+
+      #self.banks.update({'name': self.name},
+      #                  {'$unset': 'pending.'+self.session.get('release')
+      #                  })
 
     self.bank = self.banks.find_one({'name': self.name})
 
@@ -598,7 +606,17 @@ class Bank:
     for s in _tmpbank['sessions']:
       if s['id'] == sid:
         session_release = s['release']
-    self.banks.update({'name': self.name},{'$pull':{
+    if session_release is not None:
+      self.banks.update({'name': self.name},{'$pull':{
+                                            'sessions': {'id': sid},
+                                            'production': {'session': sid}
+                                            },
+                                            '$unset': {
+                                              'pending.'+session_release: ''
+                                            }
+                      })
+    else:
+      self.banks.update({'name': self.name},{'$pull':{
                                             'sessions': {'id': sid},
                                             'production': {'session': sid}
                                             }

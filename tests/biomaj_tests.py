@@ -694,7 +694,7 @@ class TestBiomajFunctional(unittest.TestCase):
       self.assertTrue(b.session.get('update'))
       self.assertEqual(b.session.get('release'), sess+'__1')
 
-  @attr('test')
+
   def test_fromscratch_update_with_release(self):
       '''
       Try updating twice, at second time, bank should  be updated (force with fromscratch)
@@ -715,6 +715,77 @@ class TestBiomajFunctional(unittest.TestCase):
       w.options.fromscratch = True
       w.wf_release()
       self.assertTrue(b.session.get('release') == '100__1')
+
+
+  def test_mix_stop_from_task(self):
+      '''
+      Get a first release, then fromscratch --stop-after, then restart from-task
+      '''
+      b = Bank('local')
+      b.update()
+      rel = b.session.get('release')
+      b2 = Bank('local')
+      b2.options.stop_after = 'download'
+      b2.options.fromscratch = True
+      res = b2.update()
+      self.assertTrue(b2.session.get('release') == rel+'__1')
+      b3 = Bank('local')
+      res = b3.update()
+      self.assertTrue(b3.session.get('release') == rel+'__1')
+      self.assertTrue(res)
+
+  def test_mix_stop_from_task2(self):
+      '''
+      Get a first release, then fromscratch --stop-after, then restart from-task
+      '''
+      b = Bank('local')
+      b.update()
+      rel = b.session.get('release')
+      b2 = Bank('local')
+      b2.options.stop_after = 'download'
+      b2.options.fromscratch = True
+      res = b2.update()
+      self.assertTrue(b2.session.get('release') == rel+'__1')
+      b3 = Bank('local')
+      res = b3.update()
+      b2.options.from_task = 'download'
+      self.assertTrue(b3.session.get('release') == rel+'__1')
+      self.assertTrue(res)
+
+  def test_mix_stop_from_task3(self):
+      '''
+      Get a first release, then fromscratch --stop-after, then restart from-task
+      '''
+      b = Bank('local')
+      b.update()
+      rel = b.session.get('release')
+      b2 = Bank('local')
+      b2.options.stop_after = 'download'
+      b2.options.fromscratch = True
+      res = b2.update()
+      self.assertTrue(b2.session.get('release') == rel+'__1')
+      b3 = Bank('local')
+      res = b3.update()
+      b2.options.from_task = 'postprocess'
+      self.assertTrue(b3.session.get('release') == rel+'__1')
+      self.assertTrue(res)
+
+  @attr('test')
+  def test_mix_stop_from_task4(self):
+      '''
+      Get a first release, then fromscratch --stop-after, then restart from-task
+      '''
+      b = Bank('local')
+      b.update()
+      rel = b.session.get('release')
+      b2 = Bank('local')
+      b2.options.stop_before = 'download'
+      b2.options.fromscratch = True
+      res = b2.update()
+      b3 = Bank('local')
+      b3.options.from_task = 'postprocess'
+      res = b3.update()
+      self.assertFalse(res)
 
   def test_delete_old_dirs(self):
       '''

@@ -434,7 +434,7 @@ class UpdateWorkflow(Workflow):
     flow = self.get_flow(Workflow.FLOW_DOWNLOAD)
     downloader = None
     cf = self.session.config
-
+    self.session.previous_release = self.session.get('previous_release')
 
     if cf.get('protocol') == 'multi':
       '''

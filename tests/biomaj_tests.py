@@ -94,7 +94,7 @@ class UtilsForTest():
       os.chmod(to_file, stat.S_IRWXU)
 
     # Manage local bank test, use bank test subdir as remote
-    properties = ['multi.properties', 'computederror.properties', 'error.properties', 'local.properties', 'localprocess.properties', 'testhttp.properties', 'computed.properties', 'sub1.properties', 'sub2.properties']
+    properties = ['multi.properties', 'computederror.properties', 'error.properties', 'local.properties', 'localprocess.properties', 'testhttp.properties', 'computed.properties', 'computed2.properties', 'sub1.properties', 'sub2.properties']
     for prop in properties:
       from_file = os.path.join(curdir, prop)
       to_file = os.path.join(self.conf_dir, prop)
@@ -411,7 +411,7 @@ class TestBiomajFTPDownload(unittest.TestCase):
     ftpd.close()
     self.assertTrue(len(ftpd.files_to_download) == 2)
 
-  @attr('test')
+
   def test_download_in_subdir(self):
     ftpd = FTPDownload('ftp', 'ftp.ncbi.nih.gov', '/blast/')
     (file_list, dir_list) = ftpd.list()
@@ -924,11 +924,20 @@ class TestBiomajFunctional(unittest.TestCase):
     self.assertFalse(os.path.exists(proc1file))
     self.assertTrue(os.path.exists(proc2file))
 
-
   def test_computed(self):
     b = Bank('computed')
     res = b.update(True)
     self.assertTrue(res)
+
+  @attr('test')
+  def test_computed_ref_release(self):
+    b = Bank('computed2')
+    res = b.update(True)
+    b2 = Bank('sub1')
+    b2release = b2.bank['production'][len(b2.bank['production'])-1]['release']
+    brelease = b.bank['production'][len(b.bank['production'])-1]['release']
+    self.assertTrue(res)
+    self.assertTrue(brelease == b2release)
 
   def test_computederror(self):
     b = Bank('computederror')

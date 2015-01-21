@@ -314,6 +314,20 @@ class UpdateWorkflow(Workflow):
     '''
     logging.info('Workflow:wf_release')
     cf = self.session.config
+    if cf.get('ref.release') and self.bank.depends:
+        # Bank is a computed bank and we ask to set release to the same
+        # than an other dependant bank
+        depbank = self.bank.get_bank(cf.get('ref.release'))
+        if depbank and depbank.bank['production']:
+          release = depbank.bank['production'][len(depbank.bank['production'])-1]['release']
+          self.session.set('release', release)
+          self.session.set('remoterelease', release)
+          MongoConnector.banks.update({'name': self.bank.name},{'$set': {'status.release.progress': str(release)}})
+          return True
+        else:
+          logging.error('Dependant bank '+str(depbank)+' has no production directory to use')
+          return False
+
     self.session.previous_release = self.session.get('previous_release')
     logging.info('Workflow:wf_release:previous_session:'+str(self.session.previous_release))
     if self.session.get('release'):

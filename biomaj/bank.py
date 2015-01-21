@@ -170,6 +170,12 @@ class Bank:
         break
     return res
 
+  def get_bank(self, bank):
+    '''
+    Gets an other bank
+    '''
+    return Bank(bank)
+
   def get_dependencies(self, bank=None):
     '''
     Search all bank dependencies

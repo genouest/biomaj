@@ -162,7 +162,7 @@ def main():
               print " \t"+prod['release']+"\t"+','.join(prod['formats'])+"\t"+','.join(prod['types'])
 
         print '#' * 80
-        return
+        sys.exit(0)
 
     if options.show:
       if not options.bank:
@@ -190,7 +190,7 @@ def main():
               print "# \t\tFiles:"
               for file in elt['files']:
                 print "# \t\t\t"+file
-      sys.exit(1)
+      sys.exit(0)
 
     if options.check:
       if not options.bank:
@@ -252,7 +252,7 @@ def main():
             release = None
           print " "+bank['name']+"\t"+','.join(bank['properties']['type'])+"\t"+str(release)
         print '#' * 80
-        return
+        sys.exit(0)
 
     if options.update:
       if not options.bank:

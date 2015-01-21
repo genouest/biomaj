@@ -177,6 +177,12 @@ class BiomajConfig:
     '''
     Get a property from bank or general configration. Optionally in section.
     '''
+    # Compatibility fields
+    if prop == 'depends':
+      depend = self.get('db.source', section, escape, None)
+      if depend:
+        return depend
+
     if self.config_bank.has_option(section,prop):
       val = self.config_bank.get(section,prop)
       # If regexp, escape backslashes

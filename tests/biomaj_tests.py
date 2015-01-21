@@ -411,6 +411,7 @@ class TestBiomajFTPDownload(unittest.TestCase):
     ftpd.close()
     self.assertTrue(len(ftpd.files_to_download) == 2)
 
+  @attr('test')
   def test_download_in_subdir(self):
     ftpd = FTPDownload('ftp', 'ftp.ncbi.nih.gov', '/blast/')
     (file_list, dir_list) = ftpd.list()
@@ -770,7 +771,7 @@ class TestBiomajFunctional(unittest.TestCase):
       self.assertTrue(b3.session.get('release') == rel+'__1')
       self.assertTrue(res)
 
-  @attr('test')
+
   def test_mix_stop_from_task4(self):
       '''
       Get a first release, then fromscratch --stop-after, then restart from-task

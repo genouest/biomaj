@@ -69,7 +69,7 @@ class LocalDownload(DownloadInterface):
       rfile['name'] = file
 
       is_dir = False
-      if os.path.isdir(file):
+      if os.path.isdir(os.path.join(self.rootdir + directory,file)):
         is_dir = True
 
       if not is_dir:

@@ -123,9 +123,15 @@ class Workflow(object):
         # Main task is over, execute sub tasks of main
         if not self.skip_all:
           for step in flow['steps']:
-            res = getattr(self, 'wf_'+step)()
-            if not res:
-              logging.error('Error during '+flow['name']+' subtask: wf_' + step)
+            try:
+              res = getattr(self, 'wf_'+step)()
+              if not res:
+                logging.error('Error during '+flow['name']+' subtask: wf_' + step)
+                self.wf_over()
+                return False
+            except Exception as e:
+              logging.error('Workflow:'+flow['name']+' subtask: wf_' + step+ ':Exception:'+str(e))
+              logging.debug(traceback.format_exc())
               self.wf_over()
               return False
       if self.options.get_option(Options.STOP_AFTER) == flow['name']:
@@ -253,7 +259,7 @@ class UpdateWorkflow(Workflow):
     { 'name': 'depends', 'steps': []},
     { 'name': 'preprocess', 'steps': []},
     { 'name': 'release', 'steps': []},
-    { 'name': 'download', 'steps': ['uncompress','copy']},
+    { 'name': 'download', 'steps': ['uncompress','copy', 'copydepends']},
     { 'name': 'postprocess', 'steps': ['metadata', 'stats']},
     { 'name': 'publish', 'steps': ['clean_offline', 'delete_old', 'clean_old_sessions']},
     { 'name': 'over', 'steps': []}
@@ -296,6 +302,37 @@ class UpdateWorkflow(Workflow):
     res = self.bank.update_dependencies()
     logging.info('Workflow:wf_depends:'+str(res))
     return res
+
+  def wf_copydepends(self):
+    '''
+    Copy files from dependent banks if needed
+    '''
+    logging.info('Workflow:wf_copydepends')
+    deps = self.bank.get_dependencies()
+    for dep in deps:
+      if self.bank.config.get(dep+'.files.move'):
+        logging.info('Worflow:wf_depends:Files:Move:'+self.bank.config.get(dep+'.files.move'))
+        bdir = None
+        for bdep in self.bank.depends:
+          if bdep.name == dep:
+            bdir = bdep.session.get_full_release_directory()
+            break
+        if bdir is None:
+          logging.error('Could not find a session update for bank '+dep)
+          return False
+        b = self.bank.get_bank(dep, no_log=True)
+        locald = LocalDownload(bdir)
+        (file_list, dir_list) = locald.list()
+        locald.match(self.bank.config.get(dep+'.files.move').split(), file_list, dir_list)
+        bankdepdir = self.bank.session.get_full_release_directory()+"/"+dep
+        if not os.path.exists(bankdepdir):
+          os.mkdir(bankdepdir)
+        downloadedfiles = locald.download(bankdepdir)
+        locald.close()
+        if not downloadedfiles:
+          logging.info('Workflow:wf_copydepends:no files to copy')
+          return False
+    return True
 
   def wf_preprocess(self):
     '''

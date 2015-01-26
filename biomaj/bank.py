@@ -170,11 +170,11 @@ class Bank:
         break
     return res
 
-  def get_bank(self, bank):
+  def get_bank(self, bank, no_log=False):
     '''
     Gets an other bank
     '''
-    return Bank(bank)
+    return Bank(bank, no_log=no_log)
 
   def get_dependencies(self, bank=None):
     '''
@@ -186,7 +186,6 @@ class Bank:
       deps = self.config.get('depends')
     else:
       deps = bank.config.get('depends')
-
     if deps is None:
       return []
     # Mainn deps

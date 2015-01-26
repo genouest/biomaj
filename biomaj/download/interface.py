@@ -83,6 +83,13 @@ class DownloadInterface:
           subdirs_pattern = subdirs_pattern[1:]
           subdir = subdirs_pattern[0]
         if not dir_list and pattern == '**/*':
+          # Take all and no more dirs, take all files
+          for rfile in file_list:
+              rfile['root'] = self.rootdir
+              if prefix != '':
+                rfile['name'] = prefix + '/' +rfile['name']
+              self.files_to_download.append(rfile)
+              logging.debug('Download:File:MatchRegExp:'+rfile['name'])
           return
         for direlt in dir_list:
           subdir = direlt['name']

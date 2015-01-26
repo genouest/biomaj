@@ -260,7 +260,7 @@ def main():
         sys.exit(1)
       bmaj = Bank(options.bank, options)
       print 'Log file: '+bmaj.config.log_file
-      res = bmaj.update()
+      res = bmaj.update(depends=True)
       Notify.notifyBankAction(bmaj)
       if not res:
         sys.exit(1)

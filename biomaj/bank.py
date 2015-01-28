@@ -427,6 +427,10 @@ class Bank:
     '''
     Set session release to *current*
     '''
+    if not os.environ['LOGNAME'] == self.bank['properties']['owner']:
+      logging.error('Not authorized, bank owned by '+self.bank['properties']['owner'])
+      raise Exception('Not authorized, bank owned by '+self.bank['properties']['owner'])
+
     current_link = os.path.join(self.config.get('data.dir'),
                                 self.config.get('dir.version'),
                                 'current')
@@ -449,6 +453,10 @@ class Bank:
     '''
     Unset *current*
     '''
+    if not os.environ['LOGNAME'] == self.bank['properties']['owner']:
+      logging.error('Not authorized, bank owned by '+self.bank['properties']['owner'])
+      raise Exception('Not authorized, bank owned by '+self.bank['properties']['owner'])
+
     current_link = os.path.join(self.config.get('data.dir'),
                                 self.config.get('dir.version'),
                                 'current')
@@ -485,6 +493,11 @@ class Bank:
     :type release: str
     :return: bool
     '''
+    if not os.environ['LOGNAME'] == self.bank['properties']['owner']:
+      logging.error('Not authorized, bank owned by '+self.bank['properties']['owner'])
+      raise Exception('Not authorized, bank owned by '+self.bank['properties']['owner'])
+
+
     rel = None
     for prod in self.bank['production']:
       if prod['release'] == release or prod['prod_dir'] == release:
@@ -504,6 +517,10 @@ class Bank:
     :type release: str
     :return: bool
     '''
+    if not os.environ['LOGNAME'] == self.bank['properties']['owner']:
+      logging.error('Not authorized, bank owned by '+self.bank['properties']['owner'])
+      raise Exception('Not authorized, bank owned by '+self.bank['properties']['owner'])
+
     rel = None
     for prod in self.bank['production']:
       if prod['release'] == release or prod['prod_dir'] == release:
@@ -692,6 +709,11 @@ class Bank:
     :return: bool
     '''
     logging.warning('Bank:'+self.name+':Remove')
+
+    if not os.environ['LOGNAME'] == self.bank['properties']['owner']:
+      logging.error('Not authorized, bank owned by '+self.bank['properties']['owner'])
+      raise Exception('Not authorized, bank owned by '+self.bank['properties']['owner'])
+
     self.session = self.get_new_session(RemoveWorkflow.FLOW)
     oldsession = None
     # Search production release matching release
@@ -734,6 +756,10 @@ class Bank:
     :return: bool
     '''
     logging.warning('Bank:'+self.name+':Update')
+
+    if not os.environ['LOGNAME'] == self.bank['properties']['owner']:
+      logging.error('Not authorized, bank owned by '+self.bank['properties']['owner'])
+      raise Exception('Not authorized, bank owned by '+self.bank['properties']['owner'])
 
     self.run_depends = depends
 

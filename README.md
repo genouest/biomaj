@@ -45,3 +45,11 @@ Biomaj uses libcurl, for sftp libcurl must be compiled with sftp support
 To delete elasticsearch index:
 
  curl -XDELETE 'http://localhost:9200/biomaj_test/'
+
+Credits
+======
+
+Special thanks for tuco at Pasteur Institute for the intensive testing and new
+ideas....
+Thanks to the old BioMAJ team for the work they have done.
+

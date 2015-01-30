@@ -2,7 +2,7 @@ import threading
 import logging
 import os
 
-from biomaj.process.process import Process, DrmaaProcess
+from biomaj.process.process import Process, DrmaaProcess, DockerProcess
 from biomaj.mongo_connector import MongoConnector
 
 class MetaProcess(threading.Thread):
@@ -120,6 +120,7 @@ class MetaProcess(threading.Thread):
             name = bprocess
             desc = self.bank.config.get(bprocess+'.desc')
             cluster = self.bank.config.get_bool(bprocess+'.cluster', default=False)
+            docker = self.bank.config.get_bool(bprocess+'.docker')
             proc_type = self.bank.config.get(bprocess+'.type')
             exe = self.bank.config.get(bprocess+'.exe')
             args = self.bank.config.get(bprocess+'.args')
@@ -127,6 +128,8 @@ class MetaProcess(threading.Thread):
             if cluster:
               native = self.bank.config.get(bprocess+'.native')
               bmaj_process = DrmaaProcess(meta+'_'+name, exe, args, desc, proc_type, native, expand, self.bmaj_env, os.path.dirname(self.bank.config.log_file))
+            elif docker:
+              bmaj_process = DockerProcess(meta+'_'+name, exe, args, desc, proc_type, docker, expand, self.bmaj_env, os.path.dirname(self.bank.config.log_file))
             else:
               bmaj_process = Process(meta+'_'+name, exe, args, desc, proc_type, expand, self.bmaj_env, os.path.dirname(self.bank.config.log_file))
             self.set_progress(bmaj_process.name, None)

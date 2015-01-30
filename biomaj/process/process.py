@@ -1,7 +1,7 @@
 import logging
 import os
 import subprocess
-
+import tempfile
 
 class Process(object):
   '''
@@ -66,6 +66,71 @@ class Process(object):
     err= False
     if not simulate:
       logging.info('PROCESS:RUN:'+self.name)
+      with open(self.output_file,'w') as fout:
+        with open(self.error_file,'w') as ferr:
+          if self.expand:
+            args = " ".join(args)
+            proc = subprocess.Popen(args, stdout=fout, stderr=ferr, env=self.bank_env, shell=True)
+          else:
+            proc = subprocess.Popen(args, stdout=fout, stderr=ferr, env=self.bank_env, shell=False)
+          proc.wait()
+          if proc.returncode == 0:
+            err = True
+          fout.flush()
+          ferr.flush()
+    else:
+      err = True
+    logging.info('PROCESS:EXEC:' + self.name + ':' + str(err))
+
+    return err
+
+class DockerProcess(Process):
+  def __init__(self, name, exe, args, desc=None, proc_type=None, docker=None, expand=True, bank_env=None, log_dir=None):
+    Process.__init__(self, name, exe, args, desc, proc_type, expand, bank_env, log_dir)
+    self.docker = docker
+
+  def run(self, simulate=False):
+    '''
+    Execute process in docker container
+
+    :param simulate: does not execute process
+    :type simulate: bool
+    :return: exit code of process
+    '''
+
+    release_dir = self.bmaj_env['datadir']+'/'+self.bmaj_env['dirversion']+'/'+self.bmaj_env['localrelease']
+    env = ''
+    if self.bank_env:
+      for key, value in self.bank_env.iteritems():
+        env = ' -e "{0}={1}"'.format(key, value)
+    #         docker run with data.dir env as shared volume
+    #         forwarded env variables
+    cmd = '''uid={uid}
+gid={gid}
+{sudo} docker pull {container_id}
+{sudo} docker run --rm -w {bank_dir}  -v {data_dir}:{data_dir} {env} {container_id} \
+bash -c "groupadd --gid {gid} {group_mobyle} && useradd --uid {uid} --gid {gid} {user_mobyle}; \
+{exe} {args}; \
+chown -R {uid}:{gid} {bank_dir}"'''.format(uid = os.getuid(),
+                                          gid = os.getgid(),
+                                          data_dir = self.bmaj_env['datadir'],
+                                          volumes = volumes,
+                                          env = env,
+                                          container_id = self.docker,
+                                          group_biomaj = 'biomaj',
+                                          user_biomaj = 'biomaj',
+                                          exe = self.exe,
+                                          args = ' '.join(self.args),
+                                          bank_dir=release_dir,
+                                          sudo='sudo'
+                                          )
+    #TODO create temp script file from command and execute it
+    tmpfile = temfile.mktemp('biomaj', 0755)
+    args = [ tmpfile ]
+    logging.debug('PROCESS:EXEC:Docker:'+str(self.args))
+    err= False
+    if not simulate:
+      logging.info('PROCESS:RUN:Docker:'+self.docker+':'+self.name)
       with open(self.output_file,'w') as fout:
         with open(self.error_file,'w') as ferr:
           if self.expand:

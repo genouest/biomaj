@@ -28,7 +28,8 @@ class BiomajConfig:
   'use_drmaa': 0,
   'db.type': '',
   'db.formats': '',
-  'keep.old.version': 1
+  'keep.old.version': 1,
+  'docker.sudo': '1'
   }
 
   # Old biomaj level compatibility

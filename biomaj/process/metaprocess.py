@@ -150,13 +150,13 @@ class MetaProcess(threading.Thread):
             proc_type = self.bank.config.get(bprocess+'.type')
             exe = self.bank.config.get(bprocess+'.exe')
             args = self.bank.config.get(bprocess+'.args')
-            print "OSALLOU "+str(args)
             expand = self.bank.config.get_bool(bprocess+'.expand', default=True)
             if cluster:
               native = self.bank.config.get(bprocess+'.native')
               bmaj_process = DrmaaProcess(meta+'_'+name, exe, args, desc, proc_type, native, expand, self.bmaj_env, os.path.dirname(self.bank.config.log_file))
             elif docker:
-              bmaj_process = DockerProcess(meta+'_'+name, exe, args, desc, proc_type, docker, expand, self.bmaj_only_env, os.path.dirname(self.bank.config.log_file))
+              use_sudo = self.bank.config.get_bool('docker.sudo', default=True)
+              bmaj_process = DockerProcess(meta+'_'+name, exe, args, desc, proc_type, docker, expand, self.bmaj_only_env, os.path.dirname(self.bank.config.log_file), use_sudo)
             else:
               bmaj_process = Process(meta+'_'+name, exe, args, desc, proc_type, expand, self.bmaj_env, os.path.dirname(self.bank.config.log_file))
             self.set_progress(bmaj_process.name, None)

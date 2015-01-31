@@ -89,9 +89,10 @@ class Process(object):
     return err
 
 class DockerProcess(Process):
-  def __init__(self, name, exe, args, desc=None, proc_type=None, docker=None, expand=True, bank_env=None, log_dir=None):
+  def __init__(self, name, exe, args, desc=None, proc_type=None, docker=None, expand=True, bank_env=None, log_dir=None, use_sudo=True):
     Process.__init__(self, name, exe, args, desc, proc_type, expand, bank_env, log_dir)
     self.docker = docker
+    self.use_sudo = use_sudo
 
   def run(self, simulate=False):
     '''
@@ -101,7 +102,9 @@ class DockerProcess(Process):
     :type simulate: bool
     :return: exit code of process
     '''
-
+    use_sudo = ''
+    if self.use_sudo:
+      use_sudo = 'sudo'
     release_dir = self.bank_env['datadir']+'/'+self.bank_env['dirversion']+'/'+self.bank_env['localrelease']
     env = ''
     if self.bank_env:
@@ -125,7 +128,7 @@ chown -R {uid}:{gid} {bank_dir}"'''.format(uid = os.getuid(),
                                           exe = self.exe,
                                           args = ' '.join(self.args),
                                           bank_dir=release_dir,
-                                          sudo='sudo'
+                                          sudo=use_sudo
                                           )
 
     (handler, tmpfile) = tempfile.mkstemp('biomaj')

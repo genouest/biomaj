@@ -30,14 +30,18 @@ class Process(object):
     :type log_dir: str
     '''
     # Replace env vars in args
-    for key,value in bank_env.iteritems():
-      if value is not None:
-        args = args.replace('${'+key+'}', value)
+    if args:
+      for key,value in bank_env.iteritems():
+        if value is not None:
+          args = args.replace('${'+key+'}', value)
 
     self.name = name
     self.exe = exe
     self.desc= desc
-    self.args = args.split()
+    if args is not None:
+      self.args = args.split()
+    else:
+      self.args = []
     self.bank_env = bank_env
     self.type = proc_type
     self.expand = expand
@@ -98,23 +102,22 @@ class DockerProcess(Process):
     :return: exit code of process
     '''
 
-    release_dir = self.bmaj_env['datadir']+'/'+self.bmaj_env['dirversion']+'/'+self.bmaj_env['localrelease']
+    release_dir = self.bank_env['datadir']+'/'+self.bank_env['dirversion']+'/'+self.bank_env['localrelease']
     env = ''
     if self.bank_env:
       for key, value in self.bank_env.iteritems():
-        env = ' -e "{0}={1}"'.format(key, value)
+        env += ' -e "{0}={1}"'.format(key, value)
     #         docker run with data.dir env as shared volume
     #         forwarded env variables
     cmd = '''uid={uid}
 gid={gid}
 {sudo} docker pull {container_id}
 {sudo} docker run --rm -w {bank_dir}  -v {data_dir}:{data_dir} {env} {container_id} \
-bash -c "groupadd --gid {gid} {group_mobyle} && useradd --uid {uid} --gid {gid} {user_mobyle}; \
+bash -c "groupadd --gid {gid} {group_biomaj} && useradd --uid {uid} --gid {gid} {user_biomaj}; \
 {exe} {args}; \
 chown -R {uid}:{gid} {bank_dir}"'''.format(uid = os.getuid(),
                                           gid = os.getgid(),
-                                          data_dir = self.bmaj_env['datadir'],
-                                          volumes = volumes,
+                                          data_dir = self.bank_env['datadir'],
                                           env = env,
                                           container_id = self.docker,
                                           group_biomaj = 'biomaj',
@@ -124,10 +127,14 @@ chown -R {uid}:{gid} {bank_dir}"'''.format(uid = os.getuid(),
                                           bank_dir=release_dir,
                                           sudo='sudo'
                                           )
-    #TODO create temp script file from command and execute it
-    tmpfile = temfile.mktemp('biomaj', 0755)
+
+    (handler, tmpfile) = tempfile.mkstemp('biomaj')
+    os.write(handler,cmd)
+    os.close(handler)
+    os.chmod(tmpfile, 0755)
     args = [ tmpfile ]
     logging.debug('PROCESS:EXEC:Docker:'+str(self.args))
+    logging.debug('PROCESS:EXEC:Docker:Tmpfile:'+tmpfile)
     err= False
     if not simulate:
       logging.info('PROCESS:RUN:Docker:'+self.docker+':'+self.name)
@@ -146,7 +153,7 @@ chown -R {uid}:{gid} {bank_dir}"'''.format(uid = os.getuid(),
     else:
       err = True
     logging.info('PROCESS:EXEC:' + self.name + ':' + str(err))
-
+    os.remove(tmpfile)
     return err
 
 

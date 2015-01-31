@@ -47,6 +47,7 @@ class MetaProcess(threading.Thread):
       # Copy all config from bank
 
 
+      self.bmaj_only_env = {}
       #The root directory where all databases are stored.
       #If your data is not stored under one directory hirearchy
       #you can override this value in the database properties file.
@@ -54,33 +55,58 @@ class MetaProcess(threading.Thread):
         self.bmaj_env[conf] = self.bank.config.config_bank.get('GENERAL', conf)
         if self.bmaj_env[conf] is None:
           self.bmaj_env[conf] = ''
+          self.bmaj_only_env[conf] = self.bmaj_env[conf]
 
       self.bmaj_env['dbname'] = self.bank.name
+      self.bmaj_only_env['dbname'] = self.bmaj_env['dbname']
+
       self.bmaj_env['datadir'] = self.bank.config.get('data.dir')
+      self.bmaj_only_env['datadir'] = self.bmaj_env['datadir']
+
       self.bmaj_env['data.dir'] = self.bmaj_env['datadir']
+      self.bmaj_only_env['data.dir'] = self.bmaj_env['data.dir']
+
       self.bmaj_env['mailadmin'] = self.bank.config.get('mail.admin')
+      self.bmaj_only_env['mailadmin'] = self.bmaj_env['mailadmin']
+
       if self.bank.config.get('mail.smtp.host'):
         self.bmaj_env['mailsmtp'] = self.bank.config.get('mail.smtp.host')
+        self.bmaj_only_env['mailsmtp'] = self.bmaj_env['mailsmtp']
+
       self.bmaj_env['processdir'] = self.bank.config.get('process.dir',default='')
+      self.bmaj_only_env['processdir'] = self.bmaj_env['processdir']
+
       if 'PATH' in self.bmaj_env:
         self.bmaj_env['PATH'] += ':' + self.bmaj_env['processdir']
+        self.bmaj_only_env['PATH'] = self.bmaj_env['PATH']
       else:
         self.bmaj_env['PATH'] = self.bmaj_env['processdir']+':/usr/local/bin:/usr/sbin:/usr/bin'
+        self.bmaj_only_env['PATH'] = self.bmaj_env['PATH']
 
       # Set some session specific env
       if self.bank.session is not None:
         self.bmaj_env['offlinedir'] = self.bank.session.get_offline_directory()
+        self.bmaj_only_env['offlinedir'] = self.bmaj_env['offlinedir']
+
         self.bmaj_env['dirversion'] = self.bank.config.get('dir.version')
+        self.bmaj_only_env['dirversion'] = self.bmaj_env['dirversion']
+
         self.bmaj_env['noextract'] = self.bank.config.get('no.extract')
         if self.bmaj_env['noextract'] is None:
           self.bmaj_env['noextract'] = ''
+        self.bmaj_only_env['noextract'] = self.bmaj_env['noextract']
+
         self.bmaj_env['localrelease'] = self.bank.session.get_release_directory()
+        self.bmaj_only_env['localrelease'] = self.bmaj_env['localrelease']
         if self.bank.session.get('release') is not None:
           self.bmaj_env['remoterelease'] = self.bank.session.get('remoterelease')
+          self.bmaj_only_env['remoterelease'] = self.bmaj_env['remoterelease']
           self.bmaj_env['removedrelease'] = self.bank.session.get('release')
+          self.bmaj_only_env['removedrelease'] = self.bmaj_env['removedrelease']
 
       for bdep in self.bank.depends:
         self.bmaj_env[bdep.name+'source'] = bdep.session.get_full_release_directory()
+        self.bmaj_only_env[bdep.name+'source'] = self.bmaj_env[bdep.name+'source']
 
 
     def set_progress(self, name, status=None):
@@ -120,16 +146,17 @@ class MetaProcess(threading.Thread):
             name = bprocess
             desc = self.bank.config.get(bprocess+'.desc')
             cluster = self.bank.config.get_bool(bprocess+'.cluster', default=False)
-            docker = self.bank.config.get_bool(bprocess+'.docker')
+            docker = self.bank.config.get(bprocess+'.docker')
             proc_type = self.bank.config.get(bprocess+'.type')
             exe = self.bank.config.get(bprocess+'.exe')
             args = self.bank.config.get(bprocess+'.args')
+            print "OSALLOU "+str(args)
             expand = self.bank.config.get_bool(bprocess+'.expand', default=True)
             if cluster:
               native = self.bank.config.get(bprocess+'.native')
               bmaj_process = DrmaaProcess(meta+'_'+name, exe, args, desc, proc_type, native, expand, self.bmaj_env, os.path.dirname(self.bank.config.log_file))
             elif docker:
-              bmaj_process = DockerProcess(meta+'_'+name, exe, args, desc, proc_type, docker, expand, self.bmaj_env, os.path.dirname(self.bank.config.log_file))
+              bmaj_process = DockerProcess(meta+'_'+name, exe, args, desc, proc_type, docker, expand, self.bmaj_only_env, os.path.dirname(self.bank.config.log_file))
             else:
               bmaj_process = Process(meta+'_'+name, exe, args, desc, proc_type, expand, self.bmaj_env, os.path.dirname(self.bank.config.log_file))
             self.set_progress(bmaj_process.name, None)

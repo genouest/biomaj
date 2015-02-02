@@ -31,11 +31,15 @@ Application Features
  * Multi threading
  * Data extraction (gzip, tar, bzip)
  * Data tree directory normalisation
+
+
 *Pre &Post processing :
  * Advanced workflow description (D.A.G) 
  * Post-process indexation for various bioinformatics software (blast, srs,
    fastacmd, readseq, etc…)
  * Easy integration of personal scripts for bank post-processing automation
+
+
 *Supervision:
  * Optional Administration web interface (biomaj-watcher)
  * CLI management

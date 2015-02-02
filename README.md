@@ -16,6 +16,17 @@ downloaded again only if a change is detected.
 
 Wiki page: https://github.com/osallou/biomaj/wiki
 
+Getting started
+===============
+
+Edit global.properties file to match your settings. Minimal conf are database connection and directories.
+
+    biomaj-cli.py -h
+
+    biomaj-cli.py --config global.properties --status
+
+    biomaj-cli.py --config global.properties  --bank alu --update
+
 Migration
 =========
 

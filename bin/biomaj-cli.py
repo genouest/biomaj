@@ -65,7 +65,7 @@ def main():
     --bank xx: name of the bank to check (will check xx.properties)
 --update: Update bank
     [MANDATORY]
-    --bank xx: name of the bank to update
+    --bank xx: name of the bank(s) to update, comma separated
     [OPTIONAL]
     --publish: after update set as *current* version
     --from-scratch: force a new update cycle, even if release is identical, release will be incremented like (myrel_1)
@@ -258,11 +258,17 @@ def main():
       if not options.bank:
         print "Bank name is missing"
         sys.exit(1)
-      bmaj = Bank(options.bank, options)
-      print 'Log file: '+bmaj.config.log_file
-      res = bmaj.update(depends=True)
-      Notify.notifyBankAction(bmaj)
-      if not res:
+      banks = options.bank.split(',')
+      gres = True
+      for bank in banks:
+        options.bank = bank
+        bmaj = Bank(bank, options)
+        print 'Log file: '+bmaj.config.log_file
+        res = bmaj.update(depends=True)
+        if not res:
+          gres = False
+        Notify.notifyBankAction(bmaj)
+      if not gres:
         sys.exit(1)
 
     if options.freeze:

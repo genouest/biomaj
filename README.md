@@ -33,14 +33,14 @@ Application Features
  * Data tree directory normalisation
 
 
-*Pre &Post processing :
+* Pre &Post processing :
  * Advanced workflow description (D.A.G) 
  * Post-process indexation for various bioinformatics software (blast, srs,
    fastacmd, readseq, etc…)
  * Easy integration of personal scripts for bank post-processing automation
 
 
-*Supervision:
+* Supervision:
  * Optional Administration web interface (biomaj-watcher)
  * CLI management
  * Mail alerts for the update cycle supervision

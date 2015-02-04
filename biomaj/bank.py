@@ -197,27 +197,50 @@ class Bank:
     return deps
 
 
+  def is_owner(self):
+    '''
+    Checks if current user is owner or admin
+    '''
+    admin_config = self.config.get('admin')
+    admin = []
+    if admin_config is not None:
+      admin = [x.strip() for x in admin_config.split(',')]
+    if admin and os.environ['LOGNAME'] in admin:
+      return True
+    if os.environ['LOGNAME'] == self.bank['properties']['owner']:
+      return True
+    return False
+
   def set_owner(self, owner):
     '''
-    Update bank owner
+    Update bank owner, only if current owner
     '''
+    if self.is_owner():
+      logging.error('Not authorized, bank owned by '+self.bank['properties']['owner'])
+      raise Exception('Not authorized, bank owned by '+self.bank['properties']['owner'])
+
     self.banks.update({'name': self.name}, {'$set' : { 'properties': { 'owner': owner} }})
 
-  def get_properties(self, keep_owner=False):
+
+  def get_properties(self):
     '''
     Read bank properties from config file
 
-    :param keep_owner: keep or update owner
-    :type keep_owner: bool
     :return: properties dict
     '''
+
+    owner = os.environ['LOGNAME']
+    # If owner not set, use current user
+    if self.bank:
+        owner = self.bank['properties']['owner']
+
     props = {
       'visibility': self.config.get('visibility.default'),
       'type': self.config.get('db.type').split(','),
-      'tags': []
+      'tags': [],
+      'owner': owner
     }
-    if not keep_owner:
-      props['owner'] = os.environ['LOGNAME']
+
     return props
 
   @staticmethod
@@ -335,7 +358,7 @@ class Bank:
     self.banks.update({'name': self.name}, {
       '$set': {
         action: self.session._session['id'],
-        'properties': self.get_properties(keep_owner=True)
+        'properties': self.get_properties()
       },
       '$push' : { 'sessions': self.session._session }
       })
@@ -437,7 +460,7 @@ class Bank:
     '''
     Set session release to *current*
     '''
-    if not os.environ['LOGNAME'] == self.bank['properties']['owner']:
+    if not self.is_owner():
       logging.error('Not authorized, bank owned by '+self.bank['properties']['owner'])
       raise Exception('Not authorized, bank owned by '+self.bank['properties']['owner'])
 
@@ -463,7 +486,7 @@ class Bank:
     '''
     Unset *current*
     '''
-    if not os.environ['LOGNAME'] == self.bank['properties']['owner']:
+    if not self.is_owner():
       logging.error('Not authorized, bank owned by '+self.bank['properties']['owner'])
       raise Exception('Not authorized, bank owned by '+self.bank['properties']['owner'])
 
@@ -503,7 +526,7 @@ class Bank:
     :type release: str
     :return: bool
     '''
-    if not os.environ['LOGNAME'] == self.bank['properties']['owner']:
+    if not self.is_owner():
       logging.error('Not authorized, bank owned by '+self.bank['properties']['owner'])
       raise Exception('Not authorized, bank owned by '+self.bank['properties']['owner'])
 
@@ -527,7 +550,7 @@ class Bank:
     :type release: str
     :return: bool
     '''
-    if not os.environ['LOGNAME'] == self.bank['properties']['owner']:
+    if not self.is_owner():
       logging.error('Not authorized, bank owned by '+self.bank['properties']['owner'])
       raise Exception('Not authorized, bank owned by '+self.bank['properties']['owner'])
 
@@ -720,7 +743,7 @@ class Bank:
     '''
     logging.warning('Bank:'+self.name+':Remove')
 
-    if not os.environ['LOGNAME'] == self.bank['properties']['owner']:
+    if not self.is_owner():
       logging.error('Not authorized, bank owned by '+self.bank['properties']['owner'])
       raise Exception('Not authorized, bank owned by '+self.bank['properties']['owner'])
 
@@ -767,7 +790,7 @@ class Bank:
     '''
     logging.warning('Bank:'+self.name+':Update')
 
-    if not os.environ['LOGNAME'] == self.bank['properties']['owner']:
+    if not self.is_owner():
       logging.error('Not authorized, bank owned by '+self.bank['properties']['owner'])
       raise Exception('Not authorized, bank owned by '+self.bank['properties']['owner'])
 

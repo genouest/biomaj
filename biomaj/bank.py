@@ -197,18 +197,28 @@ class Bank:
     return deps
 
 
-  def get_properties(self):
+  def set_owner(self, owner):
+    '''
+    Update bank owner
+    '''
+    self.banks.update({'name': self.name}, {'$set' : { 'properties': { 'owner': owner} }})
+
+  def get_properties(self, keep_owner=False):
     '''
     Read bank properties from config file
 
+    :param keep_owner: keep or update owner
+    :type keep_owner: bool
     :return: properties dict
     '''
-    return {
+    props = {
       'visibility': self.config.get('visibility.default'),
-      'owner': os.environ['LOGNAME'],
       'type': self.config.get('db.type').split(','),
       'tags': []
     }
+    if not keep_owner:
+      props['owner'] = os.environ['LOGNAME']
+    return props
 
   @staticmethod
   def searchindex(query):
@@ -325,7 +335,7 @@ class Bank:
     self.banks.update({'name': self.name}, {
       '$set': {
         action: self.session._session['id'],
-        'properties': self.get_properties()
+        'properties': self.get_properties(keep_owner=True)
       },
       '$push' : { 'sessions': self.session._session }
       })

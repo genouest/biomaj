@@ -1007,6 +1007,22 @@ class TestBiomajFunctional(unittest.TestCase):
     search_res = Bank.search(['blast'],['proteic'])
     self.assertTrue(len(search_res)==0)
 
+
+  def test_owner(self):
+    '''
+    test ACL with owner
+    '''
+    b = Bank('local')
+    res = b.update()
+    self.assertTrue(res)
+    b.set_owner('sample')
+    b2 = Bank('local')
+    try:
+      res = b2.update()
+      self.fail('not owner, should not be allowed')
+    except Exception as e:
+      pass
+
 @attr('elastic')
 class TestElastic(unittest.TestCase):
   '''

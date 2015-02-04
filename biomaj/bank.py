@@ -215,7 +215,7 @@ class Bank:
     '''
     Update bank owner, only if current owner
     '''
-    if self.is_owner():
+    if not self.is_owner():
       logging.error('Not authorized, bank owned by '+self.bank['properties']['owner'])
       raise Exception('Not authorized, bank owned by '+self.bank['properties']['owner'])
 

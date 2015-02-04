@@ -29,6 +29,7 @@ def main():
   parser.add_argument('--remove-all', dest="removeall", help="Remove all bank releases and database records", action="store_true", default=False)
   parser.add_argument('-s', '--status', dest="status", help="Get status", action="store_true", default=False)
   parser.add_argument('-b', '--bank', dest="bank",help="bank name")
+  parser.add_argument('--owner', dest="owner", help="change owner of the bank")
   parser.add_argument('--stop-before', dest="stop_before",help="Store workflow before task")
   parser.add_argument('--stop-after', dest="stop_after",help="Store workflow after task")
   parser.add_argument('--freeze', dest="freeze", help="Freeze a bank release", action="store_true", default=False)
@@ -63,6 +64,9 @@ def main():
 --check: Check bank property file
     [MANDATORY]
     --bank xx: name of the bank to check (will check xx.properties)
+--owner yy: Change owner fo the bank (user id)
+    [MANDATORY]
+    --bank xx: name of the bank
 --update: Update bank
     [MANDATORY]
     --bank xx: name of the bank(s) to update, comma separated
@@ -133,6 +137,15 @@ def main():
     sys.exit(1)
 
   try:
+
+    if options.owner:
+      if not options.bank:
+        print "Bank option is missing"
+        sys.exit(1)
+      bank = Bank(options.bank, no_log=True)
+      bank.set_owner(options.owner)
+      sys.exit(0)
+
     if options.search:
       if options.query:
         res = Bank.searchindex(options.query)

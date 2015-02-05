@@ -4,6 +4,7 @@ import os,sys
 #from optparse import OptionParser
 import argparse
 import pkg_resources
+import ConfigParser
 
 from biomaj.bank import Bank
 from biomaj.config import BiomajConfig
@@ -44,6 +45,8 @@ def main():
 
   parser.add_argument('--show', dest="show", help="Show format files for selected bank", action="store_true", default=False)
 
+  parser.add_argument('-n', '--change-dbname', dest="newbank",help="Change old bank name to this new bank name")
+
   parser.add_argument('--version', dest="version", help="Show version", action="store_true", default=False)
 
 
@@ -64,9 +67,12 @@ def main():
 --check: Check bank property file
     [MANDATORY]
     --bank xx: name of the bank to check (will check xx.properties)
---owner yy: Change owner fo the bank (user id)
+--owner yy: Change owner of the bank (user id)
     [MANDATORY]
     --bank xx: name of the bank
+--change-dbname yy: Change name of the bank to this new name
+    [MANDATORY]
+    --bank xx: current name of the bank
 --update: Update bank
     [MANDATORY]
     --bank xx: name of the bank(s) to update, comma separated
@@ -144,6 +150,24 @@ def main():
         sys.exit(1)
       bank = Bank(options.bank, no_log=True)
       bank.set_owner(options.owner)
+      sys.exit(0)
+
+    if options.newbank:
+      if not options.bank:
+        print "Bank option is missing"
+        sys.exit(1)
+      bank = Bank(options.bank, no_log=True)
+      conf_dir = BiomajConfig.global_config.get('GENERAL', 'conf.dir')
+      bank_prop_file = os.path.join(conf_dir,options.bank+'.properties')
+      config_bank = ConfigParser.SafeConfigParser()
+      config_bank.read([os.path.join(conf_dir,options.bank+'.properties')])
+      config_bank.set('GENERAL', 'db.name', options.newbank)
+      newbank_prop_file = open(os.path.join(conf_dir,options.newbank+'.properties'),'w')
+      config_bank.write(newbank_prop_file)
+      newbank_prop_file.close()
+      bank.banks.update({'name': options.bank}, {'$set' : { 'name': options.newbank }})
+      os.remove(bank_prop_file)
+      print "Bank "+options.bank+" renamed to "+options.newbank
       sys.exit(0)
 
     if options.search:

@@ -5,11 +5,13 @@ import os,sys
 import argparse
 import pkg_resources
 import ConfigParser
+import shutil
 
 from biomaj.bank import Bank
 from biomaj.config import BiomajConfig
 from biomaj.notify import Notify
 from biomaj.options import Options
+from biomaj.workflow import Workflow
 
 def main():
 
@@ -46,6 +48,8 @@ def main():
   parser.add_argument('--show', dest="show", help="Show format files for selected bank", action="store_true", default=False)
 
   parser.add_argument('-n', '--change-dbname', dest="newbank",help="Change old bank name to this new bank name")
+  parser.add_argument('-e', '--move-production-directories', dest="newdir",help="Change bank production directories location to this new path, path must exists")
+
 
   parser.add_argument('--version', dest="version", help="Show version", action="store_true", default=False)
 
@@ -71,6 +75,9 @@ def main():
     [MANDATORY]
     --bank xx: name of the bank
 --change-dbname yy: Change name of the bank to this new name
+    [MANDATORY]
+    --bank xx: current name of the bank
+--move-production-directories yy: Change bank production directories location to this new path, path must exists
     [MANDATORY]
     --bank xx: current name of the bank
 --update: Update bank
@@ -150,6 +157,34 @@ def main():
         sys.exit(1)
       bank = Bank(options.bank, no_log=True)
       bank.set_owner(options.owner)
+      sys.exit(0)
+
+    if options.newdir:
+      if not options.bank:
+        print "Bank option is missing"
+        sys.exit(1)
+      if not os.path.exists(options.newdir):
+        print "Destination directory does not exists"
+      bank = Bank(options.bank, options= options, no_log=True)
+      if not bank.bank['production']:
+        print "Nothing to move, no production directory"
+        sys.exit(0)
+      bank.load_session(Workflow.FLOW, None)
+      w = Workflow(bank)
+      res = w.wf_init()
+      if not res:
+        sys.exit(1)
+      for prod in bank.bank['production']:
+        session = bank.get_session_from_release(prod['release'])
+        bank.load_session(Workflow.FLOW, session)
+        prod_path = bank.session.get_full_release_directory()
+        if os.path.exists(prod_path):
+          shutil.move(prod_path, options.newdir)
+        prod['data_dir'] = options.newdir
+      bank.banks.update({'name': options.bank}, {'$set' : { 'production': bank.bank['production'] }})
+      print "Bank production directories moved to " + options.newdir
+      print "WARNING: do not forget to update accordingly the data.dir and dir.version properties"
+      w.wf_over()
       sys.exit(0)
 
     if options.newbank:

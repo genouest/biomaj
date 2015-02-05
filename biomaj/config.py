@@ -246,9 +246,9 @@ class BiomajConfig:
       logging.warn('celery config is not set, that\'s fine if you do not use Celery for background tasks')
 
     if not self.get('mail.smtp.host'):
-      logging.error('SMTP mail config not set, you will not be able to send emails')
+      logging.warn('SMTP mail config not set, you will not be able to send emails')
       status = False
-    if not self.get('mail.from'):
+    if self.get('mail.smtp.host') and not self.get('mail.from'):
       logging.error('Mail origin mail.from not set')
       status = False
 

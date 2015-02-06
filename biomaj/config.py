@@ -186,6 +186,8 @@ class BiomajConfig:
 
     if self.config_bank.has_option(section,prop):
       val = self.config_bank.get(section,prop)
+      if prop == 'remote.dir' and not val.endswith('/'):
+        val = val + '/'
       # If regexp, escape backslashes
       if escape and (prop == 'local.files' or prop == 'remote.files' or prop == 'http.parse.dir.line' or prop == 'http.parse.file.line'):
         val = val.replace('\\\\','\\')
@@ -280,6 +282,9 @@ class BiomajConfig:
         if not self.get('remote.dir'):
           logging.error('remote.dir not set')
           status = False
+        else if not self.get('remote.dir').endswith('/'):
+          logging.error('remote.dir must end with a /')
+          return False
         if not self.get('remote.files'):
           logging.error('remote.files not set')
           status = False

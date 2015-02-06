@@ -282,7 +282,7 @@ class BiomajConfig:
         if not self.get('remote.dir'):
           logging.error('remote.dir not set')
           status = False
-        else if not self.get('remote.dir').endswith('/'):
+        elif not self.get('remote.dir').endswith('/'):
           logging.error('remote.dir must end with a /')
           return False
         if not self.get('remote.files'):

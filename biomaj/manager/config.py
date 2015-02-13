@@ -24,43 +24,45 @@ class Config:
     :type name: Str
     :param prop_dir: Config properties directory
     :type prop_dir: Str (path)
+    :param user: Bank user name (Biomaj 1.x)
+    :type user: Str
     """
 
-    def __init__(self, name=None, prop_dir=None):
+    def __init__(self, name=None, prop_dir=None, user=None):
 
+        if user is None:
+            user = os.getlogin()
         #  We set 'config (3.0)' instaed of 'conf (1.2.3)' as the properties does not change in syntax
         if prop_dir:
-            self.prop_dir = prop_dir
+            Config.prop_dir = prop_dir
         # Try to get global.properties from ENV
+        elif 'BIOMAJ_CONF' in os.environ:
+            Config.prop_dir = os.path.join(os.environ['BIOMAJ_CONF'])
+        # Backward compatibility with Biomaj 1.x
         elif 'BIOMAJ_ROOT' in os.environ:
-            self.prop_dir = os.path.join(os.environ['BIOMAJ_ROOT'])
+            Config.prop_dir = os.path.join(os.environ['BIOMAJ_ROOT'], 'conf', 'db_properties', user)
         else:
-            raise Exception("BIOMAJ_ROOT not set and not prop_dir defined!")
+            raise Exception("BIOMAJ_CONF not set and not prop_dir defined!")
 
         cfg_list = []
-        if os.path.isdir(self.prop_dir):
-            self.global_file = os.path.join(self.prop_dir, self.global_file)
-            if not os.path.isfile(self.global_file):
-                raise Exception("global.properties not found in %s!" % self.prop_dir)
+        if os.path.isdir(Config.prop_dir):
+            Config.global_file = os.path.join(Config.prop_dir, Config.global_file)
+            if not os.path.isfile(Config.global_file):
+                raise Exception("global.properties not found in %s!" % Config.prop_dir)
             else:
-                cfg_list.append(self.global_file)
-                # self.global_cfg = ConfigParser.ConfigParser()
-                # self.global_cfg.read([self.global_file])
+                cfg_list.append(Config.global_file)
         else:
-            raise Exception("Properties directory %s not found" % self.prop_dir)
+            raise Exception("Properties directory %s not found" % Config.prop_dir)
 
         if name:
             # Try to read 'bank' properties file
-            self.bank_file = os.path.join(self.prop_dir, 'config', name + '.properties')
-            if not os.path.isfile(self.bank_file):
-                raise Exception("Can't find %s.properties" % os.path.join(self.prop_dir, 'config', name))
-            cfg_list.append(self.bank_file)
-            # self.bank_cfg = ConfigParser.ConfigParser()
-            # self.bank_cfg.read([self.bank_file])
-        self.config = ConfigParser()
-        self.config.read(cfg_list)
-
-        return None
+            Config.bank_file = os.path.join(Config.prop_dir, name + '.properties')
+            print "bank_file %s" % Config.bank_file
+            if not os.path.isfile(Config.bank_file):
+                raise Exception("Can't find %s.properties" % Config.bank_file)
+            cfg_list.append(Config.bank_file)
+        Config.config = ConfigParser()
+        Config.config.read(cfg_list)
 
     def get(self, key, section='GENERAL'):
         if not key:

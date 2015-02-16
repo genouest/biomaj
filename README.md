@@ -14,7 +14,7 @@ is put in "production" on a dedicated release directory.
 With cron tasks, update tasks can be executed at regular interval, data are
 downloaded again only if a change is detected.
 
-Wiki page: https://github.com/osallou/biomaj/wiki
+More documentation is available in wiki page.
 
 Getting started
 ===============
@@ -30,7 +30,9 @@ Edit global.properties file to match your settings. Minimal conf are database co
 Migration
 =========
 
-To migrate from previous BioMAJ, a script is available at: https://github.com/osallou/biomaj-migrate
+To migrate from previous BioMAJ, a script is available at:
+https://github.com/osallou/biomaj-migrate. Script will import old database to
+the new database, and update configuration files to the modified format. Data directory is the same.
 
 Application Features
 ====================
@@ -61,7 +63,6 @@ Application Features
 Dependencies
 ============
 
-
 Packages:
  * Debian: libcurl-dev, libldap2-dev, gcc
  * CentOs: libcurl-devel, libldap-devel, gcc
@@ -74,6 +75,35 @@ Indexing (optional):
 
 ElasticSearch indexing add advanced search features to biomaj to find bank
 having files with specific format etc...
+Configuration of ElasticSearch is not in the scope of BioMAJ documentation.
+For a basic installation, one instance of ElasticSearch is enough (low volume of
+data), in such a case, the ElasticSearch configuration file should be modified
+accordingly:
+
+    node.name: "biomaj" (or any other name)
+    index.number_of_shards: 1
+    index.number_of_replicas: 0
+
+Installation
+============
+
+After dependencies installation, go in BioMAJ source directory:
+
+    python setup.py install
+
+
+You should consider using a Python virtual environment (virtualenv) to install BioMAJ.
+
+In tools/examples, copy the global.properties and update it to match your local
+installation.
+
+The tools/process contains example process files (python and shell).
+
+
+API documentation
+=================
+
+https://readthedocs.org/projects/biomaj/
 
 Status
 ======

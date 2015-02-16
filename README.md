@@ -110,6 +110,8 @@ Status
 
 [![Build Status](https://travis-ci.org/genouest/biomaj.svg?branch=master)](https://travis-ci.org/genouest/biomaj)
 
+[![Documentation Status](https://readthedocs.org/projects/biomaj/badge/?version=latest)](https://readthedocs.org/projects/biomaj/?badge=latest)
+
 
 Testing
 =======

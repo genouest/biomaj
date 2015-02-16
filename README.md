@@ -31,7 +31,7 @@ Migration
 =========
 
 To migrate from previous BioMAJ, a script is available at:
-https://github.com/osallou/biomaj-migrate. Script will import old database to
+https://github.com/genouest/biomaj-migrate. Script will import old database to
 the new database, and update configuration files to the modified format. Data directory is the same.
 
 Application Features
@@ -108,9 +108,8 @@ https://readthedocs.org/projects/biomaj/
 Status
 ======
 
-[![Build Status](https://travis-ci.org/osallou/biomaj.svg?branch=master)](https://travis-ci.org/osallou/biomaj)
+[![Build Status](https://travis-ci.org/genouest/biomaj.svg?branch=master)](https://travis-ci.org/genouest/biomaj)
 
-[![Coverage Status](https://coveralls.io/repos/osallou/biomaj/badge.png?branch=master)](https://coveralls.io/r/osallou/biomaj?branch=master)
 
 Testing
 =======

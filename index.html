@@ -1,0 +1,209 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>BioMAJ by genouest</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1 class="header">BioMAJ</h1>
+        <p class="header">BioMAJ</p>
+
+        <ul>
+          <li class="download"><a class="buttons" href="https://github.com/genouest/biomaj/zipball/master">Download ZIP</a></li>
+          <li class="download"><a class="buttons" href="https://github.com/genouest/biomaj/tarball/master">Download TAR</a></li>
+          <li><a class="buttons github" href="https://github.com/genouest/biomaj">View On GitHub</a></li>
+        </ul>
+
+        <p class="header">This project is maintained by <a class="header name" href="https://github.com/genouest">genouest</a></p>
+
+
+      </header>
+      <section>
+        <h1>
+<a id="biomaj" class="anchor" href="#biomaj" aria-hidden="true"><span class="octicon octicon-link"></span></a>BioMAJ</h1>
+
+<p>This project is a complete rewrite of BioMAJ (<a href="http://biomaj.genouest.org">http://biomaj.genouest.org</a>).</p>
+
+<p>BioMAJ (BIOlogie Mise A Jour) is a workflow engine dedicated to data
+synchronization and processing. The Software automates the update cycle and the
+supervision of the locally mirrored databank repository.</p>
+
+<p>Common usages are to download remote databanks (Genbank for example) and apply
+some transformations (blast indexing, emboss indexing,...). Any script can be
+applied on downloaded data. When all treatments are successfully applied, bank
+is put in "production" on a dedicated release directory.
+With cron tasks, update tasks can be executed at regular interval, data are
+downloaded again only if a change is detected.</p>
+
+<p>More documentation is available in wiki page.</p>
+
+<h1>
+<a id="getting-started" class="anchor" href="#getting-started" aria-hidden="true"><span class="octicon octicon-link"></span></a>Getting started</h1>
+
+<p>Edit global.properties file to match your settings. Minimal conf are database connection and directories.</p>
+
+<pre><code>biomaj-cli.py -h
+
+biomaj-cli.py --config global.properties --status
+
+biomaj-cli.py --config global.properties  --bank alu --update
+</code></pre>
+
+<h1>
+<a id="migration" class="anchor" href="#migration" aria-hidden="true"><span class="octicon octicon-link"></span></a>Migration</h1>
+
+<p>To migrate from previous BioMAJ, a script is available at:
+<a href="https://github.com/genouest/biomaj-migrate">https://github.com/genouest/biomaj-migrate</a>. Script will import old database to
+the new database, and update configuration files to the modified format. Data directory is the same.</p>
+
+<h1>
+<a id="application-features" class="anchor" href="#application-features" aria-hidden="true"><span class="octicon octicon-link"></span></a>Application Features</h1>
+
+<ul>
+<li>
+<p>Synchronisation:</p>
+
+<ul>
+<li>Multiple remote protocols (ftp, sftp, http, local copy, ....)</li>
+<li>Data transfers integrity check</li>
+<li>Release versioning using a incremental approach</li>
+<li>Multi threading</li>
+<li>Data extraction (gzip, tar, bzip)</li>
+<li>Data tree directory normalisation</li>
+</ul>
+</li>
+<li>
+<p>Pre &amp;Post processing :</p>
+
+<ul>
+<li>Advanced workflow description (D.A.G) </li>
+<li>Post-process indexation for various bioinformatics software (blast, srs,
+fastacmd, readseq, etc…)</li>
+<li>Easy integration of personal scripts for bank post-processing automation</li>
+</ul>
+</li>
+<li>
+<p>Supervision:</p>
+
+<ul>
+<li>Optional Administration web interface (biomaj-watcher)</li>
+<li>CLI management</li>
+<li>Mail alerts for the update cycle supervision</li>
+</ul>
+</li>
+</ul>
+
+<h1>
+<a id="dependencies" class="anchor" href="#dependencies" aria-hidden="true"><span class="octicon octicon-link"></span></a>Dependencies</h1>
+
+<p>Packages:</p>
+
+<ul>
+<li>Debian: libcurl-dev, libldap2-dev, gcc</li>
+<li>CentOs: libcurl-devel, libldap-devel, gcc</li>
+</ul>
+
+<p>Database:</p>
+
+<ul>
+<li>mongodb (local or remote)</li>
+</ul>
+
+<p>Indexing (optional):</p>
+
+<ul>
+<li>elasticsearch (global property, use_elastic=1)</li>
+</ul>
+
+<p>ElasticSearch indexing add advanced search features to biomaj to find bank
+having files with specific format etc...
+Configuration of ElasticSearch is not in the scope of BioMAJ documentation.
+For a basic installation, one instance of ElasticSearch is enough (low volume of
+data), in such a case, the ElasticSearch configuration file should be modified
+accordingly:</p>
+
+<pre><code>node.name: "biomaj" (or any other name)
+index.number_of_shards: 1
+index.number_of_replicas: 0
+</code></pre>
+
+<h1>
+<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installation</h1>
+
+<p>After dependencies installation, go in BioMAJ source directory:</p>
+
+<pre><code>python setup.py install
+</code></pre>
+
+<p>You should consider using a Python virtual environment (virtualenv) to install BioMAJ.</p>
+
+<p>In tools/examples, copy the global.properties and update it to match your local
+installation.</p>
+
+<p>The tools/process contains example process files (python and shell).</p>
+
+<h1>
+<a id="api-documentation" class="anchor" href="#api-documentation" aria-hidden="true"><span class="octicon octicon-link"></span></a>API documentation</h1>
+
+<p><a href="https://readthedocs.org/projects/biomaj/">https://readthedocs.org/projects/biomaj/</a></p>
+
+<h1>
+<a id="status" class="anchor" href="#status" aria-hidden="true"><span class="octicon octicon-link"></span></a>Status</h1>
+
+<p><a href="https://travis-ci.org/genouest/biomaj"><img src="https://travis-ci.org/genouest/biomaj.svg?branch=master" alt="Build Status"></a></p>
+
+<h1>
+<a id="testing" class="anchor" href="#testing" aria-hidden="true"><span class="octicon octicon-link"></span></a>Testing</h1>
+
+<p>Execute unit tests</p>
+
+<pre><code>nosetests
+</code></pre>
+
+<p>Execute unit tests but disable ones needing network access</p>
+
+<pre><code>nosetests -a '!network'
+</code></pre>
+
+<h1>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span class="octicon octicon-link"></span></a>License</h1>
+
+<p>A-GPL v3+</p>
+
+<h1>
+<a id="remarks" class="anchor" href="#remarks" aria-hidden="true"><span class="octicon octicon-link"></span></a>Remarks</h1>
+
+<p>Biomaj uses libcurl, for sftp libcurl must be compiled with sftp support</p>
+
+<p>To delete elasticsearch index:</p>
+
+<p>curl -XDELETE 'http://localhost:9200/biomaj_test/'</p>
+
+<h1>
+<a id="credits" class="anchor" href="#credits" aria-hidden="true"><span class="octicon octicon-link"></span></a>Credits</h1>
+
+<p>Special thanks for tuco at Pasteur Institute for the intensive testing and new
+ideas....
+Thanks to the old BioMAJ team for the work they have done.</p>
+
+<p>BioMAJ is developped at IRISA research institute.</p>
+      </section>
+      <footer>
+        <p><small>Hosted on <a href="http://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
+      </footer>
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+		
+  </body>
+</html>

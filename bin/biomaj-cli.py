@@ -49,7 +49,7 @@ def main():
 
   parser.add_argument('-n', '--change-dbname', dest="newbank",help="Change old bank name to this new bank name")
   parser.add_argument('-e', '--move-production-directories', dest="newdir",help="Change bank production directories location to this new path, path must exists")
-  parser.add_argument('--visiblity', dest="visibility",help="visibitliy status of the bank")
+  parser.add_argument('--visibility', dest="visibility",help="visibility status of the bank")
 
   parser.add_argument('--version', dest="version", help="Show version", action="store_true", default=False)
 
@@ -174,6 +174,9 @@ def main():
     if options.visibility:
       if not options.bank:
         print "Bank option is missing"
+        sys.exit(1)
+      if options.visibility not in ['public', 'private']:
+        print "Valid values are public|private"
         sys.exit(1)
       bank = Bank(options.bank, no_log=True)
       bank.set_visibility(options.visibility)

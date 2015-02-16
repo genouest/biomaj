@@ -221,6 +221,17 @@ class Bank:
 
     self.banks.update({'name': self.name}, {'$set' : { 'properties': { 'owner': owner} }})
 
+  def set_visibility(self, visibility):
+    '''
+    Update bank visibility, only if current owner
+    '''
+    if not self.is_owner():
+      logging.error('Not authorized, bank owned by '+self.bank['properties']['owner'])
+      raise Exception('Not authorized, bank owned by '+self.bank['properties']['owner'])
+
+    self.banks.update({'name': self.name}, {'$set' : { 'properties': { 'visibility': visibility} }})
+
+
 
   def get_properties(self):
     '''

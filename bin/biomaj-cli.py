@@ -49,7 +49,7 @@ def main():
 
   parser.add_argument('-n', '--change-dbname', dest="newbank",help="Change old bank name to this new bank name")
   parser.add_argument('-e', '--move-production-directories', dest="newdir",help="Change bank production directories location to this new path, path must exists")
-
+  parser.add_argument('--visiblity', dest="visibility",help="visibitliy status of the bank")
 
   parser.add_argument('--version', dest="version", help="Show version", action="store_true", default=False)
 
@@ -68,18 +68,27 @@ def main():
     --bank xx / bank: Get status details of bank
 
 --log DEBUG|INFO|WARN|ERR  [OPTIONAL]: set log level in logs for this run, default is set in global.properties file
+
 --check: Check bank property file
     [MANDATORY]
     --bank xx: name of the bank to check (will check xx.properties)
+
 --owner yy: Change owner of the bank (user id)
     [MANDATORY]
     --bank xx: name of the bank
+
+--visibility public|private: change visibility public/private of a bank
+    [MANDATORY]
+    --bank xx: name of the bank
+
 --change-dbname yy: Change name of the bank to this new name
     [MANDATORY]
     --bank xx: current name of the bank
+
 --move-production-directories yy: Change bank production directories location to this new path, path must exists
     [MANDATORY]
     --bank xx: current name of the bank
+
 --update: Update bank
     [MANDATORY]
     --bank xx: name of the bank(s) to update, comma separated
@@ -90,6 +99,7 @@ def main():
     --stop-after xx: stop update cycle after step xx has completed
     --from-task xx --release yy: Force an re-update cycle for bank release *yy* or from current cycle (in production directories), skipping steps up to *xx*
     --process xx: linked to from-task, optionally specify a block, meta or process name to start from
+
 --publish: Publish bank as current release to use
     [MANDATORY]
     --bank xx: name of the bank to update
@@ -97,11 +107,13 @@ def main():
 --unpublish: Unpublish bank (remove current)
     [MANDATORY]
     --bank xx: name of the bank to update
+
 --remove-all: Remove all bank releases and database records
     [MANDATORY]
     --bank xx: name of the bank to update
     [OPTIONAL]
     --force: remove freezed releases
+
 --remove: Remove bank release (files and database release)
     [MANDATORY]
     --bank xx: name of the bank to update
@@ -157,6 +169,15 @@ def main():
         sys.exit(1)
       bank = Bank(options.bank, no_log=True)
       bank.set_owner(options.owner)
+      sys.exit(0)
+
+    if options.visibility:
+      if not options.bank:
+        print "Bank option is missing"
+        sys.exit(1)
+      bank = Bank(options.bank, no_log=True)
+      bank.set_visibility(options.visibility)
+      print "Do not forget to update accordingly the visibility.default parameter in the configuration file"
       sys.exit(0)
 
     if options.newdir:

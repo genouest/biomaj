@@ -47,19 +47,15 @@ class SQLConnector(Connector):
 
     def __init__(self):
         # 'mysql://scott:tiger@localhost/test'
-        print "PgConnector is set!"
         self.engine = create_engine(Connector.url)
-        print self.__module__
+        Connector.db = split(Connector.url, '/')[-1]
 
-    def print_infos(self):
-        print self.__module__
-
+    '''
+        Small function to test postgresql connection and sqlalchemy
+    '''
     def get_bank_list(self):
         connection = self.engine.connect()
         banks = connection.execute("select amorceid,amorcename from amorces limit 10")
         for bank in banks:
             print "[%s] %s" % (bank['amorceid'], bank['amorcename'])
         return
-
-    def get_history(self, name):
-        pass

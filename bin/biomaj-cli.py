@@ -4,11 +4,14 @@ import os,sys
 #from optparse import OptionParser
 import argparse
 import pkg_resources
+import ConfigParser
+import shutil
 
 from biomaj.bank import Bank
 from biomaj.config import BiomajConfig
 from biomaj.notify import Notify
 from biomaj.options import Options
+from biomaj.workflow import Workflow
 
 def main():
 
@@ -29,6 +32,7 @@ def main():
   parser.add_argument('--remove-all', dest="removeall", help="Remove all bank releases and database records", action="store_true", default=False)
   parser.add_argument('-s', '--status', dest="status", help="Get status", action="store_true", default=False)
   parser.add_argument('-b', '--bank', dest="bank",help="bank name")
+  parser.add_argument('--owner', dest="owner", help="change owner of the bank")
   parser.add_argument('--stop-before', dest="stop_before",help="Store workflow before task")
   parser.add_argument('--stop-after', dest="stop_after",help="Store workflow after task")
   parser.add_argument('--freeze', dest="freeze", help="Freeze a bank release", action="store_true", default=False)
@@ -42,6 +46,10 @@ def main():
   parser.add_argument('--query', dest="query",help="Lucene query syntax to search in index")
 
   parser.add_argument('--show', dest="show", help="Show format files for selected bank", action="store_true", default=False)
+
+  parser.add_argument('-n', '--change-dbname', dest="newbank",help="Change old bank name to this new bank name")
+  parser.add_argument('-e', '--move-production-directories', dest="newdir",help="Change bank production directories location to this new path, path must exists")
+  parser.add_argument('--visiblity', dest="visibility",help="visibitliy status of the bank")
 
   parser.add_argument('--version', dest="version", help="Show version", action="store_true", default=False)
 
@@ -60,12 +68,30 @@ def main():
     --bank xx / bank: Get status details of bank
 
 --log DEBUG|INFO|WARN|ERR  [OPTIONAL]: set log level in logs for this run, default is set in global.properties file
+
 --check: Check bank property file
     [MANDATORY]
     --bank xx: name of the bank to check (will check xx.properties)
+
+--owner yy: Change owner of the bank (user id)
+    [MANDATORY]
+    --bank xx: name of the bank
+
+--visibility public|private: change visibility public/private of a bank
+    [MANDATORY]
+    --bank xx: name of the bank
+
+--change-dbname yy: Change name of the bank to this new name
+    [MANDATORY]
+    --bank xx: current name of the bank
+
+--move-production-directories yy: Change bank production directories location to this new path, path must exists
+    [MANDATORY]
+    --bank xx: current name of the bank
+
 --update: Update bank
     [MANDATORY]
-    --bank xx: name of the bank to update
+    --bank xx: name of the bank(s) to update, comma separated
     [OPTIONAL]
     --publish: after update set as *current* version
     --from-scratch: force a new update cycle, even if release is identical, release will be incremented like (myrel_1)
@@ -73,6 +99,7 @@ def main():
     --stop-after xx: stop update cycle after step xx has completed
     --from-task xx --release yy: Force an re-update cycle for bank release *yy* or from current cycle (in production directories), skipping steps up to *xx*
     --process xx: linked to from-task, optionally specify a block, meta or process name to start from
+
 --publish: Publish bank as current release to use
     [MANDATORY]
     --bank xx: name of the bank to update
@@ -80,11 +107,13 @@ def main():
 --unpublish: Unpublish bank (remove current)
     [MANDATORY]
     --bank xx: name of the bank to update
+
 --remove-all: Remove all bank releases and database records
     [MANDATORY]
     --bank xx: name of the bank to update
     [OPTIONAL]
     --force: remove freezed releases
+
 --remove: Remove bank release (files and database release)
     [MANDATORY]
     --bank xx: name of the bank to update
@@ -133,6 +162,70 @@ def main():
     sys.exit(1)
 
   try:
+
+    if options.owner:
+      if not options.bank:
+        print "Bank option is missing"
+        sys.exit(1)
+      bank = Bank(options.bank, no_log=True)
+      bank.set_owner(options.owner)
+      sys.exit(0)
+
+    if options.visibility:
+      if not options.bank:
+        print "Bank option is missing"
+        sys.exit(1)
+      bank = Bank(options.bank, no_log=True)
+      bank.set_visibility(options.visibility)
+      print "Do not forget to update accordingly the visibility.default parameter in the configuration file"
+      sys.exit(0)
+
+    if options.newdir:
+      if not options.bank:
+        print "Bank option is missing"
+        sys.exit(1)
+      if not os.path.exists(options.newdir):
+        print "Destination directory does not exists"
+      bank = Bank(options.bank, options= options, no_log=True)
+      if not bank.bank['production']:
+        print "Nothing to move, no production directory"
+        sys.exit(0)
+      bank.load_session(Workflow.FLOW, None)
+      w = Workflow(bank)
+      res = w.wf_init()
+      if not res:
+        sys.exit(1)
+      for prod in bank.bank['production']:
+        session = bank.get_session_from_release(prod['release'])
+        bank.load_session(Workflow.FLOW, session)
+        prod_path = bank.session.get_full_release_directory()
+        if os.path.exists(prod_path):
+          shutil.move(prod_path, options.newdir)
+        prod['data_dir'] = options.newdir
+      bank.banks.update({'name': options.bank}, {'$set' : { 'production': bank.bank['production'] }})
+      print "Bank production directories moved to " + options.newdir
+      print "WARNING: do not forget to update accordingly the data.dir and dir.version properties"
+      w.wf_over()
+      sys.exit(0)
+
+    if options.newbank:
+      if not options.bank:
+        print "Bank option is missing"
+        sys.exit(1)
+      bank = Bank(options.bank, no_log=True)
+      conf_dir = BiomajConfig.global_config.get('GENERAL', 'conf.dir')
+      bank_prop_file = os.path.join(conf_dir,options.bank+'.properties')
+      config_bank = ConfigParser.SafeConfigParser()
+      config_bank.read([os.path.join(conf_dir,options.bank+'.properties')])
+      config_bank.set('GENERAL', 'db.name', options.newbank)
+      newbank_prop_file = open(os.path.join(conf_dir,options.newbank+'.properties'),'w')
+      config_bank.write(newbank_prop_file)
+      newbank_prop_file.close()
+      bank.banks.update({'name': options.bank}, {'$set' : { 'name': options.newbank }})
+      os.remove(bank_prop_file)
+      print "Bank "+options.bank+" renamed to "+options.newbank
+      sys.exit(0)
+
     if options.search:
       if options.query:
         res = Bank.searchindex(options.query)
@@ -258,11 +351,17 @@ def main():
       if not options.bank:
         print "Bank name is missing"
         sys.exit(1)
-      bmaj = Bank(options.bank, options)
-      print 'Log file: '+bmaj.config.log_file
-      res = bmaj.update(depends=True)
-      Notify.notifyBankAction(bmaj)
-      if not res:
+      banks = options.bank.split(',')
+      gres = True
+      for bank in banks:
+        options.bank = bank
+        bmaj = Bank(bank, options)
+        print 'Log file: '+bmaj.config.log_file
+        res = bmaj.update(depends=True)
+        if not res:
+          gres = False
+        Notify.notifyBankAction(bmaj)
+      if not gres:
         sys.exit(1)
 
     if options.freeze:

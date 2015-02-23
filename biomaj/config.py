@@ -186,6 +186,8 @@ class BiomajConfig:
 
     if self.config_bank.has_option(section,prop):
       val = self.config_bank.get(section,prop)
+      if prop == 'remote.dir' and not val.endswith('/'):
+        val = val + '/'
       # If regexp, escape backslashes
       if escape and (prop == 'local.files' or prop == 'remote.files' or prop == 'http.parse.dir.line' or prop == 'http.parse.file.line'):
         val = val.replace('\\\\','\\')
@@ -246,9 +248,9 @@ class BiomajConfig:
       logging.warn('celery config is not set, that\'s fine if you do not use Celery for background tasks')
 
     if not self.get('mail.smtp.host'):
-      logging.error('SMTP mail config not set, you will not be able to send emails')
+      logging.warn('SMTP mail config not set, you will not be able to send emails')
       status = False
-    if not self.get('mail.from'):
+    if self.get('mail.smtp.host') and not self.get('mail.from'):
       logging.error('Mail origin mail.from not set')
       status = False
 
@@ -280,6 +282,9 @@ class BiomajConfig:
         if not self.get('remote.dir'):
           logging.error('remote.dir not set')
           status = False
+        elif not self.get('remote.dir').endswith('/'):
+          logging.error('remote.dir must end with a /')
+          return False
         if not self.get('remote.files'):
           logging.error('remote.files not set')
           status = False

@@ -5,7 +5,9 @@ Created on Feb 10, 2015
 '''
 
 from biomaj.mongo_connector import MongoConnector
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, MetaData
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.automap import automap_base
 from string import split
 
 
@@ -49,13 +51,61 @@ class SQLConnector(Connector):
         # 'mysql://scott:tiger@localhost/test'
         self.engine = create_engine(Connector.url)
         Connector.db = split(Connector.url, '/')[-1]
+        self.meta = MetaData()
+        self.base = automap_base()
+        self.base.prepare(self.engine, reflect=True)
+        self.meta.reflect(bind=self.engine)
+        self.sessionmaker = sessionmaker(bind=self.engine)
 
     '''
         Small function to test postgresql connection and sqlalchemy
     '''
     def get_bank_list(self):
         connection = self.engine.connect()
-        banks = connection.execute("select amorceid,amorcename from amorces limit 10")
+        banks = connection.execute("select amorceid,amorcename from amorces where amorceid < 5")
         for bank in banks:
             print "[%s] %s" % (bank['amorceid'], bank['amorcename'])
+        print "[SESSION] Testing ..."
+        session = self.sessionmaker()
+        amorces = self.base.classes.amorces
+        banks = session.query(amorces).filter(amorces.amorceid < 5)
+        for bank in banks:
+            print "[session][%s] %s" % (bank.amorceid, bank.amorcename)
+        session.commit()
+        session.close()
+        print "[SESSION] OK"
+        print "[SESSION+JOIN] Testing ..."
+        session = self.sessionmaker()
+        fs = self.base.classes.flowcellinfos_samples
+        samples = self.base.classes.samples
+        amorces = self.base.classes.amorces
+        sample = session.query(fs).join("flowcellinfos").join("samples").\
+                                   filter(fs.flowcellid==5).\
+                                   filter(samples.samplename.like('sample%')).order_by(samples.samplename.desc)
+        for s in sample:
+            print "[flowcellid:%d][flowcellname:%s][samplename:%s]" % (s.flowcellid, s.flowcellinfos.flowcellname, s.samples.samplename)
+        session.commit()
+        session.close()
+        print "[SESSION+JOIN] OK"
+        print "[EXISTS] Testing ..."
+        session = self.sessiomaker()
+        amorce = self.base.classes.amorces
+        a = session.query(amorce).filter(amorce.amorcename == 'toto')
+        if not session.query(a.exists()):
+            print "Amorce %s does not exists" % 'toto'
+        else:
+            print "It works"
+        print "[EXISTS] OK"
+        session.commit()
+        session.close()
         return
+
+    """
+    def get_table(self, name=None):
+        if name is None:
+            raise Exception("Table name required")
+        if name in SQLConnector.meta.tables:
+            return SQLConnector.meta.tables[name]
+        else:
+            raise "Table %s does not exist!" % (name)
+    """

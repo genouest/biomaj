@@ -81,20 +81,20 @@ class Bank:
         proddir = self.db.base.classes.productionDirectory
         updateBank = self.db.base.classes.updateBank
         releases = session.query(proddir, updateBank).join(updateBank, proddir.session == updateBank.idLastSession).\
-                            filter(bproddir.ref_idbank==self.idbank).\
+                            filter(proddir.ref_idbank==self.idbank).\
                             order_by('productionDirectory.idproductionDirectory DESC')
         rel_list = []
         for p, u in releases:
             rel_list.append({
-                             '_id' : '@'.join('bank', self.name, u.updateRelease),
+                             '_id' : '@'.join(['bank', self.name, u.updateRelease]),
                              'type': 'bank',
                              'name': self.name,
                              'version': u.updateRelease or None,
                              'publication_date': p.creation.strftime("%Y-%m-%d %X") if p.creation else None,
                              'removal_date': p.remove.strftime("%Y-%m-%d %X") if p.remove else None,
-                             'bank_type': [split(',', self.config.get('dbtype'))],
+                             'bank_type': [split(',', self.config.get('db.type'))], # Can be taken from db table remoteInfo.dbType
                              'bank_format': [split(',', self.config.get('db.formats'))],
-                             'programs': self.__get_formats_for_release(p.path)
+                             'programs': [self.__get_formats_for_release(p.path)]
                              })
         return json.dumps(rel_list)
 
@@ -218,16 +218,18 @@ class Bank:
             :type path: String (path)
             :return: List of formats
         """
+        path = '/tmp/banks'
         if not path:
             raise Exception("A path is required")
-        if not os.paht.exists(path):
+        if not os.path.exists(path):
             raise Exception("Path %s does not exist" % path)
         formats = []
-        for dir, dirs in os.walk(path):
+
+        for dir, dirs, filenames in os.walk(path):
             if dir == 'flat' or dir == 'uncompressed':
                 continue
             for sub in dirs:
-                formats.append('@'.join('prog', dir, sub or '-', '?'))
+                formats.append('@'.join(['prog', sub, os.path.dirname(dir) or '-', '?']))
         return formats
 
     def __load_releases(self):

@@ -8,14 +8,15 @@ from ConfigParser import ConfigParser
 from biomaj.manager.config import Config
 from biomaj.manager.db.connector import Connector
 from string import split
-from _bsddb import DBSecondaryBadError
+import json
+import os
 
 class Bank:
 
     config = None
     db = None
 
-    def __init__(self, name=None, connect=False, check_bank=False):
+    def __init__(self, name=None, connect=False):
 
         # List of release loaded?
         self.has_releases = False
@@ -27,23 +28,21 @@ class Bank:
         self.name = name
         self.idbank = None
         if self.config is None:
-            self.config = Config(name)
+            self.config = Config(name=name)
         if connect:
             self.db = Connector(self.config.get('db.url')).get_connector()
-            if check_bank:
-                self.__check_bank()
+            self.__check_bank()
 
-    def history(self):
+    def history(self, to_json=False):
         '''
             Get the release history of a specific bank
 
-            :param name: Name of the bank
-            :type name: String
+            :param to_json: Converts output to json
+            :type name: Boolean (Default False)
             :return: A list with all the bank history
         '''
         # SQL
         # SELECT b.name, u.updateRelease,p.state, p.remove, p.creation, p.path FROM productionDirectory p
-        # JOIN bank b ON b.idbank = p.ref_idbank
         # JOIN updateBank u ON u.idLastSession = p.session
         # WHERE b.name = 'calbicans5314' (AND p.creation > ?) [OPTIONAL]
 
@@ -51,25 +50,53 @@ class Bank:
             raise Exception("No db connection available. Build object with 'connect=True'.")
 
         session = self.db.sessionmaker()
-        proddir = self.db.base.classes.productiondirectory
+        proddir = self.db.base.classes.productionDirectory
         bank = self.db.base.classes.bank
         updateBank = self.db.base.classes.updateBank
-        releases = session.query(proddir.remove, proddir.creation, proddir.path, proddir.state, proddir.idproductiondirectory,\
-                                 bank.name, updateBank.updaterelease).\
-                                 join("bank").join("updatebank").\
-                                 filter(bank.name==self.name).\
-                                 order_by(proddir.idproductiondirectory)
+        releases = session.query(proddir, updateBank).\
+                                join(updateBank, updateBank.idLastSession == proddir.session).\
+                                filter(proddir.ref_idbank==self.idbank).\
+                                order_by('productionDirectory.idproductionDirectory DESC')
         rel_list = []
-        for rel in releases:
-            rel_list.append({'id': rel.idproductiondirectory,
-                             'name': rel.bank.name,
-                             'release': rel.updatebank.updaterelease,
-                             'removed': rel.remove,
-                             'created': rel.created,
-                             'path': rel.path,
-                             'status': rel.status})
+        for p, u in releases:
+            rel_list.append({'id': "%d" % p.idproductionDirectory,
+                             'name': self.name,
+                             'release': u.updateRelease,
+                             'removed': p.remove.strftime("%Y-%m-%d %X") if p.remove else None, # p.remove is a datetime.datetime
+                             'created': p.creation.strftime("%x %X"),
+                             'path': p.path,
+                             'status': p.state})
+        session.commit()
         session.close()
+        if to_json:
+            return json.dumps(rel_list)
         return rel_list
+
+    def history_tomongo(self):
+        """
+            Get the releases history of a bank from the database and build a Mongo like document in json
+            :return: Jsonified list
+        """
+        session = self.db.sessionmaker()
+        proddir = self.db.base.classes.productionDirectory
+        updateBank = self.db.base.classes.updateBank
+        releases = session.query(proddir, updateBank).join(updateBank, proddir.session == updateBank.idLastSession).\
+                            filter(bproddir.ref_idbank==self.idbank).\
+                            order_by('productionDirectory.idproductionDirectory DESC')
+        rel_list = []
+        for p, u in releases:
+            rel_list.append({
+                             '_id' : '@'.join('bank', self.name, u.updateRelease),
+                             'type': 'bank',
+                             'name': self.name,
+                             'version': u.updateRelease or None,
+                             'publication_date': p.creation.strftime("%Y-%m-%d %X") if p.creation else None,
+                             'removal_date': p.remove.strftime("%Y-%m-%d %X") if p.remove else None,
+                             'bank_type': [split(',', self.config.get('dbtype'))],
+                             'bank_format': [split(',', self.config.get('db.formats'))],
+                             'programs': self.__get_formats_for_release(p.path)
+                             })
+        return json.dumps(rel_list)
 
     def get_dict_sections(self, tool=None):
         '''
@@ -168,12 +195,40 @@ class Bank:
         pass
 
     def __check_bank(self):
+        """
+            Checks a bank exists in the database
+            :param name: Name of the bank to check [Default self.name]
+            :param name: String
+            :return:
+            :throws: Exception if bank does not exists
+        """
+        if not self.name:
+            raise Exception("Can't check bank, name not set")
         bank = self.db.base.classes.bank
         session = self.db.sessionmaker()
         b = session.query(bank).filter(bank.name == self.name)
         if not session.query(b.exists()):
             raise Exception("Sorry bank %s not found" % self.name)
         self.idbank = b.first().idbank
+
+    def __get_formats_for_release(self, path):
+        """
+            Get all the formats supporeted for a bank (path).
+            :param path: Path of the release to search in
+            :type path: String (path)
+            :return: List of formats
+        """
+        if not path:
+            raise Exception("A path is required")
+        if not os.paht.exists(path):
+            raise Exception("Path %s does not exist" % path)
+        formats = []
+        for dir, dirs in os.walk(path):
+            if dir == 'flat' or dir == 'uncompressed':
+                continue
+            for sub in dirs:
+                formats.append('@'.join('prog', dir, sub or '-', '?'))
+        return formats
 
     def __load_releases(self):
         """

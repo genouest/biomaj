@@ -74,21 +74,23 @@ class SQLConnector(Connector):
         session.commit()
         session.close()
         print "[SESSION] OK"
+
         print "[SESSION+JOIN] Testing ..."
         session = self.sessionmaker()
         fs = self.base.classes.flowcellinfos_samples
         samples = self.base.classes.samples
         amorces = self.base.classes.amorces
         sample = session.query(fs).join("flowcellinfos").join("samples").\
-                                   filter(fs.flowcellid==5).\
-                                   filter(samples.samplename.like('sample%')).order_by(samples.samplename.desc)
+                                   filter(fs.flowcellid==6).\
+                                   filter(samples.samplename.like('coH%')).order_by('samples.samplename desc')
         for s in sample:
             print "[flowcellid:%d][flowcellname:%s][samplename:%s]" % (s.flowcellid, s.flowcellinfos.flowcellname, s.samples.samplename)
         session.commit()
         session.close()
         print "[SESSION+JOIN] OK"
+
         print "[EXISTS] Testing ..."
-        session = self.sessiomaker()
+        session = self.sessionmaker()
         amorce = self.base.classes.amorces
         a = session.query(amorce).filter(amorce.amorcename == 'toto')
         if not session.query(a.exists()):
@@ -99,6 +101,24 @@ class SQLConnector(Connector):
         session.commit()
         session.close()
         return
+
+    def get_banks(self, type='public'):
+        """
+            Just prints the list of banks handled by biomaj in its database
+            :param type: Type of the bank (public[Default]|private)
+            :type type: String
+            :return: Prints to STDOUT
+        """
+
+        if type != 'public' and type != 'private':
+            raise Exception("Type must be public|private")
+        banks = self.base.classes.bank
+        session = self.sessionmaker()
+        private = False if type == 'private' else True
+        banks = session.query(banks).filter(banks.visibility==private).all()
+        for bank in banks:
+            print "[%d] %s is %s" % (bank.idbank, bank.name, 'public' if bank.visibility else 'private')
+        return 0
 
     """
     def get_table(self, name=None):

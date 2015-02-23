@@ -57,9 +57,10 @@ docs/_build/
 target/
 
 # iPython
-.ipython*
+.ipython/*
 
 # MacOSX
 Library/
+
 # Vim
 .vim*

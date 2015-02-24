@@ -832,14 +832,14 @@ class UpdateWorkflow(Workflow):
     release_dir = self.session.get_full_release_directory()
     for release_format in self.bank.session.get('formats'):
       format_file = os.path.join(release_dir,'listingv1.'+release_format.replace('/','_'))
-      section = self.list_section(release_dir, release_format)
+      section = self.list_section(release_dir, release_format, release_format)
       logging.debug("Worfklow:OldAPI:WriteListing: "+format_file)
       fd = os.open( format_file, os.O_RDWR|os.O_CREAT )
       os.write(fd, json.dumps(section))
       os.close( fd )
     return True
 
-  def list_section(self, base_dir, release_format):
+  def list_section(self, base_dir, release_format, base_format):
       '''
       Get section files and sub-section from base_dir for directory release_format
 
@@ -847,6 +847,8 @@ class UpdateWorkflow(Workflow):
       :type base_dir: str
       :param base_dir: sub directory to scan
       :type base_dir: str
+      :param base_format: first directroy indicating format
+      :type base_format: str
       :return: dict section details
       '''
       section = { "name": release_format, "sections": [], "files": []}
@@ -857,14 +859,14 @@ class UpdateWorkflow(Workflow):
       format_dir_list = os.listdir(format_dir)
       for format_dir_file in format_dir_list:
         if os.path.isfile(os.path.join(format_dir, format_dir_file)):
-          if release_format.lower() == 'blast':
+          if base_format.lower() == 'blast':
             if format_dir_file.endswith('.nal'):
               section['files'].append(os.path.join(format_dir, format_dir_file))
           else:
             section['files'].append(os.path.join(format_dir, format_dir_file))
         else:
           # This is a sub directory
-          new_section = self.list_section(format_dir, format_dir_file)
+          new_section = self.list_section(format_dir, format_dir_file, base_format)
           section['sections'].append(new_section)
       return section
 

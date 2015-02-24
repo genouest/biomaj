@@ -5,6 +5,7 @@ import shutil
 import tempfile
 import re
 import traceback
+import json
 
 from biomaj.utils import Utils
 from biomaj.download.ftp import FTPDownload
@@ -261,7 +262,7 @@ class UpdateWorkflow(Workflow):
     { 'name': 'release', 'steps': []},
     { 'name': 'download', 'steps': ['uncompress','copy', 'copydepends']},
     { 'name': 'postprocess', 'steps': ['metadata', 'stats']},
-    { 'name': 'publish', 'steps': ['clean_offline', 'delete_old', 'clean_old_sessions']},
+    { 'name': 'publish', 'steps': ['old_biomaj_api', 'clean_offline', 'delete_old', 'clean_old_sessions']},
     { 'name': 'over', 'steps': []}
   ]
 
@@ -823,6 +824,50 @@ class UpdateWorkflow(Workflow):
     logging.info('Workflow:wf_publish')
     self.bank.publish()
     return True
+
+  def wf_old_biomaj_api(self):
+    '''
+    Generates a listing.format file containing the list of files in directories declared in formats
+    '''
+    release_dir = self.session.get_full_release_directory()
+    for release_format in self.bank.session.get('formats'):
+      format_file = os.path.join(release_dir,'listing.'+release_format.replace('/','_'))
+      section = self.list_section(release_dir, release_format)
+      logging.debug("Worfklow:OldAPI:WriteListing: "+format_file)
+      fd = os.open( format_file, os.O_RDWR|os.O_CREAT )
+      os.write(fd, json.dumps(section))
+      os.close( fd )
+    return True
+
+  def list_section(self, base_dir, release_format):
+      '''
+      Get section files and sub-section from base_dir for directory release_format
+
+      :param base_dir: root directory
+      :type base_dir: str
+      :param base_dir: sub directory to scan
+      :type base_dir: str
+      :return: dict section details
+      '''
+      section = { "name": release_format, "sections": [], "files": []}
+      format_dir = os.path.join(base_dir,release_format)
+      if not os.path.exists(format_dir):
+        logging.info("Worfklow:OldAPI:Format directory "+release_format+" does not exists, skipping")
+        return section
+      format_dir_list = os.listdir(format_dir)
+      for format_dir_file in format_dir_list:
+        if os.path.isfile(os.path.join(format_dir, format_dir_file)):
+          if release_format.lower() == 'blast':
+            if format_dir_file.endswith('.nal'):
+              section['files'].append(os.path.join(format_dir, format_dir_file))
+          else:
+            section['files'].append(os.path.join(format_dir, format_dir_file))
+        else:
+          # This is a sub directory
+          new_section = self.list_section(format_dir, format_dir_file)
+          section['sections'].append(new_section)
+      return section
+
 
   def wf_clean_offline(self):
     '''

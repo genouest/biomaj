@@ -326,8 +326,8 @@ def main():
           print "#\t\tDirectory:\t"+release_dir
         if 'pending' in _bank and len(_bank['pending'].keys()) > 0:
           print "# Pending directories"
-        for pending in _bank['pending'].keys():
-          print "#\tRelease:\t"+pending
+          for pending in _bank['pending'].keys():
+            print "#\tRelease:\t"+pending
         print '#' * 80
       else:
         print '#' * 80

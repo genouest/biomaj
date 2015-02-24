@@ -252,10 +252,12 @@ def main():
         print '#' * 80
         print "# Name\tRelease"
         for bank in res:
-
           print " "+bank['name']
           for prod in bank['production']:
-              print " \t"+prod['release']+"\t"+','.join(prod['formats'])+"\t"+','.join(prod['types'])
+              iscurrent = ""
+              if prod['session'] == bank['current']:
+                iscurrent = "current"
+              print " \t"+prod['release']+"\t"+','.join(prod['formats'])+"\t"+','.join(prod['types'])+"\t"+iscurrent
 
         print '#' * 80
         sys.exit(0)

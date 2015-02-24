@@ -42,7 +42,9 @@ class Bank:
 
     if no_log:
       if options is None:
-        options = {'no_log': True}
+        #options = {'no_log': True}
+        options = Options()
+        options.no_log = True
       else:
         options.no_log = no_log
 
@@ -398,7 +400,9 @@ class Bank:
             for rtype in release_files['types']:
               if rtype not in release_types:
                 release_types.append(rtype)
-
+      prod_dir = self.session.get_release_directory()
+      if self.session.get('prod_dir'):
+        prod_dir = self.session.get('prod_dir')
       production = { 'release': self.session.get('release'),
                       'remoterelease': self.session.get('remoterelease'),
                       'session': self.session._session['id'],
@@ -406,7 +410,7 @@ class Bank:
                       'types': release_types,
                       'size': self.session.get('fullsize'),
                       'data_dir': self.config.get('data.dir'),
-                      'prod_dir': self.session.get_release_directory(),
+                      'prod_dir': prod_dir,
                       'freeze': False }
       self.bank['production'].append(production)
 

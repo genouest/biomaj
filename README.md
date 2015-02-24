@@ -65,7 +65,7 @@ Dependencies
 
 Packages:
  * Debian: libcurl-dev, libldap2-dev, gcc
- * CentOs: libcurl-devel, libldap-devel, gcc
+ * CentOs: libcurl-devel, openldap-devel, gcc
 
 Database:
  * mongodb (local or remote)

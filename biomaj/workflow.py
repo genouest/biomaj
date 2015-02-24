@@ -861,7 +861,8 @@ class UpdateWorkflow(Workflow):
         if os.path.isfile(os.path.join(format_dir, format_dir_file)):
           if base_format.lower() == 'blast':
             if format_dir_file.endswith('.nal'):
-              section['files'].append(os.path.join(format_dir, format_dir_file))
+              fileName, fileExtension = os.path.splitext(format_dir_file)
+              section['files'].append(os.path.join(format_dir, fileName))
           else:
             section['files'].append(os.path.join(format_dir, format_dir_file))
         else:

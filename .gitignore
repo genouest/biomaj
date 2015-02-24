@@ -63,4 +63,9 @@ target/
 Library/
 
 # Vim
-.vim*
+.viminfo
+
+# Eclipse
+.settings
+.project*
+.pydev*

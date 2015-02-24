@@ -20,8 +20,11 @@ class Bank:
 
         # List of release loaded?
         self.has_releases = False
-        # Do we have a future release ready?
-        self.has_future = False
+        # List of available releses
+        self.available_releases = []
+        self.removed_releases = []
+        # Bank has a future_release available?
+        self.future_releases = None
 
         if not name:
             raise Exception("A bank name is required!")
@@ -32,6 +35,24 @@ class Bank:
         if connect:
             self.db = Connector(self.config.get('db.url')).get_connector()
             self.__check_bank()
+
+    def formats(self, release='current', flat=False):
+        '''
+            Check the "supported formats" for a specific bank.
+            This is done simpy by getting the name of subdirectory(ies)
+            listed for the release checked (current|future_release)
+            :param release: Release type to check (current[Default]|future)
+            :type release: String
+            :param flat: Get the list as a flat string [Default False]
+            :type flat: Boolean
+            :return: List of supported format(s)
+        '''
+        path = os.path.join(self.config.get('data.dir'), self.name, release)
+        if not os.path.exists(path):
+            raise Exception("Can't get format(s) for '%s', directory not found" % path)
+        if flat:
+            return ','.join(os.listdir(path))
+        return os.listdir(path)
 
     def history(self, to_json=False):
         '''
@@ -68,6 +89,7 @@ class Bank:
                              'status': p.state})
         session.commit()
         session.close()
+        print "History: %d entries" % len(rel_list)
         if to_json:
             return json.dumps(rel_list)
         return rel_list
@@ -85,17 +107,17 @@ class Bank:
                             order_by('productionDirectory.idproductionDirectory DESC')
         rel_list = []
         for p, u in releases:
-            rel_list.append({
-                             '_id' : '@'.join(['bank', self.name, u.updateRelease]),
+            rel_list.append({'_id': '@'.join(['bank', self.name, u.updateRelease]),
                              'type': 'bank',
                              'name': self.name,
                              'version': u.updateRelease or None,
                              'publication_date': p.creation.strftime("%Y-%m-%d %X") if p.creation else None,
                              'removal_date': p.remove.strftime("%Y-%m-%d %X") if p.remove else None,
-                             'bank_type': [split(',', self.config.get('db.type'))], # Can be taken from db table remoteInfo.dbType
-                             'bank_format': [split(',', self.config.get('db.formats'))],
-                             'programs': [self.__get_formats_for_release(p.path)]
-                             })
+                             'bank_type': split(self.config.get('db.type'), ','),  # Can be taken from db table remoteInfo.dbType
+                             'bank_format': split(self.config.get('db.formats'), ','),
+                             'programs': self.__get_formats_for_release(p.path)}
+                            )
+        print "History_to_mongo: %d entries" % len(rel_list)
         return json.dumps(rel_list)
 
     def get_dict_sections(self, tool=None):
@@ -191,8 +213,11 @@ class Bank:
         """
         if not self.has_releases:
             self.__load_releases()
-        
-        pass
+        releases = self.available_releases
+        releases.extend(self.removed_releases)
+        for release in releases:
+            release.info()
+        return
 
     def __check_bank(self):
         """
@@ -202,6 +227,7 @@ class Bank:
             :return:
             :throws: Exception if bank does not exists
         """
+        self.__is_connected()
         if not self.name:
             raise Exception("Can't check bank, name not set")
         bank = self.db.base.classes.bank
@@ -226,11 +252,23 @@ class Bank:
         formats = []
 
         for dir, dirs, filenames in os.walk(path):
+            if dir == path or not len(dirs):
+                continue
             if dir == 'flat' or dir == 'uncompressed':
                 continue
-            for sub in dirs:
-                formats.append('@'.join(['prog', sub, os.path.dirname(dir) or '-', '?']))
+            for d in dirs:
+                formats.append('@'.join(['prog', os.path.basename(dir), d or '-', '?']))
         return formats
+
+    def __is_connected(self):
+        """
+            Check the bank object has a connection to the database set.
+            :return: raise Exception if no connection set
+        """
+        if self.db:
+            return True
+        else:
+            raise Exception("No db connection available. Build object with 'connect=True' to access database.")
 
     def __load_releases(self):
         """
@@ -241,39 +279,37 @@ class Bank:
             :raise: Exception
         """
 
-        if not self.db:
-            raise Exception("No db connection available. Build object with 'connect=True'.")
-
+        self.__is_connected()
         if self.has_releases:
             return 0
 
         limit = self.config.getint('keep.old.version')
         session = self.db.sessionmaker()
-        prod = self.db.base.classes.productiondirectory
-        updbk = self.db.base.classes.updatebank
+        prod = self.db.base.classes.productionDirectory
+        updbk = self.db.base.classes.updateBank
         bank = self.db.base.classes.bank
-        releases = session.query(prod).join(updbk).join(bank).\
-                            filter(prod.ref_idbank == bank.idbank, bank.name == self.name).\
+        releases = session.query(prod, updbk).join(updbk, updbk.idLastSession == prod.session).\
+                            join(bank, bank.idbank == prod.ref_idbank).\
+                            filter(bank.name == self.name).\
                             order_by(prod.creation.desc())
 
-        self.current_releases = []
         self.old_releases = []
         rows = 0
 
-        for release in releases:
+        for p, u in releases:
             rel = BankRelease()
             rel.name = self.name
-            rel.release = release.updatebank.updaterelease
-            rel.creation = release.creation
-            rel.download = release.updatebank.sizedownload
-            rel.started = release.updatebank.starttime
-            rel.ended = release.updatebank.endtime
-            rel.path = release.path
-            rel.size = release.size
-            rel.status = release.state
-            rel.removed = release.removed
-            rel.session = release.session
-            if rows < limit:
+            rel.release = u.updateRelease
+            rel.creation = p.creation
+            rel.download = u.sizeDownload
+            rel.started = u.startTime
+            rel.ended = u.endTime
+            rel.path = p.path
+            rel.size = p.size
+            rel.status = p.state
+            rel.removed = p.remove
+            rel.session = p.session
+            if rows <= limit:
                 if rows == 0:
                     rel.kind = 'current'
                 else:
@@ -281,45 +317,50 @@ class Bank:
                 rel.online = True
                 self.available_releases.append(rel)
             else:
-                rel.kind = 'old'
+                rel.kind = 'removed'
                 rel.online = False
-                self.old_releases.append(rel)
+                self.removed_releases.append(rel)
             rows += 1
         # Keep trace we have loaded releases
-        self.has_releases = True
+        self.has_releases = True if len(self.available_releases) else False
         return 0
 
     def __load_future_release(self):
-
-        if not self.db:
-            raise Exception("No db connection available. Build object with 'connect=True'.")
-
-        if self.has_future:
+        '''
+            Load the release tagged has 'future' from the database. Those release are just release that have
+            been build and are not published yet. We stopped the workflow before the 'deployement' stage.
+            :return: Int
+                     Raise Exception on error
+        '''
+        self.__is_connected()
+        if self.future_release is not None:
             return 0
 
         configuration = self.db.base.classes.configuration
         updbk = self.db.base.classes.updatebank
         session = self.db.sessionmaker()
-        releases = session.query(configuration).join(updbk).filter(configuration.ref_idbank == self.idbank).\
-                    filter(updbk.isupdated == 1, updbk.updaterelease != None,
-                           updbk.productiondirectorypath != 'null').\
-                           order_by(updbk.starttime.desc)
+        releases = session.query(configuration, updbk).\
+                            join(updbk, updbk.ref_idconfiguration == configuration.idconfiguration).\
+                            filter(configuration.ref_idbank == self.idbank).\
+                            filter(updbk.isupdated == 1, updbk.updaterelease != None,
+                                   updbk.productiondirectorypath != 'null').\
+                                   order_by(updbk.starttime.desc)
 
-        for release in releases:
-            if release.updatebank.productiondirectorydeployed:
+        for c, u in releases:
+            if u.productionDirectoryDeployed:
                 break
             rel = BankRelease()
             rel.name = self.name
-            rel.release = release.updatebank.updaterelease
-            rel.start = release.updatebank.starttime
-            rel.ended = release.updatebank.endtime
-            rel.creation = release.updatebank.updated
-            rel.path = release.updatebank.productiondirectorypath
-            rel.size = release.updatebank.sizerelease
-            rel.downloaded = release.updatebank.sizedownload
+            rel.release = u.updateRelease
+            rel.start = u.startTime
+            rel.ended = u.endTime
+            rel.creation = u.isUpdated
+            rel.path = u.productionDirectoryPath
+            rel.size = u.sizeRelease
+            rel.downloaded = u.sizeDownload
             self.future_release = rel
+            break
 
-        self.has_future = True
         return 0
 
 
@@ -347,11 +388,12 @@ class BankRelease:
         """
             Prints information about a bank release
         """
+        print("----------------------")
         print("Bank         : %s" % self.name)
-        print("Type         : %s" % self.kind)
-        print("Online       : %s" % str(self.online))
-        print("Release      : %s" % self.release)
+        print("Kind         : %s" % self.kind)
+        print("Available    : %s" % str(self.online))
         print("Status       : %s" % self.status)
+        print("Release      : %s" % self.release)
         print("Creation     : %s" % self.creation)
         print("Removed      : %s" % self.removed)
         print("Last session : %s" % self.session)
@@ -361,4 +403,4 @@ class BankRelease:
         print("Started      : %s" % self.started)
         print("Ended        : %s" % self.ended)
         print("Last session : %s" % self.session)
-
+        print("----------------------")

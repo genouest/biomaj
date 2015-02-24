@@ -831,7 +831,7 @@ class UpdateWorkflow(Workflow):
     '''
     release_dir = self.session.get_full_release_directory()
     for release_format in self.bank.session.get('formats'):
-      format_file = os.path.join(release_dir,'listing.'+release_format.replace('/','_'))
+      format_file = os.path.join(release_dir,'listingv1.'+release_format.replace('/','_'))
       section = self.list_section(release_dir, release_format)
       logging.debug("Worfklow:OldAPI:WriteListing: "+format_file)
       fd = os.open( format_file, os.O_RDWR|os.O_CREAT )

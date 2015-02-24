@@ -94,10 +94,10 @@ class Bank:
             return json.dumps(rel_list)
         return rel_list
 
-    def history_tomongo(self):
+    def mongo_history(self):
         """
             Get the releases history of a bank from the database and build a Mongo like document in json
-            :return: Jsonified list
+            :return: Jsonified history + extra info to be included into bioweb (Institut Pasteur only)
         """
         session = self.db.sessionmaker()
         proddir = self.db.base.classes.productionDirectory

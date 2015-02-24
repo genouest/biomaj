@@ -7,6 +7,7 @@ Created on Feb 10, 2015
 from biomaj.mongo_connector import MongoConnector
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.sql import exists
 from sqlalchemy.ext.automap import automap_base
 from string import split
 
@@ -61,40 +62,47 @@ class SQLConnector(Connector):
         Small function to test postgresql connection and sqlalchemy
     '''
     def get_bank_list(self):
+        print "[RAW SQL] Tesing ... "
         connection = self.engine.connect()
-        banks = connection.execute("select amorceid,amorcename from amorces where amorceid < 5")
+        banks = connection.execute("select idbank, name from bank where idbank < 5")
         for bank in banks:
-            print "[%s] %s" % (bank['amorceid'], bank['amorcename'])
+            print "[%s] %s" % (bank['idbank'], bank['name'])
+        print "[RAW SQL] OK"
+
         print "[SESSION] Testing ..."
         session = self.sessionmaker()
-        amorces = self.base.classes.amorces
-        banks = session.query(amorces).filter(amorces.amorceid < 5)
+        bank = self.base.classes.bank
+        banks = session.query(bank).filter(bank.idbank < 5)
         for bank in banks:
-            print "[session][%s] %s" % (bank.amorceid, bank.amorcename)
+            print "[session][%s] %s" % (bank.idbank, bank.name)
         session.commit()
         session.close()
         print "[SESSION] OK"
 
         print "[SESSION+JOIN] Testing ..."
         session = self.sessionmaker()
-        fs = self.base.classes.flowcellinfos_samples
-        samples = self.base.classes.samples
-        amorces = self.base.classes.amorces
-        sample = session.query(fs).join("flowcellinfos").join("samples").\
-                                   filter(fs.flowcellid==6).\
-                                   filter(samples.samplename.like('coH%')).order_by('samples.samplename desc')
-        for s in sample:
-            print "[flowcellid:%d][flowcellname:%s][samplename:%s]" % (s.flowcellid, s.flowcellinfos.flowcellname, s.samples.samplename)
+        updbk = self.base.classes.updateBank
+        bank = self.base.classes.bank
+        proddir = self.base.classes.productionDirectory
+        sample = session.query(proddir, bank, updbk).\
+                        join(updbk, updbk.idLastSession == proddir.session).\
+                        join(bank, bank.idbank == proddir.ref_idbank).\
+                        filter(bank.name == 'genbank_release').\
+                        filter(proddir.state == 'available')
+        for s, b, u in sample:  
+            print "[id:%d] %s [r%s]" \
+                % (s.idproductionDirectory, b.name, u.updateRelease)
         session.commit()
         session.close()
         print "[SESSION+JOIN] OK"
 
         print "[EXISTS] Testing ..."
         session = self.sessionmaker()
-        amorce = self.base.classes.amorces
-        a = session.query(amorce).filter(amorce.amorcename == 'toto')
-        if not session.query(a.exists()):
-            print "Amorce %s does not exists" % 'toto'
+        bank = self.base.classes.bank
+        fake_bank = 'fake_foobank'
+        smt = exists().where(bank.name == fake_bank)
+        if session.query(bank).filter(smt):
+            print "Bank %s does not exists" % fake_bank
         else:
             print "It works"
         print "[EXISTS] OK"

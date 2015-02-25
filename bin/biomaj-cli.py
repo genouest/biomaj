@@ -322,8 +322,8 @@ def main():
           print "#\tRemote release:\t"+prod['remoterelease']
           print "#\tRelease:\t"+prod['release']
           print "#\t\tSession:\t"+str(prod['session'])
-          release_dir = os.path.join(bank.config.get('data.dir'),
-                        bank.config.get('dir.version'),
+          release_dir = os.path.join(prod['data_dir'],
+                        prod['dir_version'],
                         prod['prod_dir'])
           print "#\t\tDirectory:\t"+release_dir
         if 'pending' in _bank and len(_bank['pending'].keys()) > 0:

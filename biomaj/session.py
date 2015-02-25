@@ -49,7 +49,9 @@ class Session:
                                   'preprocess': {},
                                   'removeprocess': {}
                                   },
-                      'per_process_metadata': {}
+                      'per_process_metadata': {},
+                      'data_dir': self.config.get('data.dir'),
+                      'dir_version': self.config.get('dir.version')
                     }
     for flow in self.flow:
         self._session['status'][flow['name']] = False
@@ -117,8 +119,11 @@ class Session:
     '''
     Get bank directroy for this release
     '''
-    release_dir = os.path.join(self.config.get('data.dir'),
-                  self.config.get('dir.version'),
+    #release_dir = os.path.join(self.config.get('data.dir'),
+    #              self.config.get('dir.version'),
+    #              self.get_release_directory())
+    release_dir = os.path.join(self._session['data_dir'],
+                  self._session['dir_version'],
                   self.get_release_directory())
     return release_dir
 

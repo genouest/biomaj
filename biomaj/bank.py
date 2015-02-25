@@ -409,7 +409,8 @@ class Bank:
                       'formats': self.session._session['formats'].keys(),
                       'types': release_types,
                       'size': self.session.get('fullsize'),
-                      'data_dir': self.config.get('data.dir'),
+                      'data_dir': self.session._session['data_dir'],
+                      'dir_version': self.session._session['dir_version'],
                       'prod_dir': prod_dir,
                       'freeze': False }
       self.bank['production'].append(production)

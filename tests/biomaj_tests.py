@@ -61,6 +61,9 @@ class UtilsForTest():
     self.lock_dir =os.path.join(self.test_dir,'lock')
     if not os.path.exists(self.lock_dir):
       os.makedirs(self.lock_dir)
+    self.cache_dir =os.path.join(self.test_dir,'cache')
+    if not os.path.exists(self.cache_dir):
+      os.makedirs(self.cache_dir)
 
 
     if self.global_properties is None:

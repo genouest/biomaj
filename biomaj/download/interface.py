@@ -120,7 +120,7 @@ class DownloadInterface:
               rfile['name'] = prefix + '/' +rfile['name']
             self.files_to_download.append(rfile)
             logging.debug('Download:File:MatchRegExp:'+rfile['name'])
-    if len(self.files_to_download) == 0:
+    if prefix == '' and len(self.files_to_download) == 0:
       raise Exception('no file found matching expressions')
 
 

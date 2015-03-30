@@ -83,6 +83,8 @@ class MetaProcess(threading.Thread):
         self.bmaj_env['PATH'] = self.bmaj_env['processdir']+':/usr/local/bin:/usr/sbin:/usr/bin'
         self.bmaj_only_env['PATH'] = self.bmaj_env['PATH']
 
+      self.bmaj_env['PATH_PROCESS_BIOMAJ'] = self.bank.config.get('process.dir')
+
       # Set some session specific env
       if self.bank.session is not None:
         self.bmaj_env['offlinedir'] = self.bank.session.get_offline_directory()

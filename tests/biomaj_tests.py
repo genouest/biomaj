@@ -275,10 +275,11 @@ class TestBiomajHTTPDownload(unittest.TestCase):
     httpd.close()
     self.assertTrue(len(httpd.files_to_download) == 1)
 
+  @attr('test')
   def test_http_download_in_subdir(self):
-    httpd = HTTPDownload('http', 'ftp2.fr.debian.org', '/debian/dists/', self.config)
+    httpd = HTTPDownload('http', 'ftp2.fr.debian.org', '/debian/', self.config)
     (file_list, dir_list) = httpd.list()
-    httpd.match([r'^stable/Release$'], file_list, dir_list)
+    httpd.match([r'^dists/README$'], file_list, dir_list)
     httpd.download(self.utils.data_dir)
     httpd.close()
     self.assertTrue(len(httpd.files_to_download) == 1)

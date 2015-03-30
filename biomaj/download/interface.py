@@ -99,7 +99,7 @@ class DownloadInterface:
           logging.debug('Download:File:Subdir:Check:'+subdir)
           if pattern == '**/*':
             (subfile_list, subdirs_list) = self.list(prefix+'/'+subdir+'/')
-            self.match([pattern], subfile_list, subdirs_list, prefix+'/'+subdir)
+            self.match([pattern], subfile_list, subdirs_list, prefix+'/'+subdir, True)
             for rfile in file_list:
               if pattern == '**/*' or re.match(pattern, rfile['name']):
                 rfile['root'] = self.rootdir
@@ -113,7 +113,7 @@ class DownloadInterface:
               # subdir match the beginning of the pattern
               # check match in subdir
               (subfile_list, subdirs_list) = self.list(prefix+'/'+subdir+'/')
-              self.match(['/'.join(subdirs_pattern[1:])], subfile_list, subdirs_list, prefix+'/'+subdir)
+              self.match(['/'.join(subdirs_pattern[1:])], subfile_list, subdirs_list, prefix+'/'+subdir, True)
 
       else:
         for rfile in file_list:

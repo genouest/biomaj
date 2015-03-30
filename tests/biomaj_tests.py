@@ -275,7 +275,6 @@ class TestBiomajHTTPDownload(unittest.TestCase):
     httpd.close()
     self.assertTrue(len(httpd.files_to_download) == 1)
 
-  @attr('test')
   def test_http_download_in_subdir(self):
     httpd = HTTPDownload('http', 'ftp2.fr.debian.org', '/debian/', self.config)
     (file_list, dir_list) = httpd.list()
@@ -949,6 +948,7 @@ class TestBiomajFunctional(unittest.TestCase):
     self.assertFalse(res)
     self.assertTrue(b.session._session['depends']['sub2'])
     self.assertFalse(b.session._session['depends']['error'])
+
 
   @attr('network')
   def test_multi(self):

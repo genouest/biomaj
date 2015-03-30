@@ -97,7 +97,7 @@ class DirectFTPDownload(FTPDownload):
     '''
     return (self.files_to_download,[])
 
-  def match(self, patterns, file_list, dir_list=[], prefix=''):
+  def match(self, patterns, file_list, dir_list=[], prefix='', submatch=False):
     '''
     All files to download match, no pattern
     '''

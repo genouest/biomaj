@@ -59,7 +59,7 @@ class DownloadInterface:
 
     MongoConnector.banks.update({'name': self.bank},{'$inc': {'status.download.progress': val}, '$set': {'status.download.total': max}})
 
-  def match(self, patterns, file_list, dir_list=[], prefix=''):
+  def match(self, patterns, file_list, dir_list=[], prefix='', submatch=False):
     '''
     Find files matching patterns. Sets instance variable files_to_download.
 
@@ -71,9 +71,12 @@ class DownloadInterface:
     :type dir_list: list
     :param prefix: directory prefix
     :type prefix: str
+    :param submatch: first call to match, or called from match
+    :type submatch: bool
     '''
     logging.debug('Download:File:RegExp:'+str(patterns))
-    self.files_to_download = []
+    if not submatch:
+        self.files_to_download = []
     for pattern in patterns:
       subdirs_pattern = pattern.split('/')
       if len(subdirs_pattern) > 1:
@@ -120,7 +123,7 @@ class DownloadInterface:
               rfile['name'] = prefix + '/' +rfile['name']
             self.files_to_download.append(rfile)
             logging.debug('Download:File:MatchRegExp:'+rfile['name'])
-    if prefix == '' and len(self.files_to_download) == 0:
+    if not submatch and len(self.files_to_download) == 0:
       raise Exception('no file found matching expressions')
 
 

@@ -28,10 +28,10 @@ class MultiDownload(DownloadInterface):
       self.files_to_download += d.files_to_download
 
 
-  def match(self, patterns, file_list, dir_list=[], prefix=''):
+  def match(self, patterns, file_list, dir_list=[], prefix='', submatch=False):
     self.files_to_download = []
     for d in self.downloaders:
-      d.match(patterns, d.files_to_download, [], prefix)
+      d.match(patterns, d.files_to_download, [], prefix, submatch)
     self.files_to_download = []
     for d in self.downloaders:
       self.files_to_download += d.files_to_download

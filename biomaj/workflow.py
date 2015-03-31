@@ -817,6 +817,10 @@ class UpdateWorkflow(Workflow):
     '''
     Add *current* symlink to this release
     '''
+    if self.bank.config.get_bool('auto_publish', default=False):
+      logging.info('Workflow:wf_publish')
+      self.bank.publish()
+      return True
 
     if not self.options.get_option(Options.PUBLISH):
       logging.info('Workflow:wf_publish:no')

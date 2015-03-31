@@ -136,6 +136,8 @@ class Bank:
     for b in banks:
       bank_elt = {'name': b['name'], 'size': 0, 'releases': []}
       for p in b['production']:
+        if p['size'] is None:
+          p['size'] = 0
         bank_elt['size'] += p['size']
         bank_elt['releases'].append({'name': p['release'], 'size': p['size']})
       bank_list.append(bank_elt)

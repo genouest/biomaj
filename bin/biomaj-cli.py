@@ -51,6 +51,8 @@ def main():
   parser.add_argument('-e', '--move-production-directories', dest="newdir",help="Change bank production directories location to this new path, path must exists")
   parser.add_argument('--visibility', dest="visibility",help="visibility status of the bank")
 
+  parser.add_argument('--maintenance', dest="maintenance",help="Maintenance mode (on/off/status)")
+
   parser.add_argument('--version', dest="version", help="Show version", action="store_true", default=False)
 
 
@@ -143,6 +145,9 @@ def main():
   --bank xx: name of the bank to show
   [OPTIONAL]
   --release xx: release of the bank to show
+
+--maintenance on/off/status: (un)set biomaj in maintenance mode to prevent updates/removal
+
     '''
     return
 
@@ -162,6 +167,35 @@ def main():
     sys.exit(1)
 
   try:
+
+    if options.maintenance:
+      if options.maintenance not in ['on', 'off', 'status']:
+        print "Wrong maintenance value [on,off,status]"
+        sys.exit(1)
+      data_dir = BiomajConfig.global_config.get('GENERAL', 'data.dir')
+      if BiomajConfig.global_config.has_option('GENERAL', 'lock.dir'):
+        lock_dir = BiomajConfig.global_config.get('GENERAL', 'lock.dir')
+      else:
+        lock_dir = data_dir
+      maintenance_lock_file = os.path.join(lock_dir,'biomaj.lock')
+      if options.maintenance == 'status':
+        if os.path.exists(maintenance_lock_file):
+          print "Maintenance: On"
+        else:
+          print "Maintenance: Off"
+        sys.exit(0)
+      if options.maintenance == 'on':
+        f = open(maintenance_lock_file, 'w')
+        f.write('1')
+        f.close()
+        print "Maintenance set to On"
+        sys.exit(0)
+      if options.maintenance == 'off':
+        if os.path.exists(maintenance_lock_file):
+          os.remove(maintenance_lock_file)
+        print "Maintenance set to Off"
+        sys.exit(0)
+
 
     if options.owner:
       if not options.bank:

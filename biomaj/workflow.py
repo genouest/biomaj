@@ -183,6 +183,10 @@ class Workflow(object):
     if not os.path.exists(lock_dir):
       os.mkdir(lock_dir)
     lock_file = os.path.join(lock_dir,self.name+'.lock')
+    maintenance_lock_file = os.path.join(lock_dir,'biomaj.lock')
+    if os.path.exists(maintenance_lock_file):
+      logging.error('Biomaj is in maintenance')
+      return False
     if os.path.exists(lock_file):
       logging.error('Bank '+self.name+' is locked, a process may be in progress, else remove the lock file '+lock_file)
       #print 'Bank '+self.name+' is locked, a process may be in progress, else remove the lock file'

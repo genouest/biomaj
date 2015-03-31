@@ -285,18 +285,22 @@ class Bank:
     for r in res:
       prod_to_delete = []
       for p in r['production']:
-        is_format = True
+        is_format = False
+        if not formats:
+          is_format = True
         # Are formats present in this production release?
         for f in formats:
-          if f not in p['formats']:
-            is_format = False
+          if f in p['formats']:
+            is_format = True
             break
         # Are types present in this production release?
-        if is_format:
+        is_type = False
+        if not types:
           is_type = True
+        if is_format:
           for t in types:
-            if t not in p['types']:
-              is_type = False
+            if t in p['types'] or t in r['properties']['type']:
+              is_type = True
               break
         if not is_type or not is_format:
           prod_to_delete.append(p)

@@ -150,6 +150,7 @@ class TestBiomajUtils(unittest.TestCase):
     (mime, encoding) = Utils.detect_format(fasta_file)
     self.assertTrue('application/fasta' == mime)
 
+  @attr('compress')
   def test_uncompress(self):
     from_file = { 'root': os.path.dirname(os.path.realpath(__file__)),
                   'name': 'bank/test.fasta.gz'

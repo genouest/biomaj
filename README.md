@@ -47,7 +47,7 @@ Application Features
 
 
 * Pre &Post processing :
- * Advanced workflow description (D.A.G) 
+ * Advanced workflow description (D.A.G)
  * Post-process indexation for various bioinformatics software (blast, srs,
    fastacmd, readseq, etc…)
  * Easy integration of personal scripts for bank post-processing automation
@@ -66,6 +66,8 @@ Dependencies
 Packages:
  * Debian: libcurl-dev, libldap2-dev, gcc
  * CentOs: libcurl-devel, openldap-devel, gcc
+
+ Linux tools: tar, unzip, gunzip, bunzip
 
 Database:
  * mongodb (local or remote)

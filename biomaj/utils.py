@@ -8,6 +8,7 @@ import os
 import logging
 import shutil
 import datetime
+import subprocess
 
 from mimetypes import MimeTypes
 
@@ -206,34 +207,54 @@ class Utils:
     :type remove: bool
     '''
     is_archive = False
-    if tarfile.is_tarfile(file):
-      logging.debug('Uncompress:Tar:'+file)
-      tfile = tarfile.TarFile(file)
-      tfile.extractall(os.path.basename(file))
-      tfile.close()
-      is_archive = True
-    elif zipfile.is_zipfile(file):
-    logging.debug('Uncompress:Zip:'+file)
-      zfile = zipfile.ZipFile(file)
-      zfile.extractall(os.path.basename(file))
-      zfile.close()
-      is_archive = True
-    elif file.endswith('.gz'):
-      logging.debug('Uncompress:Gz:'+file)
-      f_in = open(file.replace('.gz',''), 'wb')
-      gz_file = gzip.GzipFile(file)
-      f_in.writelines(gz_file.readlines())
-      f_in.close()
-      gz_file.close()
-      is_archive = True
+    #if tarfile.is_tarfile(file):
+    #  logging.debug('Uncompress:Tar:'+file)
+    #  tfile = tarfile.TarFile(file)
+    #  tfile.extractall(os.path.basename(file))
+    #  tfile.close()
+    #  is_archive = True
+    if file.endswith('.tar.gz'):
+        proc = subprocess.Popen("tar -xfz "+file+" -C "+os.path.basename(file), shell=True)
+        proc.wait()
+        is_archive = True
+    elif file.endswith('.tar'):
+        proc = subprocess.Popen("tar -xf "+file+" -C "+os.path.basename(file), shell=True)
+        proc.wait()
+        is_archive = True
     elif file.endswith('.bz2'):
-      logging.debug('Uncompress:Bz2:'+file)
-      f_in = open(file.replace('.bz2',''), 'wb')
-      bz_file = bz2.BZ2File(file)
-      f_in.writelines(bz_file.readlines())
-      f_in.close()
-      bz_file.close()
-      is_archive = True
+        proc = subprocess.Popen("tar -xjf "+file+" -C "+os.path.basename(file), shell=True)
+        proc.wait()
+        is_archive = True
+    elif file.endswith('.gz'):
+        proc = subprocess.Popen("gunzip "+file, shell=True)
+        proc.wait()
+        is_archive = True
+    elif file.endswith('.zip'):
+        proc = subprocess.Popen("unzip "+file+" -d "+os.path.basename(file), shell=True)
+        proc.wait()
+        is_archive = True
+    #elif zipfile.is_zipfile(file):
+    #  logging.debug('Uncompress:Zip:'+file)
+    #  zfile = zipfile.ZipFile(file)
+    #  zfile.extractall(os.path.basename(file))
+    #  zfile.close()
+    #  is_archive = True
+    #elif file.endswith('.gz'):
+    #  logging.debug('Uncompress:Gz:'+file)
+    #  f_in = open(file.replace('.gz',''), 'wb')
+    #  gz_file = gzip.GzipFile(file)
+    #  f_in.writelines(gz_file.readlines())
+    #  f_in.close()
+    #  gz_file.close()
+    #  is_archive = True
+    #elif file.endswith('.bz2'):
+    #  logging.debug('Uncompress:Bz2:'+file)
+    #  f_in = open(file.replace('.bz2',''), 'wb')
+    #  bz_file = bz2.BZ2File(file)
+    #  f_in.writelines(bz_file.readlines())
+    #  f_in.close()
+    #  bz_file.close()
+    #  is_archive = True
 
     if is_archive:
       logging.debug('Uncompress:uncompress:'+file)

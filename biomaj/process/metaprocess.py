@@ -66,8 +66,9 @@ class MetaProcess(threading.Thread):
       self.bmaj_env['data.dir'] = self.bmaj_env['datadir']
       self.bmaj_only_env['data.dir'] = self.bmaj_env['data.dir']
 
-      self.bmaj_env['mailadmin'] = self.bank.config.get('mail.admin')
-      self.bmaj_only_env['mailadmin'] = self.bmaj_env['mailadmin']
+      if self.bank.config.get('mail.admin'):
+          self.bmaj_env['mailadmin'] = self.bank.config.get('mail.admin')
+          self.bmaj_only_env['mailadmin'] = self.bmaj_env['mailadmin']
 
       if self.bank.config.get('mail.smtp.host'):
         self.bmaj_env['mailsmtp'] = self.bank.config.get('mail.smtp.host')

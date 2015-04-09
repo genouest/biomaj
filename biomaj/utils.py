@@ -207,17 +207,19 @@ class Utils:
     '''
     is_archive = False
     if tarfile.is_tarfile(file):
-      logging.error('is tar')
+      logging.debug('Uncompress:Tar:'+file)
       tfile = tarfile.TarFile(file)
       tfile.extractall(os.path.basename(file))
       tfile.close()
       is_archive = True
     elif zipfile.is_zipfile(file):
+    logging.debug('Uncompress:Zip:'+file)
       zfile = zipfile.ZipFile(file)
       zfile.extractall(os.path.basename(file))
       zfile.close()
       is_archive = True
     elif file.endswith('.gz'):
+      logging.debug('Uncompress:Gz:'+file)
       f_in = open(file.replace('.gz',''), 'wb')
       gz_file = gzip.GzipFile(file)
       f_in.writelines(gz_file.readlines())
@@ -225,6 +227,7 @@ class Utils:
       gz_file.close()
       is_archive = True
     elif file.endswith('.bz2'):
+      logging.debug('Uncompress:Bz2:'+file)
       f_in = open(file.replace('.bz2',''), 'wb')
       bz_file = bz2.BZ2File(file)
       f_in.writelines(bz_file.readlines())

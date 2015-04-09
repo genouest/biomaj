@@ -214,24 +214,24 @@ class Utils:
     #  tfile.close()
     #  is_archive = True
     if file.endswith('.tar.gz'):
-        proc = subprocess.Popen("tar -xfz "+file+" -C "+os.path.basename(file), shell=True)
-        proc.wait()
+        proc = subprocess.check_call("tar xfz "+file+" -C "+os.path.dirname(file), shell=True)
+        #proc.wait()
         is_archive = True
     elif file.endswith('.tar'):
-        proc = subprocess.Popen("tar -xf "+file+" -C "+os.path.basename(file), shell=True)
-        proc.wait()
+        proc = subprocess.check_call("tar xf "+file+" -C "+os.path.dirname(file), shell=True)
+        #proc.wait()
         is_archive = True
     elif file.endswith('.bz2'):
-        proc = subprocess.Popen("tar -xjf "+file+" -C "+os.path.basename(file), shell=True)
-        proc.wait()
+        proc = subprocess.check_call("tar xjf "+file+" -C "+os.path.dirname(file), shell=True)
+        #proc.wait()
         is_archive = True
     elif file.endswith('.gz'):
-        proc = subprocess.Popen("gunzip "+file, shell=True)
-        proc.wait()
+        proc = subprocess.check_call("gunzip "+file, stdout=PIPE, shell=True)
+        #proc.wait()
         is_archive = True
     elif file.endswith('.zip'):
-        proc = subprocess.Popen("unzip "+file+" -d "+os.path.basename(file), shell=True)
-        proc.wait()
+        proc = subprocess.check_call("unzip "+file+" -d "+os.path.dirname(file), shell=True)
+        #proc.wait()
         is_archive = True
     #elif zipfile.is_zipfile(file):
     #  logging.debug('Uncompress:Zip:'+file)

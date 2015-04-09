@@ -6,6 +6,7 @@ import tempfile
 import re
 import traceback
 import json
+import time
 
 from biomaj.utils import Utils
 from biomaj.download.ftp import FTPDownload

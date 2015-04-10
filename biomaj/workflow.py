@@ -148,7 +148,7 @@ class Workflow(object):
     Set up new progress status
     '''
     status = {}
-    status['log_file'] = {'status': self.session._session['log_file'], 'progress': 0}
+    status['log_file'] = {'status': self.session.config.log_file, 'progress': 0}
     status['session'] = self.session._session['id']
     for flow in self.session.flow:
       if flow['name'] == 'download':
@@ -428,7 +428,11 @@ class UpdateWorkflow(Workflow):
         if rel is None:
           logging.error('release.regexp defined but does not match any file content')
           return False
-        release = rel.group(1)
+        # If regexp contains matching group, else take whole match
+        if len(rel.groups()) > 0:
+          release = rel.group(1)
+        else:
+          release = rel.group(0)
 
       release_downloader.close()
       if release_downloader.error:

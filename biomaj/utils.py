@@ -226,7 +226,7 @@ class Utils:
         #proc.wait()
         is_archive = True
     elif file.endswith('.gz'):
-        proc = subprocess.check_call("gunzip "+file, stdout=PIPE, shell=True)
+        proc = subprocess.check_call("gunzip "+file, shell=True)
         #proc.wait()
         is_archive = True
     elif file.endswith('.zip'):

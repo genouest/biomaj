@@ -705,7 +705,7 @@ class UpdateWorkflow(Workflow):
           # Join all threads using a timeout so it doesn't block
           # Filter out threads which have been joined or are None
           running_th = [t.join(1000) for t in running_th if t is not None and t.isAlive()]
-          logging.debug(str(running_th))
+          logging.debug("Workflow:wf_download:Download:Threads:"+str(running_th))
       except KeyboardInterrupt:
           logging.warn("Ctrl-c received! Sending kill to threads...")
           logging.warn("Running tasks will continue and process will stop.")

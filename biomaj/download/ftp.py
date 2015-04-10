@@ -119,7 +119,7 @@ class FTPDownload(DownloadInterface):
         logging.error(e)
       finally:
         self.mkdir_lock.release() # release lock, no matter what
-      logging.debug('FTP:Download:Progress'+str(cur_files)+'/'+str(nb_files)+' downloading file '+rfile['name'])
+      logging.debug('FTP:Download:Progress:'+str(cur_files)+'/'+str(nb_files)+' downloading file '+rfile['name'])
       cur_files += 1
       if not 'url' in rfile:
         rfile['url'] = self.url

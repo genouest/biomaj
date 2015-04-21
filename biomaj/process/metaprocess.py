@@ -84,6 +84,14 @@ class MetaProcess(threading.Thread):
         self.bmaj_env['PATH'] = self.bmaj_env['processdir']+':/usr/local/bin:/usr/sbin:/usr/bin'
         self.bmaj_only_env['PATH'] = self.bmaj_env['PATH']
 
+      self.bmaj_env['PP_DEPENDENCE'] = '#'
+      self.bmaj_only_env['PP_DEPENDENCE'] = '#'
+      self.bmaj_env['PP_DEPENDENCE_VOLATILE'] = '#'
+      self.bmaj_only_env['PP_DEPENDENCE_VOLATILE'] = '#'
+      self.bmaj_env['PP_WARNING'] = '#'
+      self.bmaj_only_env['PP_WARNING'] = '#'
+
+
       self.bmaj_env['PATH_PROCESS_BIOMAJ'] = self.bank.config.get('process.dir')
 
       # Set some session specific env

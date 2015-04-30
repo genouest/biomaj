@@ -377,7 +377,7 @@ class UpdateWorkflow(Workflow):
       # Release already set from a previous run
       logging.info('Workflow:wf_release:session:'+str(self.session.get('release')))
       return True
-    if self.session.config.get('release.file') == '':
+    if self.session.config.get('release.file') == '' or self.session.config.get('release.file') is None:
       logging.debug('Workflow:wf_release:norelease')
       self.session.set('release',None)
       return True
@@ -575,7 +575,21 @@ class UpdateWorkflow(Workflow):
       '''
       Simple case, one downloader with regexp
       '''
-      downloader = self.get_handler(cf.get('protocol'),cf.get('server'),cf.get('remote.dir'))
+      protocol = cf.get('protocol')
+      if protocol == 'directhttp' or protocol == 'directftp':
+        downloader = self.get_handler(cf.get('protocol'),cf.get('server'),'/', [cf.get('remote.dir')[:-1]])
+        downloader.method = cf.get('url.method')
+        if downloader.method is None:
+          downloader.method = 'GET'
+        downloader.save_as = cf.get('target.name')
+        keys = cf.get('url.params')
+        if keys is not None:
+          keys = keys.split(',')
+          for key in keys:
+            param = cf.get(key.strip()+'.value')
+            downloader.param[key.strip()] = param.strip()
+      else:
+        downloader = self.get_handler(cf.get('protocol'),cf.get('server'),cf.get('remote.dir'))
 
     if downloader is None:
       logging.error('Protocol '+cf.get('protocol')+' not supported')
@@ -590,6 +604,10 @@ class UpdateWorkflow(Workflow):
         # Not defined, or could not get it ealier
         # Set release to most recent file to download
         release_dict = Utils.get_more_recent_file(downloader.files_to_download)
+        if release_dict is None:
+            today = datetime.datetime.now()
+            release_dict = { 'year': today.year, 'month': today.month, 'day': today.day }
+
         release = str(release_dict['year']) + '-' + str(release_dict['month']) + '-' + str(release_dict['day'])
         self.session.set('release', release)
         self.session.set('remoterelease', release)

@@ -80,6 +80,8 @@ class Process(object):
           proc.wait()
           if proc.returncode == 0:
             err = True
+          else:
+            logging.error('PROCESS:ERROR:'+self.name)
           fout.flush()
           ferr.flush()
     else:
@@ -151,6 +153,8 @@ chown -R {uid}:{gid} {bank_dir}"'''.format(uid = os.getuid(),
           proc.wait()
           if proc.returncode == 0:
             err = True
+          else:
+            logging.error('PROCESS:ERROR:'+self.name)
           fout.flush()
           ferr.flush()
     else:
@@ -197,6 +201,8 @@ class DrmaaProcess(Process):
           retval = s.wait(jobid, drmaa.Session.TIMEOUT_WAIT_FOREVER)
           if  retval.hasExited > 0:
             err = True
+          else:
+            logging.error('PROCESS:ERROR:'+self.name)
           s.deleteJobTemplate(jt)
 
       except Exception as e:

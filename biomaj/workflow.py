@@ -765,6 +765,8 @@ class UpdateWorkflow(Workflow):
     no_extract = self.session.config.get('no.extract')
     if no_extract is None or no_extract == 'false':
       for file in self.downloaded_files:
+        if 'save_as' not in file:
+            file['save_as'] = file['name']
         Utils.uncompress(self.session.get_offline_directory() + '/' + file['save_as'])
     return True
 

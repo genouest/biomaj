@@ -9,7 +9,7 @@ config = {
     'url': 'http://biomaj.genouest.org',
     'download_url': 'http://biomaj.genouest.org',
     'author_email': 'olivier.sallou@irisa.fr',
-    'version': '3.0.3',
+    'version': '3.0.4',
     'install_requires': ['nose',
                             'pymongo',
                             'pycurl',

@@ -1,0 +1,8 @@
+3.0.4:
+  get possiblity to save downloaded files for ftp and http without keeping full
+  directory structure:
+    remote.files can include groups to save file without directory structure,
+     or partial directories only, examples:
+     remote.files = genomes/fasta/.*\.gz => save files in offline directory, keeping remote structure offlinedir/genomes/fasta/
+     remote.files = genomes/fasta/(.*\.gz) => save files in offline directory offlinedir/
+     remote.files = genomes/(fasta)/(.*\.gz) => save files in offline directory offlinedir/fasta

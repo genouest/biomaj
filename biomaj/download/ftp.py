@@ -107,9 +107,11 @@ class FTPDownload(DownloadInterface):
       if self.kill_received:
         raise Exception('Kill request received, exiting')
       file_dir = local_dir
+      if 'save_as' not in rfile or rfile['save_as'] is None:
+          rfile['save_as'] = rfile['name']
       if keep_dirs:
-        file_dir = local_dir + os.path.dirname(rfile['name'])
-      file_path = file_dir + '/' + os.path.basename(rfile['name'])
+        file_dir = local_dir + '/' + os.path.dirname(rfile['save_as'])
+      file_path = file_dir + '/' + os.path.basename(rfile['save_as'])
 
       self.mkdir_lock.acquire()
       try:
@@ -120,6 +122,7 @@ class FTPDownload(DownloadInterface):
       finally:
         self.mkdir_lock.release() # release lock, no matter what
       logging.debug('FTP:Download:Progress:'+str(cur_files)+'/'+str(nb_files)+' downloading file '+rfile['name'])
+      logging.debug('FTP:Download:Progress:'+str(cur_files)+'/'+str(nb_files)+' save as '+rfile['save_as'])
       cur_files += 1
       if not 'url' in rfile:
         rfile['url'] = self.url

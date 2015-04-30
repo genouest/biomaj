@@ -598,6 +598,14 @@ class UpdateWorkflow(Workflow):
     (file_list, dir_list) = downloader.list()
 
     downloader.match(cf.get('remote.files').split(), file_list, dir_list)
+    for f in downloader.files_to_download:
+        f['save_as'] = f['name']
+        for p in cf.get('remote.files').split():
+           res = re.match('/'+p, f['name'])
+           if res is not None and res.groups() is not None and len(res.groups())>=1:
+             f['save_as'] = '/'.join(res.groups())
+             break
+
 
     self.session.set('download_files',downloader.files_to_download)
     if self.session.get('release') is None:
@@ -757,7 +765,7 @@ class UpdateWorkflow(Workflow):
     no_extract = self.session.config.get('no.extract')
     if no_extract is None or no_extract == 'false':
       for file in self.downloaded_files:
-        Utils.uncompress(self.session.get_offline_directory() + '/' + file['name'])
+        Utils.uncompress(self.session.get_offline_directory() + '/' + file['save_as'])
     return True
 
   def wf_copy(self):

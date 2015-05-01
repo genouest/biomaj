@@ -203,7 +203,7 @@ class FTPDownload(DownloadInterface):
           if rfile['month'] > curdate.month:
             rfile['year'] = curdate.year - 1
           # Same month but later day => previous year
-          if rfile['month'] == curdate.month and rfile['day'] > curdate.day:
+          if rfile['month'] == curdate.month and int(rfile['day']) > curdate.day:
             rfile['year'] = curdate.year - 1
         rfile['name'] = parts[8]
         if len(parts) >= 10 and parts[9] == '->':

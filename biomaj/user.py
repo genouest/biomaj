@@ -40,8 +40,8 @@ class BmajUser(object):
           #con.simple_bind_s()
           attrs = ['mail']
           #results = con.search_s(base_dn, ldap.SCOPE_SUBTREE, filter, attrs)
-          con.search(base_dn,filter, SEARCH_SCOPE_WHOLE_SUBTREE, attributes = attrs)
-          if results:
+          con.search(base_dn,filter, SEARCH_SCOPE_WHOLE_SUBTREE, attributes=attrs)
+          if con.response:
             ldapMail = None
             #for dn, entry in results:
             for r in con.response:

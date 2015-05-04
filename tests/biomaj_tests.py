@@ -28,6 +28,8 @@ from biomaj.process.processfactory import PostProcessFactory,PreProcessFactory,R
 from biomaj.user import BmajUser
 from biomaj.bmajindex import BmajIndex
 
+from ldap3.core.exceptions import LDAPBindError
+
 
 import unittest
 
@@ -1114,27 +1116,40 @@ class MockLdapConn(object):
   ldap_user = 'biomajldap'
   ldap_user_email = 'bldap@no-reply.org'
 
+  STRATEGY_SYNC = 0
+  AUTH_SIMPLE = 0
+  STRATEGY_SYNC = 0
+  STRATEGY_ASYNC_THREADED = 0
+  SEARCH_SCOPE_WHOLE_SUBTREE = 0
+  GET_ALL_INFO = 0
+
+  @staticmethod
+  def Server(ldap_host, port, get_info):
+      return None
+
+  @staticmethod
+  def Connection(ldap_server, auto_bind=True, read_only=True, client_strategy=0, user=None, password=None, authentication=0,check_names=True):
+      if user is not None and password is not None:
+          if password == 'notest':
+              #raise ldap3.core.exceptions.LDAPBindError('no bind')
+              return None
+      return MockLdapConn(ldap_server)
+
   def __init__(self, url=None):
     #self.ldap_user = 'biomajldap'
     #self.ldap_user_email = 'bldap@no-reply.org'
     pass
 
-  def search_s(self, base_dn, scope, filter, attrs):
+  def search(self, base_dn, filter, scope, attributes=[]):
     if MockLdapConn.ldap_user in filter:
+      self.response = [{'dn': MockLdapConn.ldap_user, 'attributes': {'mail': [MockLdapConn.ldap_user_email]}}]
       return [(MockLdapConn.ldap_user, {'mail': [MockLdapConn.ldap_user_email]})]
     else:
       raise Exception('no match')
 
-  def simple_bind_s(self, user_dn=None, password=None):
-    if user_dn is None and password is None:
-      return
-    if user_dn == MockLdapConn.ldap_user and password == 'test':
-      pass
-    else:
-      raise Exception('no match')
-
-  def unbind_s(self):
+  def unbind(self):
     pass
+
 
 @attr('user')
 class TestUser(unittest.TestCase):
@@ -1150,41 +1165,39 @@ class TestUser(unittest.TestCase):
   def tearDown(self):
     self.utils.clean()
 
-  @patch('ldap.initialize')
+  @patch('ldap3.Connection')
   def test_get_user(self, initialize_mock):
     mockldap = MockLdapConn()
-    initialize_mock.return_value = mockldap
+    initialize_mock.return_value = MockLdapConn.Connection(None, None, None, None)
     user = BmajUser('biomaj')
     self.assertTrue(user.user is None)
     user.remove()
 
-  @patch('ldap.initialize')
+  @patch('ldap3.Connection')
   def test_create_user(self, initialize_mock):
     mockldap = MockLdapConn()
-    initialize_mock.return_value = mockldap
+    initialize_mock.return_value = MockLdapConn.Connection(None, None, None, None)
     user = BmajUser('biomaj')
     user.create('test', 'test@no-reply.org')
     self.assertTrue(user.user['email'] == 'test@no-reply.org')
     user.remove()
 
-
-  @patch('ldap.initialize')
+  @patch('ldap3.Connection')
   def test_check_password(self, initialize_mock):
     mockldap = MockLdapConn()
-    initialize_mock.return_value = mockldap
+    initialize_mock.return_value = MockLdapConn.Connection(None, None, None, None)
     user = BmajUser('biomaj')
     user.create('test', 'test@no-reply.org')
     self.assertTrue(user.check_password('test'))
     user.remove()
 
 
-  @patch('ldap.initialize')
+  @patch('ldap3.Connection')
   def test_ldap_user(self, initialize_mock):
     mockldap = MockLdapConn()
-    initialize_mock.return_value = mockldap
+    initialize_mock.return_value = MockLdapConn.Connection(None, None, None, None)
     user = BmajUser('biomajldap')
     self.assertTrue(user.user['is_ldap'] == True)
     self.assertTrue(user.user['_id'] is not None)
     self.assertTrue(user.check_password('test'))
-    self.assertFalse(user.check_password('notest'))
     user.remove()

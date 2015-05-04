@@ -64,7 +64,7 @@ Dependencies
 ============
 
 Packages:
- * Debian: libcurl-dev, libldap2-dev, gcc
+ * Debian: libcurl-dev, gcc
  * CentOs: libcurl-devel, openldap-devel, gcc
 
  Linux tools: tar, unzip, gunzip, bunzip

@@ -1,3 +1,5 @@
+from builtins import str
+from builtins import object
 import logging
 import os
 import subprocess
@@ -31,7 +33,7 @@ class Process(object):
     '''
     # Replace env vars in args
     if args:
-      for key,value in bank_env.iteritems():
+      for key,value in bank_env.items():
         if value is not None:
           args = args.replace('${'+key+'}', value)
 
@@ -110,7 +112,7 @@ class DockerProcess(Process):
     release_dir = self.bank_env['datadir']+'/'+self.bank_env['dirversion']+'/'+self.bank_env['localrelease']
     env = ''
     if self.bank_env:
-      for key, value in self.bank_env.iteritems():
+      for key, value in self.bank_env.items():
         env += ' -e "{0}={1}"'.format(key, value)
     #         docker run with data.dir env as shared volume
     #         forwarded env variables
@@ -136,7 +138,7 @@ chown -R {uid}:{gid} {bank_dir}"'''.format(uid = os.getuid(),
     (handler, tmpfile) = tempfile.mkstemp('biomaj')
     os.write(handler,cmd)
     os.close(handler)
-    os.chmod(tmpfile, 0755)
+    os.chmod(tmpfile, 0o755)
     args = [ tmpfile ]
     logging.debug('PROCESS:EXEC:Docker:'+str(self.args))
     logging.debug('PROCESS:EXEC:Docker:Tmpfile:'+tmpfile)

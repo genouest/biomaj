@@ -1,6 +1,7 @@
+from builtins import object
 
 
-class Options:
+class Options(object):
   '''
   Available options
   '''

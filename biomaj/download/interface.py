@@ -1,3 +1,5 @@
+from builtins import str
+from builtins import object
 import os
 import logging
 import datetime
@@ -11,7 +13,7 @@ from biomaj.utils import Utils
 from biomaj.mongo_connector import MongoConnector
 
 
-class _FakeLock:
+class _FakeLock(object):
   '''
   Fake lock for downloaders not called by a Downloadthread
   '''
@@ -25,7 +27,7 @@ class _FakeLock:
   def release(self):
     pass
 
-class DownloadInterface:
+class DownloadInterface(object):
   '''
   Main interface that all downloaders must extend
   '''

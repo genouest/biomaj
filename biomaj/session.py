@@ -1,5 +1,9 @@
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import object
 import os
-import ConfigParser
+import configparser
 import logging
 import time
 import copy
@@ -7,7 +11,7 @@ import copy
 from biomaj.workflow import Workflow, UpdateWorkflow, RemoveWorkflow
 
 
-class Session:
+class Session(object):
   '''
   BioMAJ bank session
   '''
@@ -74,7 +78,7 @@ class Session:
       if proc in self._session['process']['postprocess']:
         self.reset_meta(self._session['process']['postprocess'][proc])
       else:
-        for elt in self._session['process']['postprocess'].keys():
+        for elt in list(self._session['process']['postprocess'].keys()):
           self.reset_meta(self._session['process']['postprocess'][elt], proc)
     elif type_proc == Workflow.FLOW_PREPROCESS:
       self.reset_meta(self._session['process']['preprocess'])
@@ -88,7 +92,7 @@ class Session:
     if proc in metas:
       self.reset_process(procs)
     else:
-      for meta in metas.keys():
+      for meta in list(metas.keys()):
         self.reset_process(metas[meta], proc)
 
   def reset_process(self, processes, proc=None):
@@ -96,7 +100,7 @@ class Session:
     Reset status of processes
     '''
     set_to_false = False
-    for process in processes.keys():
+    for process in list(processes.keys()):
       if process == proc or proc is None:
         set_to_false = True
       if set_to_false:

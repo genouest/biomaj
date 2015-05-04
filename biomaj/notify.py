@@ -1,6 +1,14 @@
+from builtins import str
+from builtins import object
 import smtplib
 import email.utils
 from email.MIMEText import MIMEText
+import sys
+if sys.version < '3':
+    from email.MIMEText import MIMEText
+else:
+    from email.mime.text import MIMEText
+
 from biomaj.workflow import Workflow
 import logging
 

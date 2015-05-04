@@ -1,3 +1,6 @@
+from builtins import str
+from builtins import range
+from builtins import object
 import logging
 import datetime
 import os
@@ -796,8 +799,8 @@ class UpdateWorkflow(Workflow):
     logging.info('Workflow:wf_metadata')
     self.bank.session.set('formats', {})
     per_process_meta_data = self.session.get('per_process_metadata')
-    for proc in per_process_meta_data.keys():
-      for meta_data in per_process_meta_data[proc].keys():
+    for proc in list(per_process_meta_data.keys()):
+      for meta_data in list(per_process_meta_data[proc].keys()):
         session_formats = self.bank.session.get('formats')
         if meta_data not in session_formats:
           #session_formats[meta_data] = [meta_thread.meta_data[meta_data]]

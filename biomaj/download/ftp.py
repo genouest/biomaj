@@ -1,12 +1,21 @@
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
 import logging
 import pycurl
-import StringIO
+import io
 import re
 import os
 from datetime import datetime
 
 from biomaj.utils import Utils
 from biomaj.download.interface import DownloadInterface
+
+try:
+    from io import BytesIO
+except ImportError:
+    from StringIO import StringIO as BytesIO
+
 
 class FTPDownload(DownloadInterface):
   '''
@@ -28,6 +37,7 @@ class FTPDownload(DownloadInterface):
     url = protocol+'://'+host
     self.rootdir = rootdir
     self.url = url
+    self.headers= {}
 
 
   def match(self, patterns, file_list, dir_list=[], prefix='', submatch=False):
@@ -158,6 +168,36 @@ class FTPDownload(DownloadInterface):
         self.set_progress(nb, nb_files)
     return self.files_to_download
 
+
+  def header_function(self, header_line):
+    # HTTP standard specifies that headers are encoded in iso-8859-1.
+    # On Python 2, decoding step can be skipped.
+    # On Python 3, decoding step is required.
+    header_line = header_line.decode('iso-8859-1')
+
+    # Header lines include the first status line (HTTP/1.x ...).
+    # We are going to ignore all lines that don't have a colon in them.
+    # This will botch headers that are split on multiple lines...
+    if ':' not in header_line:
+        return
+
+    # Break the header line into header name and value.
+    name, value = header_line.split(':', 1)
+
+    # Remove whitespace that may be present.
+    # Header lines include the trailing newline, and there may be whitespace
+    # around the colon.
+    name = name.strip()
+    value = value.strip()
+
+    # Header names are case insensitive.
+    # Lowercase name here.
+    name = name.lower()
+
+    # Now we can actually record the header name and value.
+    self.headers[name] = value
+
+
   def list(self, directory=''):
     '''
     List FTP directory
@@ -168,12 +208,27 @@ class FTPDownload(DownloadInterface):
     self.crl.setopt(pycurl.URL, self.url+self.rootdir+directory)
     if self.credentials is not None:
       curl.setopt(pycurl.USERPWD, self.credentials)
-    output = StringIO.StringIO()
+    output = BytesIO()
     # lets assign this buffer to pycurl object
     self.crl.setopt(pycurl.WRITEFUNCTION, output.write)
+    self.crl.setopt(pycurl.HEADERFUNCTION, self.header_function)
     self.crl.perform()
+    # Figure out what encoding was sent with the response, if any.
+    # Check against lowercased header name.
+    encoding = None
+    if 'content-type' in self.headers:
+        content_type = self.headers['content-type'].lower()
+        match = re.search('charset=(\S+)', content_type)
+        if match:
+             encoding = match.group(1)
+    if encoding is None:
+        # Default encoding for HTML is iso-8859-1.
+        # Other content types may have different default encoding,
+        # or in case of binary data, may have no encoding at all.
+        encoding = 'iso-8859-1'
+
     # lets get the output in a string
-    result = output.getvalue()
+    result = output.getvalue().decode(encoding)
     # FTP LIST output is separated by \r\n
     # lets split the output in lines
     #lines = result.split(r'[\r\n]+')

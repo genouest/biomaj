@@ -1,10 +1,14 @@
+from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
 #!/usr/bin/python
 
 import os,sys
 #from optparse import OptionParser
 import argparse
 import pkg_resources
-import ConfigParser
+import configparser
 import shutil
 
 from biomaj.bank import Bank
@@ -62,7 +66,7 @@ def main():
   options.no_log = False
 
   if options.help:
-    print '''
+    print('''
 --config: global.properties file path
 
 --status: list of banks with published release
@@ -148,12 +152,12 @@ def main():
 
 --maintenance on/off/status: (un)set biomaj in maintenance mode to prevent updates/removal
 
-    '''
+    ''')
     return
 
   if options.version:
     version = pkg_resources.require('biomaj')[0].version
-    print 'Version: '+str(version)
+    print('Version: '+str(version))
     return
 
   bmaj = None
@@ -163,14 +167,14 @@ def main():
     else:
       BiomajConfig.load_config()
   except Exception as e:
-    print str(e)
+    print(str(e))
     sys.exit(1)
 
   try:
 
     if options.maintenance:
       if options.maintenance not in ['on', 'off', 'status']:
-        print "Wrong maintenance value [on,off,status]"
+        print("Wrong maintenance value [on,off,status]")
         sys.exit(1)
       data_dir = BiomajConfig.global_config.get('GENERAL', 'data.dir')
       if BiomajConfig.global_config.has_option('GENERAL', 'lock.dir'):
@@ -180,26 +184,26 @@ def main():
       maintenance_lock_file = os.path.join(lock_dir,'biomaj.lock')
       if options.maintenance == 'status':
         if os.path.exists(maintenance_lock_file):
-          print "Maintenance: On"
+          print("Maintenance: On")
         else:
-          print "Maintenance: Off"
+          print("Maintenance: Off")
         sys.exit(0)
       if options.maintenance == 'on':
         f = open(maintenance_lock_file, 'w')
         f.write('1')
         f.close()
-        print "Maintenance set to On"
+        print("Maintenance set to On")
         sys.exit(0)
       if options.maintenance == 'off':
         if os.path.exists(maintenance_lock_file):
           os.remove(maintenance_lock_file)
-        print "Maintenance set to Off"
+        print("Maintenance set to Off")
         sys.exit(0)
 
 
     if options.owner:
       if not options.bank:
-        print "Bank option is missing"
+        print("Bank option is missing")
         sys.exit(1)
       bank = Bank(options.bank, no_log=True)
       bank.set_owner(options.owner)
@@ -207,25 +211,25 @@ def main():
 
     if options.visibility:
       if not options.bank:
-        print "Bank option is missing"
+        print("Bank option is missing")
         sys.exit(1)
       if options.visibility not in ['public', 'private']:
-        print "Valid values are public|private"
+        print("Valid values are public|private")
         sys.exit(1)
       bank = Bank(options.bank, no_log=True)
       bank.set_visibility(options.visibility)
-      print "Do not forget to update accordingly the visibility.default parameter in the configuration file"
+      print("Do not forget to update accordingly the visibility.default parameter in the configuration file")
       sys.exit(0)
 
     if options.newdir:
       if not options.bank:
-        print "Bank option is missing"
+        print("Bank option is missing")
         sys.exit(1)
       if not os.path.exists(options.newdir):
-        print "Destination directory does not exists"
+        print("Destination directory does not exists")
       bank = Bank(options.bank, options= options, no_log=True)
       if not bank.bank['production']:
-        print "Nothing to move, no production directory"
+        print("Nothing to move, no production directory")
         sys.exit(0)
       bank.load_session(Workflow.FLOW, None)
       w = Workflow(bank)
@@ -240,19 +244,19 @@ def main():
           shutil.move(prod_path, options.newdir)
         prod['data_dir'] = options.newdir
       bank.banks.update({'name': options.bank}, {'$set' : { 'production': bank.bank['production'] }})
-      print "Bank production directories moved to " + options.newdir
-      print "WARNING: do not forget to update accordingly the data.dir and dir.version properties"
+      print("Bank production directories moved to " + options.newdir)
+      print("WARNING: do not forget to update accordingly the data.dir and dir.version properties")
       w.wf_over()
       sys.exit(0)
 
     if options.newbank:
       if not options.bank:
-        print "Bank option is missing"
+        print("Bank option is missing")
         sys.exit(1)
       bank = Bank(options.bank, no_log=True)
       conf_dir = BiomajConfig.global_config.get('GENERAL', 'conf.dir')
       bank_prop_file = os.path.join(conf_dir,options.bank+'.properties')
-      config_bank = ConfigParser.SafeConfigParser()
+      config_bank = configparser.SafeConfigParser()
       config_bank.read([os.path.join(conf_dir,options.bank+'.properties')])
       config_bank.set('GENERAL', 'db.name', options.newbank)
       newbank_prop_file = open(os.path.join(conf_dir,options.newbank+'.properties'),'w')
@@ -260,20 +264,20 @@ def main():
       newbank_prop_file.close()
       bank.banks.update({'name': options.bank}, {'$set' : { 'name': options.newbank }})
       os.remove(bank_prop_file)
-      print "Bank "+options.bank+" renamed to "+options.newbank
+      print("Bank "+options.bank+" renamed to "+options.newbank)
       sys.exit(0)
 
     if options.search:
       if options.query:
         res = Bank.searchindex(options.query)
-        print "Query matches for :"+options.query
-        print "Release\tFormat\tType\tFiles\n"
+        print("Query matches for :"+options.query)
+        print("Release\tFormat\tType\tFiles\n")
         for match in res:
-          print match['_source']['release'] + "\t" + \
+          print(match['_source']['release'] + "\t" + \
                 str(match['_source']['format']) + "\t" + \
-                str(match['_source']['types']) + "\n"
+                str(match['_source']['types']) + "\n")
           for f in match['_source']['files']:
-            print "\t\t\t"+f+"\n"
+            print("\t\t\t"+f+"\n")
       else:
         formats = []
         if options.formats:
@@ -281,24 +285,24 @@ def main():
         types = []
         if options.types:
           types = options.types.split(',')
-        print "Search by formats="+str(formats)+", types="+str(types)
+        print("Search by formats="+str(formats)+", types="+str(types))
         res = Bank.search(formats, types, False)
-        print '#' * 80
-        print "# Name\tRelease"
+        print('#' * 80)
+        print("# Name\tRelease")
         for bank in res:
-          print " "+bank['name']
+          print(" "+bank['name'])
           for prod in bank['production']:
               iscurrent = ""
               if prod['session'] == bank['current']:
                 iscurrent = "current"
-              print " \t"+prod['release']+"\t"+','.join(prod['formats'])+"\t"+','.join(prod['types'])+"\t"+iscurrent
+              print(" \t"+prod['release']+"\t"+','.join(prod['formats'])+"\t"+','.join(prod['types'])+"\t"+iscurrent)
 
-        print '#' * 80
+        print('#' * 80)
         sys.exit(0)
 
     if options.show:
       if not options.bank:
-        print "Bank option is required"
+        print("Bank option is required")
         sys.exit(1)
 
       bank = Bank(options.bank, no_log=False)
@@ -308,28 +312,28 @@ def main():
           include =False
         if include:
           session = bank.get_session_from_release(prod['release'])
-          print '#' * 80
-          print "# Name:\t"+bank.bank['name']
-          print "# Release:\t"+prod['release']
+          print('#' * 80)
+          print("# Name:\t"+bank.bank['name'])
+          print("# Release:\t"+prod['release'])
           formats = session['formats']
-          for fformat in formats.keys():
-            print "# \tFormat:\t"+fformat
+          for fformat in list(formats.keys()):
+            print("# \tFormat:\t"+fformat)
             for elt in formats[fformat]:
-              print "# \t\tTypes:\t"+','.join(elt['types'])
-              print "# \t\tTags:"
-              for tag in elt['tags'].keys():
-                print "# \t\t\t"+tag+":"+elt['tags'][tag]
-              print "# \t\tFiles:"
+              print("# \t\tTypes:\t"+','.join(elt['types']))
+              print("# \t\tTags:")
+              for tag in list(elt['tags'].keys()):
+                print("# \t\t\t"+tag+":"+elt['tags'][tag])
+              print("# \t\tFiles:")
               for file in elt['files']:
-                print "# \t\t\t"+file
+                print("# \t\t\t"+file)
       sys.exit(0)
 
     if options.check:
       if not options.bank:
-        print "Bank name is missing"
+        print("Bank name is missing")
         sys.exit(1)
       bank = Bank(options.bank, no_log=False)
-      print options.bank+" check: "+str(bank.check())+"\n"
+      print(options.bank+" check: "+str(bank.check())+"\n")
       sys.exit(0)
 
 
@@ -337,37 +341,37 @@ def main():
       if options.bank:
         bank = Bank(options.bank)
         _bank = bank.bank
-        print '#' * 80
-        print "# Name:\t"+_bank['name']
-        print "# Type:\t"+str(_bank['properties']['type'])
+        print('#' * 80)
+        print("# Name:\t"+_bank['name'])
+        print("# Type:\t"+str(_bank['properties']['type']))
         # Get last update session
         if 'status' in _bank:
-          print "# Last update status:\t"+str(_bank['status']['over']['status'])
+          print("# Last update status:\t"+str(_bank['status']['over']['status']))
         release = None
         if 'current' in _bank and _bank['current']:
           for prod in _bank['production']:
             if _bank['current'] == prod['session']:
               release = prod['release']
-        print "# Published release:\t"+str(release)
-        print "# Production directories"
+        print("# Published release:\t"+str(release))
+        print("# Production directories")
         for prod in _bank['production']:
           if 'freeze' in prod:
-            print "#\tFreeze:\t"+str(prod['freeze'])
-          print "#\tRemote release:\t"+prod['remoterelease']
-          print "#\tRelease:\t"+prod['release']
-          print "#\t\tSession:\t"+str(prod['session'])
+            print("#\tFreeze:\t"+str(prod['freeze']))
+          print("#\tRemote release:\t"+prod['remoterelease'])
+          print("#\tRelease:\t"+prod['release'])
+          print("#\t\tSession:\t"+str(prod['session']))
           release_dir = os.path.join(prod['data_dir'],
                         prod['dir_version'],
                         prod['prod_dir'])
-          print "#\t\tDirectory:\t"+release_dir
-        if 'pending' in _bank and len(_bank['pending'].keys()) > 0:
-          print "# Pending directories"
-          for pending in _bank['pending'].keys():
-            print "#\tRelease:\t"+pending
-        print '#' * 80
+          print("#\t\tDirectory:\t"+release_dir)
+        if 'pending' in _bank and len(list(_bank['pending'].keys())) > 0:
+          print("# Pending directories")
+          for pending in list(_bank['pending'].keys()):
+            print("#\tRelease:\t"+pending)
+        print('#' * 80)
       else:
-        print '#' * 80
-        print "# Name\tType\tRelease"
+        print('#' * 80)
+        print("# Name\tType\tRelease")
         banks = Bank.list()
         for bank in banks:
           '''
@@ -382,20 +386,20 @@ def main():
                 release = prod['release']
           else:
             release = None
-          print " "+bank['name']+"\t"+','.join(bank['properties']['type'])+"\t"+str(release)
-        print '#' * 80
+          print(" "+bank['name']+"\t"+','.join(bank['properties']['type'])+"\t"+str(release))
+        print('#' * 80)
         sys.exit(0)
 
     if options.update:
       if not options.bank:
-        print "Bank name is missing"
+        print("Bank name is missing")
         sys.exit(1)
       banks = options.bank.split(',')
       gres = True
       for bank in banks:
         options.bank = bank
         bmaj = Bank(bank, options)
-        print 'Log file: '+bmaj.config.log_file
+        print('Log file: '+bmaj.config.log_file)
         res = bmaj.update(depends=True)
         if not res:
           gres = False
@@ -405,10 +409,10 @@ def main():
 
     if options.freeze:
       if not options.bank:
-        print "Bank name is missing"
+        print("Bank name is missing")
         sys.exit(1)
       if not options.release:
-        print "Bank release is missing"
+        print("Bank release is missing")
         sys.exit(1)
       bmaj = Bank(options.bank, options)
       res = bmaj.freeze(options.release)
@@ -417,10 +421,10 @@ def main():
 
     if options.unfreeze:
       if not options.bank:
-        print "Bank name is missing"
+        print("Bank name is missing")
         sys.exit(1)
       if not options.release:
-        print "Bank release is missing"
+        print("Bank release is missing")
         sys.exit(1)
       bmaj = Bank(options.bank, options)
       res = bmaj.unfreeze(options.release)
@@ -429,18 +433,18 @@ def main():
 
     if options.remove or options.removeall:
       if not options.bank:
-        print "Bank name is missing"
+        print("Bank name is missing")
         sys.exit(1)
       if options.remove and not options.release:
-        print "Bank release is missing"
+        print("Bank release is missing")
         sys.exit(1)
       if options.removeall:
         bmaj = Bank(options.bank, options, no_log=True)
-        print 'Log file: '+bmaj.config.log_file
+        print('Log file: '+bmaj.config.log_file)
         res = bmaj.removeAll(options.force)
       else:
         bmaj = Bank(options.bank, options)
-        print 'Log file: '+bmaj.config.log_file
+        print('Log file: '+bmaj.config.log_file)
         res = bmaj.remove(options.release)
         Notify.notifyBankAction(bmaj)
       if not res:
@@ -448,7 +452,7 @@ def main():
 
     if options.unpublish:
       if not options.bank:
-        print "Bank name is missing"
+        print("Bank name is missing")
         sys.exit(1)
       bmaj = Bank(options.bank, options)
       bmaj.load_session()
@@ -457,10 +461,10 @@ def main():
 
     if options.publish:
       if not options.bank:
-        print "Bank name or release is missing"
+        print("Bank name or release is missing")
         sys.exit(1)
       bmaj = Bank(options.bank, options)
-      print 'Log file: '+bmaj.config.log_file
+      print('Log file: '+bmaj.config.log_file)
       bmaj.load_session()
       bank = bmaj.bank
       session = None
@@ -483,12 +487,12 @@ def main():
                 break
             break
       if session is None:
-        print "No production session could be found for this release"
+        print("No production session could be found for this release")
         sys.exit(1)
       bmaj.session._session = session
       bmaj.publish()
   except Exception as e:
-    print str(e)
+    print(str(e))
 
 if __name__ == '__main__':
     main()

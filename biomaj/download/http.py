@@ -1,11 +1,18 @@
+from future import standard_library
+standard_library.install_aliases()
 import logging
 import pycurl
-import StringIO
+import io
 import re
 import os
 
 from biomaj.utils import Utils
 from biomaj.download.ftp import FTPDownload
+
+try:
+    from io import BytesIO
+except ImportError:
+    from StringIO import StringIO as BytesIO
 
 class HTTPDownload(FTPDownload):
   '''
@@ -37,9 +44,10 @@ class HTTPDownload(FTPDownload):
     if self.credentials is not None:
       curl.setopt(pycurl.USERPWD, self.credentials)
 
-    output = StringIO.StringIO()
+    output = BytesIO()
     # lets assign this buffer to pycurl object
     self.crl.setopt(pycurl.WRITEFUNCTION, output.write)
+    self.crl.setopt(pycurl.HEADERFUNCTION, self.header_function)
     self.crl.perform()
     # lets get the output in a string
     result = output.getvalue()

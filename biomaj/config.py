@@ -1,13 +1,18 @@
+from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import object
 import logging
 import logging.config
 import os
-import ConfigParser
+import configparser
 import time
 import sys
 
 from biomaj.bmajindex import BmajIndex
 
-class BiomajConfig:
+class BiomajConfig(object):
   '''
   Manage Biomaj configuration
   '''
@@ -76,10 +81,10 @@ class BiomajConfig:
 
     BiomajConfig.config_file = os.path.abspath(config_file)
 
-    BiomajConfig.global_config = ConfigParser.SafeConfigParser()
+    BiomajConfig.global_config = configparser.SafeConfigParser()
 
     if allow_user_config and os.path.exists(os.path.expanduser('~/.biomaj.cfg')):
-      BiomajConfig.user_config = ConfigParser.SafeConfigParser()
+      BiomajConfig.user_config = configparser.SafeConfigParser()
       BiomajConfig.user_config.read([os.path.expanduser('~/.biomaj.cfg')])
 
     BiomajConfig.global_config.read([config_file])
@@ -114,7 +119,7 @@ class BiomajConfig:
     self.name = bank
     if BiomajConfig.global_config is None:
       BiomajConfig.load_config()
-    self.config_bank = ConfigParser.SafeConfigParser()
+    self.config_bank = configparser.SafeConfigParser()
     conf_dir = BiomajConfig.global_config.get('GENERAL', 'conf.dir')
     if not os.path.exists(os.path.join(conf_dir,bank+'.properties')):
       logging.error('Bank configuration file does not exists')
@@ -122,11 +127,11 @@ class BiomajConfig:
     try:
       self.config_bank.read([os.path.join(conf_dir,bank+'.properties')])
     except Exception as e:
-      print "Configuration file error: "+str(e)
+      print("Configuration file error: "+str(e))
       logging.error("Configuration file error "+str(e))
       sys.exit(1)
 
-    self.last_modified = long(os.stat(os.path.join(conf_dir,bank+'.properties')).st_mtime)
+    self.last_modified = int(os.stat(os.path.join(conf_dir,bank+'.properties')).st_mtime)
 
     if os.path.exists(os.path.expanduser('~/.biomaj.cfg')):
       logging.config.fileConfig(os.path.expanduser('~/.biomaj.cfg'))

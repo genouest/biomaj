@@ -1,3 +1,5 @@
+from builtins import str
+from builtins import object
 import os
 import logging
 import time
@@ -16,7 +18,7 @@ from biomaj.bmajindex import BmajIndex
 #from bson.objectid import ObjectId
 
 
-class Bank:
+class Bank(object):
   '''
   BioMAJ bank
   '''
@@ -412,7 +414,7 @@ class Bank:
       production = { 'release': self.session.get('release'),
                       'remoterelease': self.session.get('remoterelease'),
                       'session': self.session._session['id'],
-                      'formats': self.session._session['formats'].keys(),
+                      'formats': list(self.session._session['formats'].keys()),
                       'types': release_types,
                       'size': self.session.get('fullsize'),
                       'data_dir': self.session._session['data_dir'],

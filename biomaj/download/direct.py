@@ -1,14 +1,22 @@
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
 import datetime
 import logging
 import pycurl
-import StringIO
+import io
 import os
 import re
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 from biomaj.download.interface import DownloadInterface
 from biomaj.download.ftp import FTPDownload
 from biomaj.utils import Utils
+
+try:
+    from io import BytesIO
+except ImportError:
+    from StringIO import StringIO as BytesIO
 
 class MultiDownload(DownloadInterface):
   '''
@@ -78,6 +86,7 @@ class DirectFTPDownload(FTPDownload):
     FTPDownload.__init__(self, protocol, host, rootdir)
     today = datetime.date.today()
     self.files_to_download = []
+    self.headers = {}
     for file in file_list:
       rfile = {}
       rfile['root'] = self.rootdir
@@ -163,7 +172,7 @@ class DirectHttpDownload(DirectFTPDownload):
 
       if self.method == 'POST':
         # Form data must be provided already urlencoded.
-        postfields = urllib.urlencode(self.param)
+        postfields = urllib.parse.urlencode(self.param)
         # Sets request method to POST,
         # Content-Type header to application/x-www-form-urlencoded
         # and data to send in request body.
@@ -173,7 +182,7 @@ class DirectHttpDownload(DirectFTPDownload):
         curl.setopt(pycurl.POSTFIELDS, postfields)
         curl.setopt(pycurl.URL, rfile['url']+rfile['root']+'/'+rfile['name'])
       else:
-        url = rfile['url']+rfile['root']+'/'+rfile['name']+'?'+urllib.urlencode(self.param)
+        url = rfile['url']+rfile['root']+'/'+rfile['name']+'?'+urllib.parse.urlencode(self.param)
         curl.setopt(pycurl.URL, url)
 
       curl.setopt(pycurl.WRITEDATA, fp)
@@ -187,6 +196,34 @@ class DirectHttpDownload(DirectFTPDownload):
       self.set_progress(1, nb_files)
     return self.files_to_download
 
+  def header_function(self, header_line):
+    # HTTP standard specifies that headers are encoded in iso-8859-1.
+    # On Python 2, decoding step can be skipped.
+    # On Python 3, decoding step is required.
+    header_line = header_line.decode('iso-8859-1')
+
+    # Header lines include the first status line (HTTP/1.x ...).
+    # We are going to ignore all lines that don't have a colon in them.
+    # This will botch headers that are split on multiple lines...
+    if ':' not in header_line:
+      return
+
+    # Break the header line into header name and value.
+    name, value = header_line.split(':', 1)
+
+    # Remove whitespace that may be present.
+    # Header lines include the trailing newline, and there may be whitespace
+    # around the colon.
+    name = name.strip()
+    value = value.strip()
+
+    # Header names are case insensitive.
+    # Lowercase name here.
+    name = name.lower()
+
+    # Now we can actually record the header name and value.
+    self.headers[name] = value
+
   def list(self, directory=''):
     '''
     Try to get file headers to get last_modification and size
@@ -198,12 +235,29 @@ class DirectHttpDownload(DirectFTPDownload):
 
       self.crl.setopt(pycurl.NOBODY, True)
       self.crl.setopt(pycurl.URL, self.url+self.rootdir+file['name'])
-      output = StringIO.StringIO()
+      output = BytesIO()
       # lets assign this buffer to pycurl object
       self.crl.setopt(pycurl.WRITEFUNCTION, output.write)
+      self.crl.setopt(pycurl.HEADERFUNCTION, self.header_function)
       self.crl.perform()
+
+      # Figure out what encoding was sent with the response, if any.
+      # Check against lowercased header name.
+      encoding = None
+      if 'content-type' in self.headers:
+          content_type = self.headers['content-type'].lower()
+          match = re.search('charset=(\S+)', content_type)
+          if match:
+               encoding = match.group(1)
+      if encoding is None:
+          # Default encoding for HTML is iso-8859-1.
+          # Other content types may have different default encoding,
+          # or in case of binary data, may have no encoding at all.
+          encoding = 'iso-8859-1'
+
       # lets get the output in a string
-      result = output.getvalue()
+      result = output.getvalue().decode(encoding)
+
       lines = re.split(r'[\n\r]+', result)
       for line in lines:
         parts = line.split(':')

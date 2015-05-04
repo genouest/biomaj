@@ -1,7 +1,8 @@
+from builtins import object
 from pymongo import MongoClient
 
 
-class MongoConnector:
+class MongoConnector(object):
   '''
   Connector to mongodb
   '''

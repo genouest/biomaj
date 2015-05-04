@@ -1,3 +1,5 @@
+from builtins import str
+from builtins import object
 import tarfile
 import zipfile
 import gzip
@@ -12,7 +14,7 @@ import subprocess
 
 from mimetypes import MimeTypes
 
-class Utils:
+class Utils(object):
   '''
   Utility classes
   '''

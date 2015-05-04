@@ -1,3 +1,5 @@
+from builtins import str
+from builtins import object
 import logging
 import copy
 from elasticsearch import Elasticsearch
@@ -156,7 +158,7 @@ class BmajIndex(object):
       obj['bank'] = bank_name
       formats = obj['formats']
       try:
-        for fkey,fvalue in formats.iteritems():
+        for fkey,fvalue in formats.items():
           for elt in fvalue:
             elt['format'] = fkey
             elt['bank'] = bank_name

@@ -1,8 +1,10 @@
+from builtins import range
+from builtins import object
 import threading
 import logging
 from biomaj.process.metaprocess import MetaProcess
 
-class ProcessFactory:
+class ProcessFactory(object):
   '''
   Manage process execution
   '''

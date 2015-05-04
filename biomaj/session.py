@@ -65,6 +65,39 @@ class Session(object):
     # Default is update
     self._session['action'] = action
 
+  def reload_postprocess_in_order(self, postprocess):
+      '''
+      Reloads processes in config order
+      '''
+      if self.config.get('BLOCKS') is None:
+          return postprocess
+      copy_postprocess = {}
+      blocks = self.config.get('BLOCKS').split(',')
+      for block in blocks:
+          copy_postprocess[block] = OrderedDict()
+          metas = self.config.get(block.strip()+'.db.post.process').split(',')
+          for meta in metas:
+            copy_postprocess[block][meta] = OrderedDict()
+            processes = self.config.get(meta.strip()).split(',')
+            for process in processes:
+                copy_postprocess[block][meta][process] = postprocess[block][meta][process]
+      return copy_postprocess
+
+  def reload_in_order(self, otherprocess):
+      '''
+      Reloads processes in config order
+      '''
+      if self.config.get(otherprocess.strip()) is None:
+          return postprocess
+      copy_postprocess = {}
+      metas = self.config.get(otherprocess.strip()).split(',')
+      for meta in metas:
+          copy_postprocess[block][meta] = OrderedDict()
+          processes = self.config.get(meta.strip()).split(',')
+          for process in processes:
+              copy_postprocess[block][meta][process] = otherprocess[block][meta][process]
+      return copy_postprocess
+
   def reset_proc(self, type_proc, proc=None):
     '''
     Reset status of processes for type in session
@@ -76,13 +109,16 @@ class Session(object):
     '''
     if type_proc == Workflow.FLOW_POSTPROCESS:
       if proc in self._session['process']['postprocess']:
+        self._session['process']['postprocess'] = self.reload_postprocess_in_order(self._session['process']['postprocess'])
         self.reset_meta(self._session['process']['postprocess'][proc])
       else:
         for elt in list(self._session['process']['postprocess'].keys()):
           self.reset_meta(self._session['process']['postprocess'][elt], proc)
     elif type_proc == Workflow.FLOW_PREPROCESS:
+      self._session['process']['preprocess'] = self.reload_in_order(self._session['process']['preprocess'])
       self.reset_meta(self._session['process']['preprocess'])
     elif type_proc == Workflow.FLOW_REMOVEPROCESS:
+      self._session['process']['removeprocess'] = self.reload_in_order(self._session['process']['removeprocess'])
       self.reset_meta(self._session['process']['removeprocess'], proc)
 
   def reset_meta(self, metas, proc=None):

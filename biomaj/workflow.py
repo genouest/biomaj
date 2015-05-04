@@ -881,7 +881,7 @@ class UpdateWorkflow(Workflow):
       section = self.list_section(release_dir, release_format, release_format)
       logging.debug("Worfklow:OldAPI:WriteListing: "+format_file)
       fd = os.open( format_file, os.O_RDWR|os.O_CREAT )
-      os.write(fd, json.dumps(section))
+      os.write(fd, json.dumps(section).encode('utf-8'))
       os.close( fd )
     return True
 

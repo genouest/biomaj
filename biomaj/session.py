@@ -71,7 +71,7 @@ class Session(object):
       '''
       if self.config.get('BLOCKS') is None:
           return postprocess
-      copy_postprocess = {}
+      copy_postprocess = OrderedDict()
       blocks = self.config.get('BLOCKS').split(',')
       for block in blocks:
           copy_postprocess[block] = OrderedDict()
@@ -89,7 +89,7 @@ class Session(object):
       '''
       if self.config.get(otherprocess.strip()) is None:
           return postprocess
-      copy_postprocess = {}
+      copy_postprocess = OrderedDict()
       metas = self.config.get(otherprocess.strip()).split(',')
       for meta in metas:
           copy_postprocess[block][meta] = OrderedDict()

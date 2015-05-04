@@ -49,8 +49,22 @@ class HTTPDownload(FTPDownload):
     self.crl.setopt(pycurl.WRITEFUNCTION, output.write)
     self.crl.setopt(pycurl.HEADERFUNCTION, self.header_function)
     self.crl.perform()
+    # Figure out what encoding was sent with the response, if any.
+    # Check against lowercased header name.
+    encoding = None
+    if 'content-type' in self.headers:
+        content_type = self.headers['content-type'].lower()
+        match = re.search('charset=(\S+)', content_type)
+        if match:
+             encoding = match.group(1)
+    if encoding is None:
+        # Default encoding for HTML is iso-8859-1.
+        # Other content types may have different default encoding,
+        # or in case of binary data, may have no encoding at all.
+        encoding = 'iso-8859-1'
+
     # lets get the output in a string
-    result = output.getvalue()
+    result = output.getvalue().decode(encoding)
     '''
     'http.parse.dir.line': r'<a[\s]+href="([\S]+)/".*alt="\[DIR\]">.*([\d]{2}-[\w\d]{2,5}-[\d]{4}\s[\d]{2}:[\d]{2})',
     'http.parse.file.line': r'<a[\s]+href="([\S]+)".*([\d]{2}-[\w\d]{2,5}-[\d]{4}\s[\d]{2}:[\d]{2})[\s]+([\d\.]+[MKG]{0,1})',

@@ -57,6 +57,7 @@ class Workflow(object):
       self.session = bank.session
     else:
       self.session = session
+      self.bank.session = session
     self.options = bank.options
     self.name = bank.name
     # Skip all remaining tasks, no need to update
@@ -975,6 +976,7 @@ class UpdateWorkflow(Workflow):
 
           session.set('action', 'remove')
           session.set('release', prod['release'])
+          session.set('remoterelease', prod['remoterelease'])
           session.set('update_session_id', prod['session'])
           logging.info('Workflow:wf_delete_old:Delete:'+prod['release'])
           res = self.bank.start_remove(session)

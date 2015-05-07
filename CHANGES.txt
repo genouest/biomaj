@@ -1,3 +1,6 @@
+3.0.5:
+  Fix removal workflow during an update workflow, removedrelease was current
+  release.
 3.0.4:
   Update code to make it Python 3 compatible
   Use ldap3 library (pure Python and p2,3 compatible) instead of python-ldap

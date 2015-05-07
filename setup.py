@@ -18,7 +18,7 @@ config = {
         'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
         'Natural Language :: English',
-        'Operating System :: POSIX :: Linux'
+        'Operating System :: POSIX :: Linux',
         # Indicate who your project is intended for
         'Intended Audience :: Science/Research',
         'Topic :: Scientific/Engineering :: Bio-Informatics',

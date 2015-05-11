@@ -1,3 +1,5 @@
+3.0.6:
+  Add process env variables logdir and logfile
 3.0.5:
   Fix removal workflow during an update workflow, removedrelease was current
   release.

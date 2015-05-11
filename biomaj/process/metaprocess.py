@@ -92,11 +92,20 @@ class MetaProcess(threading.Thread):
       self.bmaj_env['PP_WARNING'] = '#'
       self.bmaj_only_env['PP_WARNING'] = '#'
 
-
       self.bmaj_env['PATH_PROCESS_BIOMAJ'] = self.bank.config.get('process.dir')
 
       # Set some session specific env
       if self.bank.session is not None:
+
+        if self.bank.session.get('log_file') is not None:
+          log_file = self.bank.session.get('log_file')
+          log_dir = os.path.dirname(log_file)
+          self.bmaj_env['logdir'] = log_dir
+          self.bmaj_only_env['logdir'] = log_dir
+          self.bmaj_env['logfile'] = log_file
+          self.bmaj_only_env['logfile'] = log_file
+  
+
         self.bmaj_env['offlinedir'] = self.bank.session.get_offline_directory()
         self.bmaj_only_env['offlinedir'] = self.bmaj_env['offlinedir']
 

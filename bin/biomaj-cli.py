@@ -1,8 +1,8 @@
+#!/usr/bin/env python
 from __future__ import print_function
 from future import standard_library
 standard_library.install_aliases()
 from builtins import str
-#!/usr/bin/python
 
 import os,sys
 #from optparse import OptionParser

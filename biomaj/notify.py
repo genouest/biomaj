@@ -2,7 +2,6 @@ from builtins import str
 from builtins import object
 import smtplib
 import email.utils
-from email.MIMEText import MIMEText
 import sys
 if sys.version < '3':
     from email.MIMEText import MIMEText

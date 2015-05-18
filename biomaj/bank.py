@@ -757,6 +757,44 @@ class Bank(object):
       return {}
     return self.bank['status']
 
+
+  def remove_pending(self, release):
+    '''
+    Remove pending releases
+
+    :param release: release or release directory
+    :type release: str
+    :return: bool
+    '''
+    logging.warning('Bank:'+self.name+':RemovePending')
+
+    if not self.is_owner():
+      logging.error('Not authorized, bank owned by '+self.bank['properties']['owner'])
+      raise Exception('Not authorized, bank owned by '+self.bank['properties']['owner'])
+
+    if not self.bank['pending']:
+        return True
+    pendings = self.bank['pending']
+    for release in list(pendings.keys()):
+        pending_session_id = pendings[release]
+        pending_session = None
+        for s in self.bank['sessions']:
+          if s['id'] == pending_session_id:
+            pending_session = s
+            break
+        session = Session(self.name, self.config, RemoveWorkflow.FLOW)
+        if pending_session is None:
+            session._session['release'] = release
+        else:
+            session.load(pending_session)
+        if os.path.exists(session.get_full_release_directory()):
+            logging.debug("Remove:Pending:Dir:"+session.get_full_release_directory())
+            shutil.rmtree(session.get_full_release_directory())
+        self.remove_session(pendings[release])
+    self.banks.update({'name': self.name},{'$set': {'pending': {}}})
+    return True
+
+
   def remove(self, release):
     '''
     Remove a release (db and files)

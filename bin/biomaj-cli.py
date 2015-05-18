@@ -34,6 +34,7 @@ def main():
   parser.add_argument('-l', '--log', dest="log",help="log level")
   parser.add_argument('-r', '--remove', dest="remove", help="Remove a bank release", action="store_true", default=False)
   parser.add_argument('--remove-all', dest="removeall", help="Remove all bank releases and database records", action="store_true", default=False)
+  parser.add_argument('--remove-pending', dest="removepending", help="Remove pending release", action="store_true", default=False)
   parser.add_argument('-s', '--status', dest="status", help="Get status", action="store_true", default=False)
   parser.add_argument('-b', '--bank', dest="bank",help="bank name")
   parser.add_argument('--owner', dest="owner", help="change owner of the bank")
@@ -105,6 +106,7 @@ def main():
     --stop-after xx: stop update cycle after step xx has completed
     --from-task xx --release yy: Force an re-update cycle for bank release *yy* or from current cycle (in production directories), skipping steps up to *xx*
     --process xx: linked to from-task, optionally specify a block, meta or process name to start from
+    --release xx: release to update
 
 --publish: Publish bank as current release to use
     [MANDATORY]
@@ -119,6 +121,10 @@ def main():
     --bank xx: name of the bank to update
     [OPTIONAL]
     --force: remove freezed releases
+
+--remove-pending: Remove pending releases
+    [MANDATORY]
+    --bank xx: name of the bank to update
 
 --remove: Remove bank release (files and database release)
     [MANDATORY]
@@ -449,6 +455,16 @@ def main():
         Notify.notifyBankAction(bmaj)
       if not res:
         sys.exit(1)
+
+    if options.removepending:
+        if not options.bank:
+          print("Bank name is missing")
+          sys.exit(1)
+        bmaj = Bank(options.bank, options, no_log=True)
+        print('Log file: '+bmaj.config.log_file)
+        res = bmaj.remove_pending(options.release)
+        if not res:
+          sys.exit(1)
 
     if options.unpublish:
       if not options.bank:

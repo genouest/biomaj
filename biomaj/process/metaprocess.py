@@ -93,6 +93,7 @@ class MetaProcess(threading.Thread):
       self.bmaj_only_env['PP_WARNING'] = '#'
 
       self.bmaj_env['PATH_PROCESS_BIOMAJ'] = self.bank.config.get('process.dir')
+      self.bmaj_only_env['PATH_PROCESS_BIOMAJ'] = self.bank.config.get('process.dir')
 
       # Set some session specific env
       if self.bank.session is not None:
@@ -104,7 +105,7 @@ class MetaProcess(threading.Thread):
           self.bmaj_only_env['logdir'] = log_dir
           self.bmaj_env['logfile'] = log_file
           self.bmaj_only_env['logfile'] = log_file
-  
+
 
         self.bmaj_env['offlinedir'] = self.bank.session.get_offline_directory()
         self.bmaj_only_env['offlinedir'] = self.bmaj_env['offlinedir']
@@ -128,6 +129,12 @@ class MetaProcess(threading.Thread):
       for bdep in self.bank.depends:
         self.bmaj_env[bdep.name+'source'] = bdep.session.get_full_release_directory()
         self.bmaj_only_env[bdep.name+'source'] = self.bmaj_env[bdep.name+'source']
+
+      # Fix case where a var = None
+      for key in list(self.bmaj_only_env.keys()):
+          if self.bmaj_only_env[key] is None:
+              self.bmaj_env[key] = ''
+              self.bmaj_only_env[key] = ''
 
 
     def set_progress(self, name, status=None):

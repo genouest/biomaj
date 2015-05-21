@@ -208,7 +208,12 @@ class FTPDownload(DownloadInterface):
     :return: tuple of file and dirs in current directory with details
     '''
     logging.debug('Download:List:'+self.url+self.rootdir+directory)
-    self.crl.setopt(pycurl.URL, self.url+self.rootdir+directory)
+    #self.crl.setopt(pycurl.URL, self.url+self.rootdir+directory)
+    try:
+        self.crl.setopt(pycurl.URL, self.url+self.rootdir+directory)
+    except Exception as a:
+        self.crl.setopt(pycurl.URL, (self.url+self.rootdir+directory).encode('ascii','ignore'))
+
     if self.credentials is not None:
       curl.setopt(pycurl.USERPWD, self.credentials)
     output = BytesIO()

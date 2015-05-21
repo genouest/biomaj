@@ -180,10 +180,18 @@ class DirectHttpDownload(DirectFTPDownload):
           curl.setopt(pycurl.USERPWD, self.credentials)
 
         curl.setopt(pycurl.POSTFIELDS, postfields)
-        curl.setopt(pycurl.URL, rfile['url']+rfile['root']+'/'+rfile['name'])
+        try:
+            curl.setopt(pycurl.URL, rfile['url']+rfile['root']+'/'+rfile['name'])
+        except Exception as a:
+            curl.setopt(pycurl.URL, (rfile['url']+rfile['root']+'/'+rfile['name']).encode('ascii','ignore'))
+        #curl.setopt(pycurl.URL, rfile['url']+rfile['root']+'/'+rfile['name'])
       else:
         url = rfile['url']+rfile['root']+'/'+rfile['name']+'?'+urllib.parse.urlencode(self.param)
-        curl.setopt(pycurl.URL, url)
+        #curl.setopt(pycurl.URL, url)
+        try:
+            curl.setopt(pycurl.URL, url)
+        except Exception as a:
+            curl.setopt(pycurl.URL, url.encode('ascii','ignore'))
 
       curl.setopt(pycurl.WRITEDATA, fp)
       curl.perform()
@@ -234,7 +242,11 @@ class DirectHttpDownload(DirectFTPDownload):
         curl.setopt(pycurl.USERPWD, self.credentials)
 
       self.crl.setopt(pycurl.NOBODY, True)
-      self.crl.setopt(pycurl.URL, self.url+self.rootdir+file['name'])
+      try:
+          self.crl.setopt(pycurl.URL, self.url+self.rootdir+file['name'])
+      except Exception as a:
+          self.crl.setopt(pycurl.URL, (self.url+self.rootdir+file['name']).encode('ascii','ignore'))
+      #self.crl.setopt(pycurl.URL, self.url+self.rootdir+file['name'])
       output = BytesIO()
       # lets assign this buffer to pycurl object
       self.crl.setopt(pycurl.WRITEFUNCTION, output.write)

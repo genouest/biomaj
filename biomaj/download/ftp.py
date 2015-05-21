@@ -138,7 +138,10 @@ class FTPDownload(DownloadInterface):
         rfile['url'] = self.url
       fp = open(file_path, "wb")
       curl = pycurl.Curl()
-      curl.setopt(pycurl.URL, rfile['url']+rfile['root']+'/'+rfile['name'])
+      try:
+          curl.setopt(pycurl.URL, rfile['url']+rfile['root']+'/'+rfile['name'])
+      except Exception as a:
+          curl.setopt(pycurl.URL, (rfile['url']+rfile['root']+'/'+rfile['name']).encode('ascii','ignore'))
       if self.credentials is not None:
         curl.setopt(pycurl.USERPWD, self.credentials)
       curl.setopt(pycurl.WRITEDATA, fp)

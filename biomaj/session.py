@@ -8,7 +8,7 @@ import os
 import time
 import copy
 
-from biomaj.workflow import Workflow, UpdateWorkflow
+from biomaj.workflow import Workflow
 
 
 class Session(object):
@@ -37,9 +37,9 @@ class Session(object):
 
         formats = {}
         if self.config.get('db.formats') is not None:
-            flist = self.config.get('db.formats').split(',')
-            for f in flist:
-                formats[f.strip()] = []
+          flist = self.config.get('db.formats').split(',')
+          for f in flist:
+            formats[f.strip()] = []
 
         self._session = { 'id':  time.time(),
                           'log_file': self.config.log_file,
@@ -108,28 +108,28 @@ class Session(object):
         :type proc: str
         '''
         if type_proc == Workflow.FLOW_POSTPROCESS:
-            if proc in self._session['process']['postprocess']:
-                self._session['process']['postprocess'] = self.reload_postprocess_in_order(self._session['process']['postprocess'])
-                self.reset_meta(self._session['process']['postprocess'][proc])
-            else:
-                for elt in list(self._session['process']['postprocess'].keys()):
-                    self.reset_meta(self._session['process']['postprocess'][elt], proc)
+          if proc in self._session['process']['postprocess']:
+            self._session['process']['postprocess'] = self.reload_postprocess_in_order(self._session['process']['postprocess'])
+            self.reset_meta(self._session['process']['postprocess'][proc])
+          else:
+            for elt in list(self._session['process']['postprocess'].keys()):
+              self.reset_meta(self._session['process']['postprocess'][elt], proc)
         elif type_proc == Workflow.FLOW_PREPROCESS:
-            self._session['process']['preprocess'] = self.reload_in_order(self._session['process']['preprocess'])
-            self.reset_meta(self._session['process']['preprocess'])
+          self._session['process']['preprocess'] = self.reload_in_order(self._session['process']['preprocess'])
+          self.reset_meta(self._session['process']['preprocess'])
         elif type_proc == Workflow.FLOW_REMOVEPROCESS:
-            self._session['process']['removeprocess'] = self.reload_in_order(self._session['process']['removeprocess'])
-            self.reset_meta(self._session['process']['removeprocess'], proc)
+          self._session['process']['removeprocess'] = self.reload_in_order(self._session['process']['removeprocess'])
+          self.reset_meta(self._session['process']['removeprocess'], proc)
 
     def reset_meta(self, metas, proc=None):
         '''
         Reset status of meta processes
         '''
         if proc in metas:
-            self.reset_process(procs)
+          self.reset_process(procs)
         else:
-            for meta in list(metas.keys()):
-                self.reset_process(metas[meta], proc)
+          for meta in list(metas.keys()):
+            self.reset_process(metas[meta], proc)
 
     def reset_process(self, processes, proc=None):
         '''
@@ -137,10 +137,10 @@ class Session(object):
         '''
         set_to_false = False
         for process in list(processes.keys()):
-            if process == proc or proc is None:
-                set_to_false = True
-            if set_to_false:
-                processes[process] = False
+          if process == proc or proc is None:
+            set_to_false = True
+          if set_to_false:
+            processes[process] = False
 
 
     def load(self, session):
@@ -178,9 +178,9 @@ class Session(object):
         Return an attribute of session
         '''
         if attr in self._session:
-            return self._session[attr]
+          return self._session[attr]
         else:
-            return None
+          return None
 
     def set(self, attr, value):
         '''
@@ -193,7 +193,7 @@ class Session(object):
         Return status for a flow event
         '''
         if status not in  self._session['status']:
-            return False
+          return False
         return self._session['status'][status]
 
     def set_status(self, status, value):

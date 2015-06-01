@@ -8,7 +8,7 @@ import os
 import time
 import copy
 
-from biomaj.workflow import Workflow, UpdateWorkflow
+from biomaj.workflow import Workflow
 
 
 class Session(object):

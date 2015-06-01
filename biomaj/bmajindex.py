@@ -132,7 +132,7 @@ class BmajIndex(object):
             return
         if stat['release'] is None or stat['bank'] is None:
             return False
-        obj['bank'] = bank_name
+        stat['bank'] = bank_name
 
         BmajIndex.es.index(index=BmajIndex.index, doc_type='releasestats', id=stat_id, body=stat)
         return True

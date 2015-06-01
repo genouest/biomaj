@@ -33,8 +33,8 @@ class Utils(object):
             return -1
         folder_size = 0
         for (path, dirs, files) in os.walk(folder):
-            for file in files:
-                filename = os.path.join(path, file)
+            for ffile in files:
+                filename = os.path.join(path, ffile)
                 folder_size += os.path.getsize(filename)
         return folder_size
 
@@ -58,16 +58,16 @@ class Utils(object):
         Each file is a dict like with (at least) parameters: year, month, day
         '''
         release = None
-        for file in files:
+        for rfile in files:
             if release is None:
-                release = { 'year': file['year'], 'month': file['month'], 'day': file['day']}
+                release = { 'year': rfile['year'], 'month': rfile['month'], 'day': rfile['day']}
             else:
                 rel_date = datetime.date(int(release['year']),int(release['month']),int(release['day']))
-                file_date = datetime.date(int(file['year']),int(file['month']),int(file['day']))
+                file_date = datetime.date(int(rfile['year']),int(rfile['month']),int(rfile['day']))
                 if file_date > rel_date:
-                    release['year'] = file['year']
-                    release['month'] = file['month']
-                    release['day'] = file['day']
+                    release['year'] = rfile['year']
+                    release['month'] = rfile['month']
+                    release['day'] = rfile['day']
         return release
 
     @staticmethod
@@ -198,7 +198,7 @@ class Utils(object):
         return files_to_copy
 
     @staticmethod
-    def uncompress(file, remove=True):
+    def uncompress(archivefile, remove=True):
         '''
         Test if file is an archive, and uncompress it
         Remove archive file if specified
@@ -215,24 +215,24 @@ class Utils(object):
         #  tfile.extractall(os.path.basename(file))
         #  tfile.close()
         #  is_archive = True
-        if file.endswith('.tar.gz'):
-            proc = subprocess.check_call("tar xfz "+file+" --overwrite -C "+os.path.dirname(file), shell=True)
+        if archivefile.endswith('.tar.gz'):
+            proc = subprocess.check_call("tar xfz "+archivefile+" --overwrite -C "+os.path.dirname(archivefile), shell=True)
             #proc.wait()
             is_archive = True
-        elif file.endswith('.tar'):
-            proc = subprocess.check_call("tar xf "+file+" --overwrite -C "+os.path.dirname(file), shell=True)
+        elif archivefile.endswith('.tar'):
+            proc = subprocess.check_call("tar xf "+archivefile+" --overwrite -C "+os.path.dirname(archivefile), shell=True)
             #proc.wait()
             is_archive = True
-        elif file.endswith('.bz2'):
-            proc = subprocess.check_call("tar xjf "+file+" --overwrite -C "+os.path.dirname(file), shell=True)
+        elif archivefile.endswith('.bz2'):
+            proc = subprocess.check_call("tar xjf "+archivefile+" --overwrite -C "+os.path.dirname(archivefile), shell=True)
             #proc.wait()
             is_archive = True
-        elif file.endswith('.gz'):
-            proc = subprocess.check_call("gunzip -f "+file, shell=True)
+        elif archivefile.endswith('.gz'):
+            proc = subprocess.check_call("gunzip -f "+archivefile, shell=True)
             #proc.wait()
             is_archive = True
-        elif file.endswith('.zip'):
-            proc = subprocess.check_call("unzip -o "+file+" -d "+os.path.dirname(file), shell=True)
+        elif archivefile.endswith('.zip'):
+            proc = subprocess.check_call("unzip -o "+archivefile+" -d "+os.path.dirname(archivefile), shell=True)
             #proc.wait()
             is_archive = True
         #elif zipfile.is_zipfile(file):
@@ -259,8 +259,8 @@ class Utils(object):
         #  is_archive = True
 
         if is_archive:
-            logging.debug('Uncompress:uncompress:'+file)
+            logging.debug('Uncompress:uncompress:'+archivefile)
 
 
-        if is_archive and remove and os.path.exists(file):
-            os.remove(file)
+        if is_archive and remove and os.path.exists(archivefile):
+            os.remove(archivefile)

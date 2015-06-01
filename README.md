@@ -114,6 +114,7 @@ Status
 
 [![Documentation Status](https://readthedocs.org/projects/biomaj/badge/?version=latest)](https://readthedocs.org/projects/biomaj/?badge=latest)
 
+[![Code Health](https://landscape.io/github/genouest/biomaj/master/landscape.svg?style=flat)](https://landscape.io/github/genouest/biomaj/master)
 
 Testing
 =======

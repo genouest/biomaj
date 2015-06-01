@@ -1,14 +1,14 @@
 from builtins import str
 from builtins import range
-import os
+#import os
 import logging
-import datetime
-import time
-import re
+#import datetime
+#import time
+#import re
 import threading
 import copy
-import tarfile
-import zipfile
+#import tarfile
+#import zipfile
 import traceback
 
 class DownloadThread(threading.Thread):
@@ -36,10 +36,10 @@ class DownloadThread(threading.Thread):
             threads.append(th)
         # Now dispatch the files to download to the threads
         thread_id = 0
-        for file in downloader.files_to_download:
+        for dfile in downloader.files_to_download:
             if thread_id == DownloadThread.NB_THREAD:
                 thread_id = 0
-            threads[thread_id].downloader.files_to_download.append(file)
+            threads[thread_id].downloader.files_to_download.append(dfile)
             thread_id += 1
         return threads
 

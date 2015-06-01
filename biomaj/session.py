@@ -109,11 +109,11 @@ class Session(object):
         '''
         if type_proc == Workflow.FLOW_POSTPROCESS:
             if proc in self._session['process']['postprocess']:
-              self._session['process']['postprocess'] = self.reload_postprocess_in_order(self._session['process']['postprocess'])
-              self.reset_meta(self._session['process']['postprocess'][proc])
+                self._session['process']['postprocess'] = self.reload_postprocess_in_order(self._session['process']['postprocess'])
+                self.reset_meta(self._session['process']['postprocess'][proc])
             else:
-              for elt in list(self._session['process']['postprocess'].keys()):
-                  self.reset_meta(self._session['process']['postprocess'][elt], proc)
+                for elt in list(self._session['process']['postprocess'].keys()):
+                    self.reset_meta(self._session['process']['postprocess'][elt], proc)
         elif type_proc == Workflow.FLOW_PREPROCESS:
             self._session['process']['preprocess'] = self.reload_in_order(self._session['process']['preprocess'])
             self.reset_meta(self._session['process']['preprocess'])
@@ -126,7 +126,7 @@ class Session(object):
         Reset status of meta processes
         '''
         if proc in metas:
-            self.reset_process(procs)
+            self.reset_process(proc)
         else:
             for meta in list(metas.keys()):
                 self.reset_process(metas[meta], proc)

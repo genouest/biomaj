@@ -4,7 +4,7 @@ import os
 import logging
 import time
 import shutil
-import copy
+#import copy
 
 from biomaj.mongo_connector import MongoConnector
 
@@ -90,19 +90,6 @@ class Bank(object):
         Checks bank configuration
         '''
         return self.config.check()
-
-        '''
-        offline.dir.name=offline/ncbi/blast/alu_tmp
-        dir.version=ncbi/blast/alu
-        protocol=ftp
-        server=ftp.ncbi.nih.gov
-        remote.dir=/blast/db/FASTA/
-
-        remote.files=^alu.*\.gz$
-        local.files=^alu\.(a|n).*
-        '''
-
-        return 'Not yet implemented'
 
     def is_locked(self):
         '''

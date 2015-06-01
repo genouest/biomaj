@@ -330,8 +330,8 @@ def main():
                             for tag in list(elt['tags'].keys()):
                                 print("# \t\t\t"+tag+":"+elt['tags'][tag])
                             print("# \t\tFiles:")
-                            for file in elt['files']:
-                                print("# \t\t\t"+file)
+                            for eltfile in elt['files']:
+                                print("# \t\t\t"+eltfile)
             sys.exit(0)
 
         if options.check:
@@ -380,12 +380,10 @@ def main():
                 print("# Name\tType\tRelease")
                 banks = Bank.list()
                 for bank in banks:
-                    '''
-                    production = { 'release': self.session.get('release'),
-                                    'session': self.session._session['id'],
-                                    'data_dir': self.config.get('data.dir'),
-                                    'prod_dir': self.session.get_release_directory()}
-                    '''
+                    # production = { 'release': self.session.get('release'),
+                    #                'session': self.session._session['id'],
+                    #                'data_dir': self.config.get('data.dir'),
+                    #                'prod_dir': self.session.get_release_directory()}
                     if 'current' in bank and bank['current']:
                         for prod in bank['production']:
                             if bank['current'] == prod['session']:

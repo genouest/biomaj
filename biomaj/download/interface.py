@@ -82,7 +82,7 @@ class DownloadInterface(object):
         for pattern in patterns:
             subdirs_pattern = pattern.split('/')
             if len(subdirs_pattern) > 1:
-            # Pattern contains sub directories
+                # Pattern contains sub directories
                 subdir = subdirs_pattern[0]
                 if subdir == '^':
                     subdirs_pattern = subdirs_pattern[1:]
@@ -164,26 +164,26 @@ class DownloadInterface(object):
         index = 0
 
         if len(new_or_modified_files) > 0:
-            for file in self.files_to_download:
+            for dfile in self.files_to_download:
                 if index < len(new_or_modified_files) and \
-                  file['name'] == new_or_modified_files[index][0]:
-                    new_files_to_download.append(file)
+                  dfile['name'] == new_or_modified_files[index][0]:
+                    new_files_to_download.append(dfile)
                     index += 1
                 else:
-                    if not check_exists or os.path.exists(os.path.join(root_dir,file['name'])):
-                        file['root'] = root_dir
-                        self.files_to_copy.append(file)
+                    if not check_exists or os.path.exists(os.path.join(root_dir,dfile['name'])):
+                        dfile['root'] = root_dir
+                        self.files_to_copy.append(dfile)
                     else:
-                        new_files_to_download.append(file)
+                        new_files_to_download.append(dfile)
 
         else:
             # Copy everything
-            for file in self.files_to_download:
-                if not check_exists or os.path.exists(os.path.join(root_dir,file['name'])):
-                    file['root'] = root_dir
-                    self.files_to_copy.apppend(file)
+            for dfile in self.files_to_download:
+                if not check_exists or os.path.exists(os.path.join(root_dir,dfile['name'])):
+                    dfile['root'] = root_dir
+                    self.files_to_copy.apppend(dfile)
                 else:
-                    new_files_to_download.append(file)
+                    new_files_to_download.append(dfile)
 
         self.files_to_download = new_files_to_download
 
@@ -212,7 +212,7 @@ class DownloadInterface(object):
         '''
         pass
 
-    def set_credentials(userpwd):
+    def set_credentials(self, userpwd):
         '''
         Set credentials in format user:pwd
 

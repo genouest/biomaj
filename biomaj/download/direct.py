@@ -76,7 +76,7 @@ class DirectFTPDownload(FTPDownload):
     download a list of files from FTP, no regexp
     '''
 
-    def __init__(self, protocol, host, rootdir='', file_list=[]):
+    def __init__(self, protocol, host, rootdir='', file_list=None):
         '''
 
         Initialize the files in list with today as last-modification date.
@@ -86,6 +86,8 @@ class DirectFTPDownload(FTPDownload):
         :type file_list: list
         '''
         FTPDownload.__init__(self, protocol, host, rootdir)
+        if file_list is None:
+            file_list = []
         today = datetime.date.today()
         self.files_to_download = []
         self.headers = {}

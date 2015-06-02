@@ -61,7 +61,7 @@ class DownloadInterface(object):
 
         MongoConnector.banks.update({'name': self.bank},{'$inc': {'status.download.progress': val}, '$set': {'status.download.total': max}})
 
-    def match(self, patterns, file_list, dir_list=[], prefix='', submatch=False):
+    def match(self, patterns, file_list, dir_list=None, prefix='', submatch=False):
         '''
         Find files matching patterns. Sets instance variable files_to_download.
 
@@ -77,6 +77,10 @@ class DownloadInterface(object):
         :type submatch: bool
         '''
         logging.debug('Download:File:RegExp:'+str(patterns))
+
+        if dir_list is None:
+            dir_list = []
+
         if not submatch:
             self.files_to_download = []
         for pattern in patterns:

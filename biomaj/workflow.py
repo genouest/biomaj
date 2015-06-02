@@ -66,10 +66,12 @@ class Workflow(object):
         self.session._session['update'] = False
         self.session._session['remove'] = False
 
-    def get_handler(self, protocol, server, remote_dir, list_file=[]):
+    def get_handler(self, protocol, server, remote_dir, list_file=None):
         '''
         Get a protocol download handler
         '''
+        if list_file is None:
+            list_file = []
         downloader = None
         if protocol == 'ftp' or protocol == 'sftp':
             downloader = FTPDownload(protocol, server, remote_dir)

@@ -13,7 +13,7 @@ class MetaProcess(threading.Thread):
     Each meta process defined a list of Process to execute sequentially
     '''
 
-    def __init__(self, bank, metas, meta_status=None, meta_data={}, simulate=False):
+    def __init__(self, bank, metas, meta_status=None, meta_data=None, simulate=False):
         '''
         Creates a meta process thread
 
@@ -26,6 +26,8 @@ class MetaProcess(threading.Thread):
         :param simulate: does not execute process
         :type simulate: bool
         '''
+        if meta_data is None:
+            meta_data = {}
         threading.Thread.__init__(self)
         self._lock = None
         self.kill_received = False

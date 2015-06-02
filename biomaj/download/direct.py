@@ -36,7 +36,9 @@ class MultiDownload(DownloadInterface):
             self.files_to_download += d.files_to_download
 
 
-    def match(self, patterns, file_list, dir_list=[], prefix='', submatch=False):
+    def match(self, patterns, file_list, dir_list=None, prefix='', submatch=False):
+        if dir_list is None:
+            dir_list = []
         self.files_to_download = []
         for d in self.downloaders:
             d.match(patterns, d.files_to_download, [], prefix, submatch)
@@ -106,21 +108,25 @@ class DirectFTPDownload(FTPDownload):
         '''
         return (self.files_to_download,[])
 
-    def match(self, patterns, file_list, dir_list=[], prefix='', submatch=False):
+    def match(self, patterns, file_list, dir_list=None, prefix='', submatch=False):
         '''
         All files to download match, no pattern
         '''
+        if dir_list is None:
+            dir_list = []
         self.files_to_download = file_list
 
 
 
 class DirectHttpDownload(DirectFTPDownload):
 
-    def __init__(self, protocol, host, rootdir='', file_list=[]):
+    def __init__(self, protocol, host, rootdir='', file_list=None):
         '''
         :param file_list: list of files to download on server
         :type file_list: list
         '''
+        if file_list is None:
+            file_list = []
         DirectFTPDownload.__init__(self, protocol, host, rootdir, file_list)
         self.save_as = None
         self.method = 'GET'

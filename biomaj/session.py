@@ -18,7 +18,7 @@ class Session(object):
 
     OVER = 0
 
-    def __init__(self, name, config, flow=Workflow.FLOW, action='update'):
+    def __init__(self, name, config, flow=None, action='update'):
         '''
         Creates a new session
 
@@ -31,6 +31,8 @@ class Session(object):
         :type action: str
         :type flow: dict
         '''
+        if flow is None:
+            flow = Workflow.FLOW
         self.name = name
         self.config = config
         self.flow = copy.deepcopy(flow)

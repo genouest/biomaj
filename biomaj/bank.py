@@ -253,12 +253,18 @@ class Bank(object):
 
 
     @staticmethod
-    def search(formats=[], types=[], with_sessions=True):
+    def search(formats=None, types=None, with_sessions=True):
         '''
         Search all bank releases matching some formats and types
 
         Matches production release with at least one of formats and one of types
         '''
+        if formats is None:
+            formats = []
+
+        if types is None:
+            types = []
+
         if MongoConnector.db is None:
             MongoConnector(BiomajConfig.global_config.get('GENERAL','db.url'),
                             BiomajConfig.global_config.get('GENERAL','db.name'))
@@ -576,13 +582,15 @@ class Bank(object):
         self.bank = self.banks.find_one({'name': self.name})
         return True
 
-    def get_new_session(self, flow=Workflow.FLOW):
+    def get_new_session(self, flow=None):
         '''
         Returns an empty session
 
         :param flow: kind of workflow
         :type flow: :func:`biomaj.workflow.Workflow.FLOW`
         '''
+        if flow is None:
+            flow=Workflow.FLOW
         return Session(self.name, self.config, flow)
 
     def get_session_from_release(self, release):
@@ -612,7 +620,7 @@ class Bank(object):
             logging.error('No production session could be found for this release')
         return oldsession
 
-    def load_session(self, flow=Workflow.FLOW, session=None):
+    def load_session(self, flow=None, session=None):
         '''
         Loads last session or, if over or forced, a new session
 
@@ -621,6 +629,9 @@ class Bank(object):
         :param flow: kind of workflow
         :type flow: :func:`biomaj.workflow.Workflow.FLOW`
         '''
+        if flow is None:
+            flow=Workflow.FLOW
+
         if session is not None:
             logging.debug('Load specified session '+str(session['id']))
             self.session = Session(self.name, self.config, flow)

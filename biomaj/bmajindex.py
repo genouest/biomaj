@@ -26,7 +26,7 @@ class BmajIndex(object):
     do_index = False
 
     @staticmethod
-    def load(hosts=['localhost'], index='biomaj', do_index=True):
+    def load(hosts=None, index='biomaj', do_index=True):
         '''
         Initialize index
 
@@ -35,6 +35,8 @@ class BmajIndex(object):
         :param do_index: index data or not
         :type do_index: bool
         '''
+        if hosts is None:
+            hosts=['localhost']
         if not do_index:
             return
         BmajIndex.index = index

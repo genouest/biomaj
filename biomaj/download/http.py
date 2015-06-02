@@ -47,7 +47,7 @@ class HTTPDownload(FTPDownload):
             self.crl.setopt(pycurl.URL, (self.url+self.rootdir+directory).encode('ascii','ignore'))
 
         if self.credentials is not None:
-            curl.setopt(pycurl.USERPWD, self.credentials)
+            self.crl.setopt(pycurl.USERPWD, self.credentials)
 
         output = BytesIO()
         # lets assign this buffer to pycurl object

@@ -239,7 +239,7 @@ class DirectHttpDownload(DirectFTPDownload):
         for file in self.files_to_download:
             self.crl.setopt(pycurl.HEADER, True)
             if self.credentials is not None:
-                curl.setopt(pycurl.USERPWD, self.credentials)
+                self.crl.setopt(pycurl.USERPWD, self.credentials)
 
             self.crl.setopt(pycurl.NOBODY, True)
             try:

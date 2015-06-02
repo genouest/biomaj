@@ -662,7 +662,7 @@ class UpdateWorkflow(Workflow):
         keep_files = []
         if os.path.exists(offline_dir):
             for file_to_download in downloader.files_to_download:
-            # If file is in offline dir and has same date and size, do not download again
+                # If file is in offline dir and has same date and size, do not download again
                 if os.path.exists(offline_dir + '/' + file_to_download['name']):
                     try:
                         file_stat = os.stat(offline_dir + '/' + file_to_download['name'])
@@ -804,7 +804,7 @@ class UpdateWorkflow(Workflow):
             for meta_data in list(per_process_meta_data[proc].keys()):
                 session_formats = self.bank.session.get('formats')
                 if meta_data not in session_formats:
-                #session_formats[meta_data] = [meta_thread.meta_data[meta_data]]
+                    #session_formats[meta_data] = [meta_thread.meta_data[meta_data]]
                     session_formats[meta_data] = per_process_meta_data[proc][meta_data]
                 else:
                     #session_formats[meta_data].append(meta_thread.meta_data[meta_data])

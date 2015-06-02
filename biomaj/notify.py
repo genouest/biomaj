@@ -11,7 +11,7 @@ else:
 from biomaj.workflow import Workflow
 import logging
 
-class Notify:
+class Notify(object):
     '''
     Send notifications
     '''

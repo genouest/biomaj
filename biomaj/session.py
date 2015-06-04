@@ -7,6 +7,7 @@ import os
 #import logging
 import time
 import copy
+import sys
 
 from biomaj.workflow import Workflow
 

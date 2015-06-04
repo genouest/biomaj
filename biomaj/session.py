@@ -16,6 +16,14 @@ class Session(object):
     BioMAJ bank session
     '''
 
+    @staticmethod
+    def get_ordered_dict():
+        if sys.version_info < (2, 7):
+            return {}
+        else:
+            return OrderedDict()
+
+
     OVER = 0
 
     def __init__(self, name, config, flow=None, action='update'):
@@ -73,13 +81,13 @@ class Session(object):
         '''
         if self.config.get('BLOCKS') is None:
             return postprocess
-        copy_postprocess = OrderedDict()
+        copy_postprocess = Session.get_ordered_dict()
         blocks = self.config.get('BLOCKS').split(',')
         for block in blocks:
-            copy_postprocess[block] = OrderedDict()
+            copy_postprocess[block] = Session.get_ordered_dict()
             metas = self.config.get(block.strip()+'.db.post.process').split(',')
             for meta in metas:
-                copy_postprocess[block][meta] = OrderedDict()
+                copy_postprocess[block][meta] = Session.get_ordered_dict()
                 processes = self.config.get(meta.strip()).split(',')
                 for process in processes:
                     copy_postprocess[block][meta][process] = postprocess[block][meta][process]
@@ -91,10 +99,10 @@ class Session(object):
         '''
         if self.config.get(otherprocess.strip()) is None:
             return otherprocess
-        copy_postprocess = OrderedDict()
+        copy_postprocess = Session.get_ordered_dict()
         metas = self.config.get(otherprocess.strip()).split(',')
         for meta in metas:
-            copy_postprocess[meta] = OrderedDict()
+            copy_postprocess[meta] = Session.get_ordered_dict()
             processes = self.config.get(meta.strip()).split(',')
             for process in processes:
                 copy_postprocess[meta][process] = otherprocess[meta][process]

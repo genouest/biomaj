@@ -1,3 +1,6 @@
+3.0.7:
+  Merge config files to be able to reference global.properties variables in bank
+    property file in format %(xx)s
 3.0.6:
   Add option --remove-pending to remove all pending sessions and directories
   Add process env variables logdir and logfile

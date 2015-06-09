@@ -1,4 +1,6 @@
 3.0.7:
+  Reindent code, pep8 fixes
+  Various fixes on var names and OrderedDict suport for Python < 2.7
   Merge config files to be able to reference global.properties variables in bank
     property file in format %(xx)s
   Use ConfigParser instead of SafeConfigParser that will be deprecated

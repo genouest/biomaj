@@ -81,11 +81,11 @@ class BiomajConfig(object):
 
         BiomajConfig.config_file = os.path.abspath(config_file)
 
-        BiomajConfig.global_config = configparser.SafeConfigParser()
+        BiomajConfig.global_config = configparser.ConfigParser()
 
         if allow_user_config and os.path.exists(os.path.expanduser('~/.biomaj.cfg')):
             BiomajConfig.user_config_file = os.path.expanduser('~/.biomaj.cfg')
-            BiomajConfig.user_config = configparser.SafeConfigParser()
+            BiomajConfig.user_config = configparser.ConfigParser()
             BiomajConfig.user_config.read([os.path.expanduser('~/.biomaj.cfg')])
         else:
             BiomajConfig.user_config_file = None
@@ -122,7 +122,7 @@ class BiomajConfig(object):
         self.name = bank
         if BiomajConfig.global_config is None:
             BiomajConfig.load_config()
-        self.config_bank = configparser.SafeConfigParser()
+        self.config_bank = configparser.ConfigParser()
         conf_dir = BiomajConfig.global_config.get('GENERAL', 'conf.dir')
         if not os.path.exists(os.path.join(conf_dir,bank+'.properties')):
             logging.error('Bank configuration file does not exists')

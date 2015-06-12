@@ -1,0 +1,24 @@
+3.0.7:
+  Reindent code, pep8 fixes
+  Various fixes on var names and OrderedDict suport for Python < 2.7
+  Merge config files to be able to reference global.properties variables in bank
+    property file in format %(xx)s
+  Use ConfigParser instead of SafeConfigParser that will be deprecated
+3.0.6:
+  Add option --remove-pending to remove all pending sessions and directories
+  Add process env variables logdir and logfile
+  Fix Unicode issue with old versions of PyCurl.
+3.0.5:
+  Fix removal workflow during an update workflow, removedrelease was current
+  release.
+  Fix shebang of biomaj-cli, and python 2/3 compat issue
+3.0.4:
+  Update code to make it Python 3 compatible
+  Use ldap3 library (pure Python and p2,3 compatible) instead of python-ldap
+  get possiblity to save downloaded files for ftp and http without keeping full
+  directory structure:
+    remote.files can include groups to save file without directory structure,
+     or partial directories only, examples:
+     remote.files = genomes/fasta/.*\.gz => save files in offline directory, keeping remote structure offlinedir/genomes/fasta/
+     remote.files = genomes/fasta/(.*\.gz) => save files in offline directory offlinedir/
+     remote.files = genomes/(fasta)/(.*\.gz) => save files in offline directory offlinedir/fasta

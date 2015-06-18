@@ -85,6 +85,10 @@ class Workflow(object):
             downloader = DirectHttpDownload('http', server, remote_dir, list_file)
         if downloader is not None:
             downloader.bank = self.bank.name
+
+        proxy = self.bank.config.get('proxy')
+        if proxy is not None and proxy:
+            downloader.set_proxy(proxy)
         return downloader
 
 

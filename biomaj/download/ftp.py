@@ -144,6 +144,10 @@ class FTPDownload(DownloadInterface):
                 curl.setopt(pycurl.URL, rfile['url']+rfile['root']+'/'+rfile['name'])
             except Exception as a:
                 curl.setopt(pycurl.URL, (rfile['url']+rfile['root']+'/'+rfile['name']).encode('ascii','ignore'))
+
+            if self.proxy is not None:
+                self.crl.setopt(pycurl.PROXY, self.proxy)
+
             if self.credentials is not None:
                 curl.setopt(pycurl.USERPWD, self.credentials)
             curl.setopt(pycurl.WRITEDATA, fp)
@@ -215,6 +219,9 @@ class FTPDownload(DownloadInterface):
             self.crl.setopt(pycurl.URL, self.url+self.rootdir+directory)
         except Exception as a:
             self.crl.setopt(pycurl.URL, (self.url+self.rootdir+directory).encode('ascii','ignore'))
+
+        if self.proxy is not None:
+            self.crl.setopt(pycurl.PROXY, self.proxy)
 
         if self.credentials is not None:
             self.crl.setopt(pycurl.USERPWD, self.credentials)

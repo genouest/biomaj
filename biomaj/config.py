@@ -124,6 +124,7 @@ class BiomajConfig(object):
             BiomajConfig.load_config()
         self.config_bank = configparser.ConfigParser()
         conf_dir = BiomajConfig.global_config.get('GENERAL', 'conf.dir')
+        
         if not os.path.exists(os.path.join(conf_dir,bank+'.properties')):
             logging.error('Bank configuration file does not exists')
             raise Exception('Configuration file '+bank+'.properties does not exists')

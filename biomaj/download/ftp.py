@@ -39,7 +39,6 @@ class FTPDownload(DownloadInterface):
         self.url = url
         self.headers= {}
 
-
     def match(self, patterns, file_list, dir_list=None, prefix='', submatch=False):
         '''
         Find files matching patterns. Sets instance variable files_to_download.
@@ -250,6 +249,7 @@ class FTPDownload(DownloadInterface):
 
         # lets get the output in a string
         result = output.getvalue().decode(encoding)
+
         # FTP LIST output is separated by \r\n
         # lets split the output in lines
         #lines = result.split(r'[\r\n]+')
@@ -257,6 +257,7 @@ class FTPDownload(DownloadInterface):
         # lets walk through each line
         rfiles = []
         rdirs = []
+
         for line in lines:
             rfile = {}
             # lets print each part separately

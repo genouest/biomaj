@@ -160,7 +160,7 @@ class Bank:
             release = prod['release']
       bank_info.append(["Name", "Type(s)", "Last update status", "Puslished release"])
       bank_info.append([_bank['name'],
-                          str(', '.join(_bank['properties']['type'])),
+                          str(','.join(_bank['properties']['type'])),
                           str(_bank['status']['over']['status'] if 'status' in _bank else ''),
                           str(release)])
 

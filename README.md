@@ -47,7 +47,7 @@ Application Features
 
 
 * Pre &Post processing :
- * Advanced workflow description (D.A.G) 
+ * Advanced workflow description (D.A.G)
  * Post-process indexation for various bioinformatics software (blast, srs,
    fastacmd, readseq, etc…)
  * Easy integration of personal scripts for bank post-processing automation
@@ -64,8 +64,10 @@ Dependencies
 ============
 
 Packages:
- * Debian: libcurl-dev, libldap2-dev, gcc
- * CentOs: libcurl-devel, libldap-devel, gcc
+ * Debian: libcurl-dev, gcc
+ * CentOs: libcurl-devel, openldap-devel, gcc
+
+ Linux tools: tar, unzip, gunzip, bunzip
 
 Database:
  * mongodb (local or remote)
@@ -110,6 +112,9 @@ Status
 
 [![Build Status](https://travis-ci.org/genouest/biomaj.svg?branch=master)](https://travis-ci.org/genouest/biomaj)
 
+[![Documentation Status](https://readthedocs.org/projects/biomaj/badge/?version=latest)](https://readthedocs.org/projects/biomaj/?badge=latest)
+
+[![Code Health](https://landscape.io/github/genouest/biomaj/master/landscape.svg?style=flat)](https://landscape.io/github/genouest/biomaj/master)
 
 Testing
 =======

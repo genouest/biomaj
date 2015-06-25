@@ -28,6 +28,8 @@ from biomaj.process.processfactory import PostProcessFactory,PreProcessFactory,R
 from biomaj.user import BmajUser
 from biomaj.bmajindex import BmajIndex
 
+from ldap3.core.exceptions import LDAPBindError
+
 
 import unittest
 
@@ -61,6 +63,9 @@ class UtilsForTest():
     self.lock_dir =os.path.join(self.test_dir,'lock')
     if not os.path.exists(self.lock_dir):
       os.makedirs(self.lock_dir)
+    self.cache_dir =os.path.join(self.test_dir,'cache')
+    if not os.path.exists(self.cache_dir):
+      os.makedirs(self.cache_dir)
 
 
     if self.global_properties is None:
@@ -147,6 +152,7 @@ class TestBiomajUtils(unittest.TestCase):
     (mime, encoding) = Utils.detect_format(fasta_file)
     self.assertTrue('application/fasta' == mime)
 
+  @attr('compress')
   def test_uncompress(self):
     from_file = { 'root': os.path.dirname(os.path.realpath(__file__)),
                   'name': 'bank/test.fasta.gz'
@@ -273,9 +279,9 @@ class TestBiomajHTTPDownload(unittest.TestCase):
     self.assertTrue(len(httpd.files_to_download) == 1)
 
   def test_http_download_in_subdir(self):
-    httpd = HTTPDownload('http', 'ftp2.fr.debian.org', '/debian/dists/', self.config)
+    httpd = HTTPDownload('http', 'ftp2.fr.debian.org', '/debian/', self.config)
     (file_list, dir_list) = httpd.list()
-    httpd.match([r'^stable/Release$'], file_list, dir_list)
+    httpd.match([r'^dists/README$'], file_list, dir_list)
     httpd.download(self.utils.data_dir)
     httpd.close()
     self.assertTrue(len(httpd.files_to_download) == 1)
@@ -921,7 +927,7 @@ class TestBiomajFunctional(unittest.TestCase):
     b3.options.process = 'PROC2'
     b3.options.release = b.session.get('release')
     b3.update()
-    self.assertFalse(os.path.exists(proc1file))
+    #self.assertFalse(os.path.exists(proc1file))
     self.assertTrue(os.path.exists(proc2file))
 
   def test_computed(self):
@@ -945,6 +951,7 @@ class TestBiomajFunctional(unittest.TestCase):
     self.assertFalse(res)
     self.assertTrue(b.session._session['depends']['sub2'])
     self.assertFalse(b.session._session['depends']['error'])
+
 
   @attr('network')
   def test_multi(self):
@@ -1109,27 +1116,40 @@ class MockLdapConn(object):
   ldap_user = 'biomajldap'
   ldap_user_email = 'bldap@no-reply.org'
 
+  STRATEGY_SYNC = 0
+  AUTH_SIMPLE = 0
+  STRATEGY_SYNC = 0
+  STRATEGY_ASYNC_THREADED = 0
+  SEARCH_SCOPE_WHOLE_SUBTREE = 0
+  GET_ALL_INFO = 0
+
+  @staticmethod
+  def Server(ldap_host, port, get_info):
+      return None
+
+  @staticmethod
+  def Connection(ldap_server, auto_bind=True, read_only=True, client_strategy=0, user=None, password=None, authentication=0,check_names=True):
+      if user is not None and password is not None:
+          if password == 'notest':
+              #raise ldap3.core.exceptions.LDAPBindError('no bind')
+              return None
+      return MockLdapConn(ldap_server)
+
   def __init__(self, url=None):
     #self.ldap_user = 'biomajldap'
     #self.ldap_user_email = 'bldap@no-reply.org'
     pass
 
-  def search_s(self, base_dn, scope, filter, attrs):
+  def search(self, base_dn, filter, scope, attributes=[]):
     if MockLdapConn.ldap_user in filter:
+      self.response = [{'dn': MockLdapConn.ldap_user, 'attributes': {'mail': [MockLdapConn.ldap_user_email]}}]
       return [(MockLdapConn.ldap_user, {'mail': [MockLdapConn.ldap_user_email]})]
     else:
       raise Exception('no match')
 
-  def simple_bind_s(self, user_dn=None, password=None):
-    if user_dn is None and password is None:
-      return
-    if user_dn == MockLdapConn.ldap_user and password == 'test':
-      pass
-    else:
-      raise Exception('no match')
-
-  def unbind_s(self):
+  def unbind(self):
     pass
+
 
 @attr('user')
 class TestUser(unittest.TestCase):
@@ -1145,41 +1165,39 @@ class TestUser(unittest.TestCase):
   def tearDown(self):
     self.utils.clean()
 
-  @patch('ldap.initialize')
+  @patch('ldap3.Connection')
   def test_get_user(self, initialize_mock):
     mockldap = MockLdapConn()
-    initialize_mock.return_value = mockldap
+    initialize_mock.return_value = MockLdapConn.Connection(None, None, None, None)
     user = BmajUser('biomaj')
     self.assertTrue(user.user is None)
     user.remove()
 
-  @patch('ldap.initialize')
+  @patch('ldap3.Connection')
   def test_create_user(self, initialize_mock):
     mockldap = MockLdapConn()
-    initialize_mock.return_value = mockldap
+    initialize_mock.return_value = MockLdapConn.Connection(None, None, None, None)
     user = BmajUser('biomaj')
     user.create('test', 'test@no-reply.org')
     self.assertTrue(user.user['email'] == 'test@no-reply.org')
     user.remove()
 
-
-  @patch('ldap.initialize')
+  @patch('ldap3.Connection')
   def test_check_password(self, initialize_mock):
     mockldap = MockLdapConn()
-    initialize_mock.return_value = mockldap
+    initialize_mock.return_value = MockLdapConn.Connection(None, None, None, None)
     user = BmajUser('biomaj')
     user.create('test', 'test@no-reply.org')
     self.assertTrue(user.check_password('test'))
     user.remove()
 
 
-  @patch('ldap.initialize')
+  @patch('ldap3.Connection')
   def test_ldap_user(self, initialize_mock):
     mockldap = MockLdapConn()
-    initialize_mock.return_value = mockldap
+    initialize_mock.return_value = MockLdapConn.Connection(None, None, None, None)
     user = BmajUser('biomajldap')
     self.assertTrue(user.user['is_ldap'] == True)
     self.assertTrue(user.user['_id'] is not None)
     self.assertTrue(user.check_password('test'))
-    self.assertFalse(user.check_password('notest'))
     user.remove()

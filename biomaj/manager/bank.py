@@ -4,7 +4,6 @@ Created on Feb 6, 2015
 @author: tuco
 '''
 from ConfigParser import ConfigParser
-# import MySQLdb
 from biomaj.manager.config import Config
 from biomaj.manager.db.connector import Connector
 from string import split

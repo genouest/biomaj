@@ -6,7 +6,7 @@ import argparse
 import pkg_resources
 import ConfigParser
 import shutil
-
+from tabulate import tabulate
 from biomaj.bank import Bank
 from biomaj.config import BiomajConfig
 from biomaj.notify import Notify
@@ -297,55 +297,21 @@ def main():
     if options.status:
       if options.bank:
         bank = Bank(options.bank)
-        _bank = bank.bank
-        print '#' * 80
-        print "# Name:\t"+_bank['name']
-        print "# Type:\t"+str(_bank['properties']['type'])
-        # Get last update session
-        if 'status' in _bank:
-          print "# Last update status:\t"+str(_bank['status']['over']['status'])
-        release = None
-        if 'current' in _bank and _bank['current']:
-          for prod in _bank['production']:
-            if _bank['current'] == prod['session']:
-              release = prod['release']
-        print "# Published release:\t"+str(release)
-        print "# Production directories"
-        for prod in _bank['production']:
-          if 'freeze' in prod:
-            print "#\tFreeze:\t"+str(prod['freeze'])
-          print "#\tRemote release:\t"+prod['remoterelease']
-          print "#\tRelease:\t"+prod['release']
-          print "#\t\tSession:\t"+str(prod['session'])
-          release_dir = os.path.join(bank.config.get('data.dir'),
-                        bank.config.get('dir.version'),
-                        prod['prod_dir'])
-          print "#\t\tDirectory:\t"+release_dir
-        if 'pending' in _bank and len(_bank['pending'].keys()) > 0:
-          print "# Pending directories"
-        for pending in _bank['pending'].keys():
-          print "#\tRelease:\t"+pending
-        print '#' * 80
+        info = bank.get_bank_release_info(full=True)
+        print tabulate(info[0], headers='firstrow', tablefmt='psql')
+        print tabulate(info[1], headers='firstrow', tablefmt='psql')
+        # do we have some pending release(s)
+        if len(info[2]) > 1:
+            print tabulate(info[2], headers='firstrow', tablefmt='psql')
       else:
-        print '#' * 80
-        print "# Name\tType\tRelease"
         banks = Bank.list()
-        for bank in banks:
-          '''
-          production = { 'release': self.session.get('release'),
-                          'session': self.session._session['id'],
-                          'data_dir': self.config.get('data.dir'),
-                          'prod_dir': self.session.get_release_directory()}
-          '''
-          if 'current' in bank and bank['current']:
-            for prod in bank['production']:
-              if bank['current'] == prod['session']:
-                release = prod['release']
-          else:
-            release = None
-          print " "+bank['name']+"\t"+','.join(bank['properties']['type'])+"\t"+str(release)
-        print '#' * 80
-        sys.exit(0)
+        # Headers of output table
+        banks_list = [["Name", "Type(s)", "Release", "Visibility"]]
+        for bank in sorted(banks, key=lambda k: k['name']):
+          bank = Bank(bank['name'], no_log=True)
+          banks_list.append(bank.get_bank_release_info())
+        print tabulate(banks_list, headers="firstrow", tablefmt="psql")
+      sys.exit(0)
 
     if options.update:
       if not options.bank:

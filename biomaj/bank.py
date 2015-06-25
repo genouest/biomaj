@@ -2,6 +2,7 @@ import os
 import logging
 import time
 import shutil
+import datetime
 import copy
 
 from biomaj.mongo_connector import MongoConnector
@@ -138,6 +139,57 @@ class Bank:
         bank_elt['releases'].append({'name': p['release'], 'size': p['size']})
       bank_list.append(bank_elt)
     return bank_list
+
+  def get_bank_release_info(self, full=False):
+    '''
+    Get release info for the bank. Used with --status option from biomaj-cly.py
+    :param full: Do we get full info for the bank release
+    :type full: Boolean
+    :return: List
+    '''
+    _bank = self.bank
+
+    if full:
+      bank_info = []
+      prod_info = []
+      pendings = []
+      release = None
+      if 'current' in _bank and _bank['current']:
+        for prod in _bank['production']:
+          if _bank['current'] == prod['session']:
+            release = prod['release']
+      bank_info.append(["Name", "Type(s)", "Last update status", "Puslished release"])
+      bank_info.append([_bank['name'],
+                          str(', '.join(_bank['properties']['type'])),
+                          str(_bank['status']['over']['status'] if 'status' in _bank else ''),
+                          str(release)])
+
+      prod_info.append(["Session", "Remote release", "Release", "Directory", "Freeze", "Pending"])
+      for prod in _bank['production']:
+        release_dir = os.path.join(self.config.get('data.dir'),
+                                   self.config.get('dir.version'),
+                                   prod['prod_dir'])
+        date = datetime.datetime.fromtimestamp(prod['session']).strftime('%Y-%m-%d %H:%M:%S')
+        prod_info.append([date,
+                          prod['remoterelease'],
+                          prod['release'],
+                          release_dir,
+                          'yes' if 'freeze' in prod and prod['freeze'] else 'no',
+                          ])
+
+      if 'pending' in _bank and len(_bank['pending'].keys()) > 0:
+        pendings.append(["Pending release(s)"])
+        for pending in _bank['pending'].keys():
+            pendings.append(pending)
+      return [ bank_info, prod_info, pendings ]
+    else:
+      if 'current' in _bank and _bank['current']:
+        for prod in _bank['production']:
+          if _bank['current'] == prod['session']:
+            release = prod['release']
+      else:
+        release = None
+      return [ _bank['name'], ','.join(_bank['properties']['type']), str(release), _bank['properties']['visibility'] ]
 
   def update_dependencies(self):
     '''

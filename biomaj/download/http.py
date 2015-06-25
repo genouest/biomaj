@@ -46,6 +46,11 @@ class HTTPDownload(FTPDownload):
         except Exception as a:
             self.crl.setopt(pycurl.URL, (self.url+self.rootdir+directory).encode('ascii','ignore'))
 
+        if self.proxy is not None:
+            self.crl.setopt(pycurl.PROXY, self.proxy)
+            if self.proxy_auth is not None:
+                curl.setopt(pycurl.PROXYUSERPWD, self.proxy_auth)
+
         if self.credentials is not None:
             self.crl.setopt(pycurl.USERPWD, self.credentials)
 

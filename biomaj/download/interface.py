@@ -43,6 +43,19 @@ class DownloadInterface(object):
         self.bank = None
         self.mkdir_lock = _FakeLock()
         self.kill_received = False
+        self.proxy = None
+
+    def set_proxy(self, proxy, proxy_auth=None):
+        '''
+        Use a proxy to connect to remote servers
+
+        :param proxy: proxy to use (see http://curl.haxx.se/libcurl/c/CURLOPT_PROXY.html for format)
+        :type proxy: str
+        :param proxy_auth: proxy authentication if any (user:password)
+        :type proxy_auth: str
+        '''
+        self.proxy = proxy
+        self.proxy_auth = proxy_auth
 
 
     def set_progress(self, val, max):

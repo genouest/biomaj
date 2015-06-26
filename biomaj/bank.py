@@ -294,7 +294,7 @@ class Bank:
 
     owner = os.environ['LOGNAME']
     # If owner not set, use current user
-    if self.bank:
+    if self.bank and 'properties' in self.bank and 'owner' in self.bank['properties']:
         owner = self.bank['properties']['owner']
 
     props = {

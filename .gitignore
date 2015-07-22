@@ -55,3 +55,17 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# iPython
+.ipython/*
+
+# MacOSX
+Library/
+
+# Vim
+.viminfo
+
+# Eclipse
+.settings
+.project*
+.pydev*

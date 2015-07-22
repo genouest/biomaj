@@ -296,13 +296,13 @@ def main():
 
     if options.status:
       if options.bank:
-        bank = Bank(options.bank)
+        bank = Bank(options.bank, no_log=True)
         info = bank.get_bank_release_info(full=True)
-        print tabulate(info[0], headers='firstrow', tablefmt='psql')
-        print tabulate(info[1], headers='firstrow', tablefmt='psql')
+        print(tabulate(info[0], headers='firstrow', tablefmt='psql'))
+        print(tabulate(info[1], headers='firstrow', tablefmt='psql'))
         # do we have some pending release(s)
         if len(info[2]) > 1:
-            print tabulate(info[2], headers='firstrow', tablefmt='psql')
+            print(tabulate(info[2], headers='firstrow', tablefmt='psql'))
       else:
         banks = Bank.list()
         # Headers of output table
@@ -310,7 +310,7 @@ def main():
         for bank in sorted(banks, key=lambda k: k['name']):
           bank = Bank(bank['name'], no_log=True)
           banks_list.append(bank.get_bank_release_info())
-        print tabulate(banks_list, headers="firstrow", tablefmt="psql")
+        print(tabulate(banks_list, headers="firstrow", tablefmt="psql"))
       sys.exit(0)
 
     if options.update:

@@ -2,9 +2,9 @@ import os
 import logging
 import time
 import shutil
-import datetime
 import copy
 
+from datetime import datetime
 from biomaj.mongo_connector import MongoConnector
 
 from biomaj.session import Session
@@ -143,7 +143,7 @@ class Bank:
   def get_bank_release_info(self, full=False):
     '''
     Get release info for the bank. Used with --status option from biomaj-cly.py
-    :param full: Do we get full info for the bank release
+    :param full: Display full for the bank
     :type full: Boolean
     :return: List
     '''
@@ -158,18 +158,18 @@ class Bank:
         for prod in _bank['production']:
           if _bank['current'] == prod['session']:
             release = prod['release']
-      bank_info.append(["Name", "Type(s)", "Last update status", "Puslished release"])
+      bank_info.append(["Name", "Type(s)", "Last update status", "Published release"])
       bank_info.append([_bank['name'],
-                          str(','.join(_bank['properties']['type'])),
-                          str(_bank['status']['over']['status'] if 'status' in _bank else ''),
-                          str(release)])
+                        str(','.join(_bank['properties']['type'])),
+                        str(datetime.fromtimestamp(_bank['last_update_session']).strftime("%Y-%m-%d %H:%M:%S")),
+                        str(release)])
 
       prod_info.append(["Session", "Remote release", "Release", "Directory", "Freeze", "Pending"])
       for prod in _bank['production']:
         release_dir = os.path.join(self.config.get('data.dir'),
                                    self.config.get('dir.version'),
                                    prod['prod_dir'])
-        date = datetime.datetime.fromtimestamp(prod['session']).strftime('%Y-%m-%d %H:%M:%S')
+        date = datetime.fromtimestamp(prod['session']).strftime('%Y-%m-%d %H:%M:%S')
         prod_info.append([date,
                           prod['remoterelease'],
                           prod['release'],

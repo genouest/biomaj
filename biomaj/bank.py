@@ -186,9 +186,9 @@ class Bank:
       if 'current' in _bank and _bank['current']:
         for prod in _bank['production']:
           if _bank['current'] == prod['session']:
-            release = prod['release']
+            release = prod['remoterelease']
       else:
-        release = None
+        release = 'N/A'
       return [ _bank['name'], ','.join(_bank['properties']['type']), str(release), _bank['properties']['visibility'] ]
 
   def update_dependencies(self):

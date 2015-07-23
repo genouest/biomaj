@@ -40,6 +40,7 @@ config = {
                             'mock',
                             'drmaa',
                             'future',
+                            'tabulate',
                             'elasticsearch'],
     'packages': find_packages(),
     'include_package_data': True,

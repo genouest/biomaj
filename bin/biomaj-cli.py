@@ -3,6 +3,7 @@ from __future__ import print_function
 from future import standard_library
 standard_library.install_aliases()
 from builtins import str
+from tabulate import tabulate
 
 import os,sys
 #from optparse import OptionParser
@@ -345,54 +346,22 @@ def main():
 
         if options.status:
             if options.bank:
-                bank = Bank(options.bank)
-                _bank = bank.bank
-                print('#' * 80)
-                print("# Name:\t"+_bank['name'])
-                print("# Type:\t"+str(_bank['properties']['type']))
-                # Get last update session
-                if 'status' in _bank:
-                    print("# Last update status:\t"+str(_bank['status']['over']['status']))
-                release = None
-                if 'current' in _bank and _bank['current']:
-                    for prod in _bank['production']:
-                        if _bank['current'] == prod['session']:
-                            release = prod['release']
-                print("# Published release:\t"+str(release))
-                print("# Production directories")
-                for prod in _bank['production']:
-                    if 'freeze' in prod:
-                        print("#\tFreeze:\t"+str(prod['freeze']))
-                    print("#\tRemote release:\t"+prod['remoterelease'])
-                    print("#\tRelease:\t"+prod['release'])
-                    print("#\t\tSession:\t"+str(prod['session']))
-                    release_dir = os.path.join(prod['data_dir'],
-                                  prod['dir_version'],
-                                  prod['prod_dir'])
-                    print("#\t\tDirectory:\t"+release_dir)
-                if 'pending' in _bank and len(list(_bank['pending'].keys())) > 0:
-                    print("# Pending directories")
-                    for pending in list(_bank['pending'].keys()):
-                        print("#\tRelease:\t"+pending)
-                print('#' * 80)
+                bank = Bank(options.bank, no_log=True)
+                info = bank.get_bank_release_info(full=True)
+                print(tabulate(info['info'], headers='firstrow', tablefmt='psql'))
+                print(tabulate(info['prod'], headers='firstrow', tablefmt='psql'))
+                # do we have some pending release(s)
+                if 'pending' in info and len(info['pending']) > 1:
+                    print(tabulate(info['pending'], headers='firstrow', tablefmt='psql'))
             else:
-                print('#' * 80)
-                print("# Name\tType\tRelease")
                 banks = Bank.list()
-                for bank in banks:
-                    # production = { 'release': self.session.get('release'),
-                    #                'session': self.session._session['id'],
-                    #                'data_dir': self.config.get('data.dir'),
-                    #                'prod_dir': self.session.get_release_directory()}
-                    if 'current' in bank and bank['current']:
-                        for prod in bank['production']:
-                            if bank['current'] == prod['session']:
-                                release = prod['release']
-                    else:
-                        release = None
-                    print(" "+bank['name']+"\t"+','.join(bank['properties']['type'])+"\t"+str(release))
-                print('#' * 80)
-                sys.exit(0)
+                # Headers of output table
+                banks_list = [["Name", "Type(s)", "Release", "Visibility"]]
+                for bank in sorted(banks, key=lambda k: k['name']):
+                    bank = Bank(bank['name'], no_log=True)
+                    banks_list.append(bank.get_bank_release_info()['info'])
+                print(tabulate(banks_list, headers="firstrow", tablefmt="psql"))
+            sys.exit(0)
 
         if options.update:
             if not options.bank:

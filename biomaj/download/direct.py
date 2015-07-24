@@ -257,7 +257,7 @@ class DirectHttpDownload(DirectFTPDownload):
             if self.proxy is not None:
                 self.crl.setopt(pycurl.PROXY, self.proxy)
                 if self.proxy_auth is not None:
-                    curl.setopt(pycurl.PROXYUSERPWD, self.proxy_auth)
+                    self.crl.setopt(pycurl.PROXYUSERPWD, self.proxy_auth)
 
             self.crl.setopt(pycurl.NOBODY, True)
             try:

@@ -49,7 +49,7 @@ class HTTPDownload(FTPDownload):
         if self.proxy is not None:
             self.crl.setopt(pycurl.PROXY, self.proxy)
             if self.proxy_auth is not None:
-                curl.setopt(pycurl.PROXYUSERPWD, self.proxy_auth)
+                self.crl.setopt(pycurl.PROXYUSERPWD, self.proxy_auth)
 
         if self.credentials is not None:
             self.crl.setopt(pycurl.USERPWD, self.credentials)

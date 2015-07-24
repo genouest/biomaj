@@ -1037,6 +1037,7 @@ class TestElastic(unittest.TestCase):
   '''
 
   def setUp(self):
+    BmajIndex.es = None
     self.utils = UtilsForTest()
     curdir = os.path.dirname(os.path.realpath(__file__))
     BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)

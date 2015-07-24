@@ -86,7 +86,13 @@ class BmajIndex(object):
             "term" : { "bank" : bank_name }
             }
           }
-        BmajIndex.es.delete_by_query(index=BmajIndex.index, body=query)
+        try:
+            BmajIndex.es.delete_by_query(index=BmajIndex.index, body=query)
+        except Exception:
+            if BmajIndex.skip_if_failure:
+                BmajIndex.do_index = False
+            else:
+                raise e
 
     @staticmethod
     def remove(bank_name, release):
@@ -145,7 +151,13 @@ class BmajIndex(object):
         if stat['release'] is None or stat['bank'] is None:
             return False
         #stat['bank'] = bank_name
-        BmajIndex.es.index(index=BmajIndex.index, doc_type='releasestats', id=stat_id, body=stat)
+        try:
+            BmajIndex.es.index(index=BmajIndex.index, doc_type='releasestats', id=stat_id, body=stat)
+        except Exception:
+            if BmajIndex.skip_if_failure:
+                BmajIndex.do_index = False
+            else:
+                return False
         return True
 
 

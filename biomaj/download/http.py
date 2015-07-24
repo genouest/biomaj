@@ -44,7 +44,7 @@ class HTTPDownload(FTPDownload):
         try:
             self.crl.setopt(pycurl.URL, self.url+self.rootdir+directory)
         except Exception as a:
-            self.crl.setopt(pycurl.URL, (self.url+self.rootdir+directory).encode('ascii','ignore'))
+            self.crl.setopt(pycurl.URL, (self.url+self.rootdir+directory).encode('ascii', 'ignore'))
 
         if self.proxy is not None:
             self.crl.setopt(pycurl.PROXY, self.proxy)
@@ -89,7 +89,7 @@ class HTTPDownload(FTPDownload):
         rdirs = []
 
         dirs = re.findall(self.config.get('http.parse.dir.line'), result)
-        if dirs is not None and len(dirs)>0:
+        if dirs is not None and len(dirs) > 0:
             for founddir in dirs:
                 rfile = {}
                 rfile['permissions'] = ''

@@ -1040,7 +1040,8 @@ class TestElastic(unittest.TestCase):
     self.utils = UtilsForTest()
     curdir = os.path.dirname(os.path.realpath(__file__))
     BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
-
+    if BmajIndex.do_index == False:
+        self.skipTest("Skipping indexing tests due to elasticsearch not available")
   # Delete all banks
     b = Bank('local')
     b.banks.remove({})

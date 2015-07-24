@@ -105,7 +105,15 @@ class BiomajConfig(object):
             elastic_index = BiomajConfig.global_config.get('GENERAL','elastic_index')
             if elastic_index is None:
                 elastic_index = 'biomaj'
-            BmajIndex.load(index=elastic_index, hosts=elastic_hosts, do_index=do_index)
+
+            if BiomajConfig.global_config.has_option('GENERAL', 'test') and \
+                BiomajConfig.global_config.get('GENERAL', 'test') == "1":
+                # Test connection to elasticsearch, if not available skip indexing for tests
+                BmajIndex.skip_if_failure = True
+
+
+            BmajIndex.load(index=elastic_index, hosts=elastic_hosts,
+                                                    do_index=do_index)
 
 
 

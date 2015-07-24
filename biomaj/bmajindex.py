@@ -25,6 +25,11 @@ class BmajIndex(object):
     '''
     do_index = False
 
+    '''
+    Skip if failure (tests)
+    '''
+    skip_if_failure = False
+
     @staticmethod
     def load(hosts=None, index='biomaj', do_index=True):
         '''
@@ -63,7 +68,10 @@ class BmajIndex(object):
                     BmajIndex.es.indices.create(index=BmajIndex.index,body=mapping)
             except Exception as e:
                 logging.error('ElasticSearch connection error, check server is running and configuration')
-                raise e
+                if BmajIndex.skip_if_failure:
+                    BmajIndex.do_index = False
+                else:
+                    raise e
 
 
     @staticmethod
@@ -101,6 +109,8 @@ class BmajIndex(object):
             BmajIndex.es.delete_by_query(index=BmajIndex.index, body=query)
         except Exception as e:
             logging.error('Index:Remove:'+bank_name+'_'+str(release)+':Exception:'+str(e))
+            if BmajIndex.skip_if_failure:
+                BmajIndex.do_index = False
 
     @staticmethod
     def search(query):
@@ -135,7 +145,6 @@ class BmajIndex(object):
         if stat['release'] is None or stat['bank'] is None:
             return False
         #stat['bank'] = bank_name
-
         BmajIndex.es.index(index=BmajIndex.index, doc_type='releasestats', id=stat_id, body=stat)
         return True
 
@@ -172,3 +181,5 @@ class BmajIndex(object):
                 BmajIndex.es.indices.flush(index=BmajIndex.index, force=True)
         except Exception as e:
             logging.error('Index:Add:'+bank_name+'_'+str(obj['release'])+':Exception:'+str(e))
+            if BmajIndex.skip_if_failure:
+                BmajIndex.do_index = False

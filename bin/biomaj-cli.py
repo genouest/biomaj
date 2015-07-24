@@ -5,7 +5,8 @@ standard_library.install_aliases()
 from builtins import str
 from tabulate import tabulate
 
-import os,sys
+import os
+import sys
 #from optparse import OptionParser
 import argparse
 import pkg_resources

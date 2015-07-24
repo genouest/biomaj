@@ -90,38 +90,38 @@ class HTTPDownload(FTPDownload):
 
         dirs = re.findall(self.config.get('http.parse.dir.line'), result)
         if dirs is not None and len(dirs)>0:
-            for dir in dirs:
+            for founddir in dirs:
                 rfile = {}
                 rfile['permissions'] = ''
                 rfile['group'] = ''
                 rfile['user'] = ''
                 rfile['size'] = '0'
-                date = dir[int(self.config.get('http.group.dir.date'))-1]
+                date = founddir[int(self.config.get('http.group.dir.date'))-1]
                 dirdate = date.split()
                 parts = dirdate[0].split('-')
                 #19-Jul-2014 13:02
                 rfile['month'] = Utils.month_to_num(parts[1])
                 rfile['day'] = parts[0]
                 rfile['year'] = parts[2]
-                rfile['name'] = dir[int(self.config.get('http.group.dir.name'))-1]
+                rfile['name'] = founddir[int(self.config.get('http.group.dir.name'))-1]
                 rdirs.append(rfile)
 
         files = re.findall(self.config.get('http.parse.file.line'), result)
         if files is not None and len(files)>0:
-            for file in files:
+            for foundfile in files:
                 rfile = {}
                 rfile['permissions'] = ''
                 rfile['group'] = ''
                 rfile['user'] = ''
-                rfile['size'] = file[int(self.config.get('http.group.file.size'))-1]
-                date = file[int(self.config.get('http.group.file.date'))-1]
+                rfile['size'] = foundfile[int(self.config.get('http.group.file.size'))-1]
+                date = foundfile[int(self.config.get('http.group.file.date'))-1]
                 dirdate = date.split()
                 parts = dirdate[0].split('-')
                 #19-Jul-2014 13:02
                 rfile['month'] = Utils.month_to_num(parts[1])
                 rfile['day'] = parts[0]
                 rfile['year'] = parts[2]
-                rfile['name'] = file[int(self.config.get('http.group.file.name'))-1]
+                rfile['name'] = foundfile[int(self.config.get('http.group.file.name'))-1]
                 rfiles.append(rfile)
 
         return (rfiles, rdirs)

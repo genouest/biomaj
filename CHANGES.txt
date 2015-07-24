@@ -1,6 +1,8 @@
 3.0.8:
   do not test index if elasticsearch is not up
   minor fixes
+  add http proxy support
+  pylint fixes
 3.0.7:
   Reindent code, pep8 fixes
   Various fixes on var names and OrderedDict suport for Python < 2.7

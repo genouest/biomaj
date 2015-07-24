@@ -83,7 +83,7 @@ class ProcessFactory(object):
         Dispatch meta processes in available threads
         '''
         self.threads_tasks = []
-        for i in range(0,ProcessFactory.NB_THREAD):
+        for i in range(0, ProcessFactory.NB_THREAD):
             # Fill array of meta process in future threads
             self.threads_tasks.append([])
         thread_id = 0

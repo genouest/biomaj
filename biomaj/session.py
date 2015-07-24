@@ -49,10 +49,10 @@ class Session(object):
         formats = {}
         if self.config.get('db.formats') is not None:
             flist = self.config.get('db.formats').split(',')
-            for f in flist:
-                formats[f.strip()] = []
+            for f_in_list in flist:
+                formats[f_in_list.strip()] = []
 
-        self._session = { 'id':  time.time(),
+        self._session = {'id':  time.time(),
                           'log_file': self.config.log_file,
                           'status': {},
                           'files': [],
@@ -71,7 +71,7 @@ class Session(object):
         for flow in self.flow:
             self._session['status'][flow['name']] = False
 
-        self.set('last_modified',self.config.last_modified)
+        self.set('last_modified', self.config.last_modified)
 
         # Default is update
         self._session['action'] = action
@@ -182,7 +182,7 @@ class Session(object):
         '''
         Get bank offline directory
         '''
-        return os.path.join(self.config.get('data.dir'),self.config.get('offline.dir.name'))
+        return os.path.join(self.config.get('data.dir'), self.config.get('offline.dir.name'))
 
     def get(self, attr):
         '''

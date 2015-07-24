@@ -108,7 +108,7 @@ class DirectFTPDownload(FTPDownload):
         '''
         FTP protocol does not give us the possibility to get file date from remote url
         '''
-        return (self.files_to_download,[])
+        return (self.files_to_download, [])
 
     def match(self, patterns, file_list, dir_list=None, prefix='', submatch=False):
         '''
@@ -196,7 +196,7 @@ class DirectHttpDownload(DirectFTPDownload):
                 try:
                     curl.setopt(pycurl.URL, rfile['url']+rfile['root']+'/'+rfile['name'])
                 except Exception as a:
-                    curl.setopt(pycurl.URL, (rfile['url']+rfile['root']+'/'+rfile['name']).encode('ascii','ignore'))
+                    curl.setopt(pycurl.URL, (rfile['url']+rfile['root']+'/'+rfile['name']).encode('ascii', 'ignore'))
                 #curl.setopt(pycurl.URL, rfile['url']+rfile['root']+'/'+rfile['name'])
             else:
                 url = rfile['url']+rfile['root']+'/'+rfile['name']+'?'+urllib.parse.urlencode(self.param)
@@ -204,7 +204,7 @@ class DirectHttpDownload(DirectFTPDownload):
                 try:
                     curl.setopt(pycurl.URL, url)
                 except Exception as a:
-                    curl.setopt(pycurl.URL, url.encode('ascii','ignore'))
+                    curl.setopt(pycurl.URL, url.encode('ascii', 'ignore'))
 
             curl.setopt(pycurl.WRITEDATA, fp)
             curl.perform()
@@ -263,7 +263,7 @@ class DirectHttpDownload(DirectFTPDownload):
             try:
                 self.crl.setopt(pycurl.URL, self.url+self.rootdir+file['name'])
             except Exception as a:
-                self.crl.setopt(pycurl.URL, (self.url+self.rootdir+file['name']).encode('ascii','ignore'))
+                self.crl.setopt(pycurl.URL, (self.url+self.rootdir+file['name']).encode('ascii', 'ignore'))
             #self.crl.setopt(pycurl.URL, self.url+self.rootdir+file['name'])
             output = BytesIO()
             # lets assign this buffer to pycurl object
@@ -315,4 +315,4 @@ class DirectHttpDownload(DirectFTPDownload):
                         file['month'] = Utils.month_to_num(res.group(2))
                         file['year'] = res.group(4)
                         continue
-        return (self.files_to_download,[])
+        return (self.files_to_download, [])

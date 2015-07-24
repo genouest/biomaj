@@ -46,8 +46,8 @@ class Utils(object):
         '''
         if Utils.mime is None:
             Utils.mime = MimeTypes()
-            mimesfile = os.path.join(os.path.dirname(__file__),'mimes-bio.txt')
-            Utils.mime.read(mimesfile,True)
+            mimesfile = os.path.join(os.path.dirname(__file__), 'mimes-bio.txt')
+            Utils.mime.read(mimesfile, True)
         return Utils.mime.guess_type(filename, True)
 
     @staticmethod
@@ -60,10 +60,10 @@ class Utils(object):
         release = None
         for rfile in files:
             if release is None:
-                release = { 'year': rfile['year'], 'month': rfile['month'], 'day': rfile['day']}
+                release = {'year': rfile['year'], 'month': rfile['month'], 'day': rfile['day']}
             else:
-                rel_date = datetime.date(int(release['year']),int(release['month']),int(release['day']))
-                file_date = datetime.date(int(rfile['year']),int(rfile['month']),int(rfile['day']))
+                rel_date = datetime.date(int(release['year']), int(release['month']), int(release['day']))
+                file_date = datetime.date(int(rfile['year']), int(rfile['month']), int(rfile['day']))
                 if file_date > rel_date:
                     release['year'] = rfile['year']
                     release['month'] = rfile['month']
@@ -160,7 +160,7 @@ class Utils(object):
         for root, dirs, files in os.walk(from_dir, topdown=True):
             for name in files:
                 for reg in regexps:
-                    file_relative_path = os.path.join(root, name).replace(from_dir,'')
+                    file_relative_path = os.path.join(root, name).replace(from_dir, '')
                     if file_relative_path.startswith('/'):
                         file_relative_path = file_relative_path.replace('/', '', 1)
                     if re.match(reg, file_relative_path):

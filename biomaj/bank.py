@@ -331,13 +331,13 @@ class Bank(object):
         if MongoConnector.db is None:
             MongoConnector(BiomajConfig.global_config.get('GENERAL', 'db.url'),
                            BiomajConfig.global_config.get('GENERAL', 'db.name'))
-        filter = {}
+        searchfilter = {}
         if formats:
-            filter['production.formats'] = {'$in': formats}
+            searchfilter['production.formats'] = {'$in': formats}
         if with_sessions:
-            res = MongoConnector.banks.find(filter)
+            res = MongoConnector.banks.find(searchfilter)
         else:
-            res = MongoConnector.banks.find(filter, {'sessions': 0})
+            res = MongoConnector.banks.find(searchfilter, {'sessions': 0})
         # Now search in which production release formats and types apply
         search_list = []
         for r in res:

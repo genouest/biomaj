@@ -120,7 +120,7 @@ class Utils(object):
                 try:
                     if not os.path.exists(os.path.dirname(to_file)):
                         os.makedirs(os.path.dirname(to_file))
-                except Exception as  e:
+                except Exception as e:
                     logging.error(e)
                 finally:
                     lock.release()

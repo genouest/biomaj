@@ -88,7 +88,7 @@ class BmajIndex(object):
           }
         try:
             BmajIndex.es.delete_by_query(index=BmajIndex.index, body=query)
-        except Exception:
+        except Exception as e:
             if BmajIndex.skip_if_failure:
                 BmajIndex.do_index = False
             else:

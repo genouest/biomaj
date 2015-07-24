@@ -952,7 +952,10 @@ class UpdateWorkflow(Workflow):
             # This is a run on an already present release, skip delete
             logging.info('Workflow:wf_delete_old:Skip')
             return True
-        keep = int(self.session.config.get('keep.old.version'))
+        if not self.session.config.get('keep.old.version'):
+            keep = 1
+        else:
+            keep = int(self.session.config.get('keep.old.version'))
         # Current production dir is not yet in list
         nb_prod = len(self.bank.bank['production'])
         # save session during delete workflow

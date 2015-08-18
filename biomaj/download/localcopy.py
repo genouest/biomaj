@@ -55,10 +55,10 @@ class LocalDownload(DownloadInterface):
         rfiles = []
         rdirs = []
 
-        files = [ f for f in os.listdir(self.rootdir + directory) ]
-        for file in files:
+        files = [f for f in os.listdir(self.rootdir + directory)]
+        for file_in_files in files:
             rfile = {}
-            fstat = os.stat(os.path.join(self.rootdir + directory,file))
+            fstat = os.stat(os.path.join(self.rootdir + directory,file_in_files))
 
             rfile['permissions'] = str(fstat.st_mode)
             rfile['group'] = str(fstat.st_gid)
@@ -68,10 +68,10 @@ class LocalDownload(DownloadInterface):
             rfile['month'] = fstat_mtime.month
             rfile['day'] = fstat_mtime.day
             rfile['year'] = fstat_mtime.year
-            rfile['name'] = file
+            rfile['name'] = file_in_files
 
             is_dir = False
-            if os.path.isdir(os.path.join(self.rootdir + directory,file)):
+            if os.path.isdir(os.path.join(self.rootdir + directory, file_in_files)):
                 is_dir = True
 
             if not is_dir:

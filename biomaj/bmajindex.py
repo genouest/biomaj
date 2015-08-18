@@ -25,6 +25,11 @@ class BmajIndex(object):
     '''
     do_index = False
 
+    '''
+    Skip if failure (tests)
+    '''
+    skip_if_failure = False
+
     @staticmethod
     def load(hosts=None, index='biomaj', do_index=True):
         '''
@@ -36,7 +41,7 @@ class BmajIndex(object):
         :type do_index: bool
         '''
         if hosts is None:
-            hosts=['localhost']
+            hosts = ['localhost']
         if not do_index:
             return
         BmajIndex.index = index
@@ -60,10 +65,13 @@ class BmajIndex(object):
             }
             try:
                 if not BmajIndex.es.indices.exists(index=BmajIndex.index):
-                    BmajIndex.es.indices.create(index=BmajIndex.index,body=mapping)
+                    BmajIndex.es.indices.create(index=BmajIndex.index, body=mapping)
             except Exception as e:
                 logging.error('ElasticSearch connection error, check server is running and configuration')
-                raise e
+                if BmajIndex.skip_if_failure:
+                    BmajIndex.do_index = False
+                else:
+                    raise e
 
 
     @staticmethod
@@ -75,10 +83,16 @@ class BmajIndex(object):
             return
         query = {
           "query" : {
-            "term" : { "bank" : bank_name }
+            "term" : {"bank" : bank_name}
             }
           }
-        BmajIndex.es.delete_by_query(index=BmajIndex.index, body=query)
+        try:
+            BmajIndex.es.delete_by_query(index=BmajIndex.index, body=query)
+        except Exception as e:
+            if BmajIndex.skip_if_failure:
+                BmajIndex.do_index = False
+            else:
+                raise e
 
     @staticmethod
     def remove(bank_name, release):
@@ -95,12 +109,14 @@ class BmajIndex(object):
         try:
             query = {
               "query" : {
-                "term" : { "release" : release, "bank": bank_name }
+                "term" : {"release" : release, "bank": bank_name}
                 }
               }
             BmajIndex.es.delete_by_query(index=BmajIndex.index, body=query)
         except Exception as e:
             logging.error('Index:Remove:'+bank_name+'_'+str(release)+':Exception:'+str(e))
+            if BmajIndex.skip_if_failure:
+                BmajIndex.do_index = False
 
     @staticmethod
     def search(query):
@@ -110,7 +126,7 @@ class BmajIndex(object):
         return res['hits']['hits']
 
     @staticmethod
-    def searchq(query,size=1000):
+    def searchq(query, size=1000):
         '''
         Lucene syntax search
 
@@ -135,8 +151,13 @@ class BmajIndex(object):
         if stat['release'] is None or stat['bank'] is None:
             return False
         #stat['bank'] = bank_name
-
-        BmajIndex.es.index(index=BmajIndex.index, doc_type='releasestats', id=stat_id, body=stat)
+        try:
+            BmajIndex.es.index(index=BmajIndex.index, doc_type='releasestats', id=stat_id, body=stat)
+        except Exception:
+            if BmajIndex.skip_if_failure:
+                BmajIndex.do_index = False
+            else:
+                return False
         return True
 
 
@@ -160,7 +181,7 @@ class BmajIndex(object):
         obj['bank'] = bank_name
         formats = obj['formats']
         try:
-            for fkey,fvalue in formats.items():
+            for fkey, fvalue in formats.items():
                 for elt in fvalue:
                     elt['format'] = fkey
                     elt['bank'] = bank_name
@@ -172,3 +193,5 @@ class BmajIndex(object):
                 BmajIndex.es.indices.flush(index=BmajIndex.index, force=True)
         except Exception as e:
             logging.error('Index:Add:'+bank_name+'_'+str(obj['release'])+':Exception:'+str(e))
+            if BmajIndex.skip_if_failure:
+                BmajIndex.do_index = False

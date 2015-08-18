@@ -14,35 +14,35 @@ class BmajUser(object):
     def __init__(self, user):
 
         if MongoConnector.db is None:
-            MongoConnector(BiomajConfig.global_config.get('GENERAL','db.url'),
-                            BiomajConfig.global_config.get('GENERAL','db.name'))
+            MongoConnector(BiomajConfig.global_config.get('GENERAL', 'db.url'),
+                            BiomajConfig.global_config.get('GENERAL', 'db.name'))
 
         self.users = MongoConnector.users
         self.id = user
         self.user = self.users.find_one({'id': user})
         ldap_server = None
         con = None
-        if not self.user and BiomajConfig.global_config.get('GENERAL','use_ldap') == '1':
+        if not self.user and BiomajConfig.global_config.get('GENERAL', 'use_ldap') == '1':
             # Check if in ldap
             #import ldap
             from ldap3 import Server, Connection, AUTH_SIMPLE, STRATEGY_SYNC, STRATEGY_ASYNC_THREADED, SEARCH_SCOPE_WHOLE_SUBTREE, GET_ALL_INFO
             try:
-                ldap_host = BiomajConfig.global_config.get('GENERAL','ldap.host')
-                ldap_port = BiomajConfig.global_config.get('GENERAL','ldap.port')
+                ldap_host = BiomajConfig.global_config.get('GENERAL', 'ldap.host')
+                ldap_port = BiomajConfig.global_config.get('GENERAL', 'ldap.port')
                 #con = ldap.initialize('ldap://' + ldap_host + ':' + str(ldap_port))
-                ldap_server = Server(ldap_host, port = int(ldap_port), get_info = GET_ALL_INFO)
-                con = Connection(ldap_server, auto_bind = True, client_strategy = STRATEGY_SYNC, check_names=True)
+                ldap_server = Server(ldap_host, port=int(ldap_port), get_info=GET_ALL_INFO)
+                con = Connection(ldap_server, auto_bind=True, client_strategy=STRATEGY_SYNC, check_names=True)
             except Exception as err:
                 logging.error(str(err))
                 self.user = None
-            ldap_dn = BiomajConfig.global_config.get('GENERAL','ldap.dn')
+            ldap_dn = BiomajConfig.global_config.get('GENERAL', 'ldap.dn')
             base_dn = 'ou=People,' + ldap_dn
-            filter = "(&(|(uid=" + user + ")(mail=" + user + ")))"
+            ldapfilter = "(&(|(uid=" + user + ")(mail=" + user + ")))"
             try:
                 #con.simple_bind_s()
                 attrs = ['mail']
                 #results = con.search_s(base_dn, ldap.SCOPE_SUBTREE, filter, attrs)
-                con.search(base_dn,filter, SEARCH_SCOPE_WHOLE_SUBTREE, attributes=attrs)
+                con.search(base_dn, ldapfilter, SEARCH_SCOPE_WHOLE_SUBTREE, attributes=attrs)
                 if con.response:
                     ldapMail = None
                     #for dn, entry in results:
@@ -112,17 +112,17 @@ class BmajUser(object):
             from ldap3 import Server, Connection, AUTH_SIMPLE, STRATEGY_SYNC, STRATEGY_ASYNC_THREADED, SEARCH_SCOPE_WHOLE_SUBTREE, GET_ALL_INFO
             from ldap3.core.exceptions import LDAPBindError
             try:
-                ldap_host = BiomajConfig.global_config.get('GENERAL','ldap.host')
-                ldap_port = BiomajConfig.global_config.get('GENERAL','ldap.port')
+                ldap_host = BiomajConfig.global_config.get('GENERAL', 'ldap.host')
+                ldap_port = BiomajConfig.global_config.get('GENERAL', 'ldap.port')
                 #con = ldap.initialize('ldap://' + ldap_host + ':' + str(ldap_port))
-                ldap_server = Server(ldap_host, port = int(ldap_port), get_info = GET_ALL_INFO)
-                con = Connection(ldap_server, auto_bind = True, client_strategy = STRATEGY_SYNC, check_names=True)
+                ldap_server = Server(ldap_host, port=int(ldap_port), get_info=GET_ALL_INFO)
+                con = Connection(ldap_server, auto_bind=True, client_strategy=STRATEGY_SYNC, check_names=True)
             except Exception as err:
                 logging.error(str(err))
                 return False
             ldap_dn = BiomajConfig.global_config.get('GENERAL','ldap.dn')
             base_dn = 'ou=People,' + ldap_dn
-            filter = "(&(|(uid=" + self.user['id'] + ")(mail=" + self.user['id'] + ")))"
+            ldapfilter = "(&(|(uid=" + self.user['id'] + ")(mail=" + self.user['id'] + ")))"
             #try:
             #    con.simple_bind_s()
             #except Exception as err:
@@ -130,7 +130,7 @@ class BmajUser(object):
             #    return False
             try:
                 attrs = ['mail']
-                con.search(base_dn,filter, SEARCH_SCOPE_WHOLE_SUBTREE, attributes = attrs)
+                con.search(base_dn, ldapfilter, SEARCH_SCOPE_WHOLE_SUBTREE, attributes=attrs)
                 #results = con.search_s(base_dn, ldap.SCOPE_SUBTREE, filter, attrs)
                 user_dn = None
                 ldapMail = None
@@ -142,7 +142,7 @@ class BmajUser(object):
                 #    user_dn = str(dn)
                 #    ldapMail = entry['mail'][0]
                 con.unbind()
-                con = Connection(ldap_server, auto_bind = True, read_only=True, client_strategy = STRATEGY_SYNC, user=user_dn, password=password, authentication=AUTH_SIMPLE, check_names=True)
+                con = Connection(ldap_server, auto_bind=True, read_only=True, client_strategy=STRATEGY_SYNC, user=user_dn, password=password, authentication=AUTH_SIMPLE, check_names=True)
                 con.unbind()
                 #con.simple_bind_s(user_dn, password)
                 #con.unbind_s()

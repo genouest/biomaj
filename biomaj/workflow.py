@@ -21,7 +21,7 @@ from biomaj.download.downloadthreads import DownloadThread
 from biomaj.mongo_connector import MongoConnector
 from biomaj.options import Options
 
-from biomaj.process.processfactory import RemoveProcessFactory,PreProcessFactory,PostProcessFactory
+from biomaj.process.processfactory import RemoveProcessFactory, PreProcessFactory, PostProcessFactory
 
 class Workflow(object):
     '''
@@ -40,9 +40,9 @@ class Workflow(object):
     FLOW_OVER = 'over'
 
     FLOW = [
-      { 'name': 'init', 'steps': []},
-      { 'name': 'check', 'steps': []},
-      { 'name': 'over', 'steps': []}
+      {'name': 'init', 'steps': []},
+      {'name': 'check', 'steps': []},
+      {'name': 'over', 'steps': []}
     ]
 
     def __init__(self, bank, session=None):
@@ -170,7 +170,7 @@ class Workflow(object):
                 status[flow['name']] = {'status': None, 'progress': ''}
             else:
                 status[flow['name']] = {'status': None, 'progress': 0}
-        MongoConnector.banks.update({'name': self.name},{'$set': {'status': status}})
+        MongoConnector.banks.update({'name': self.name}, {'$set': {'status': status}})
 
     def wf_progress_end(self):
         '''
@@ -183,7 +183,7 @@ class Workflow(object):
         Update bank status
         '''
         subtask = 'status.'+task+'.status'
-        MongoConnector.banks.update({'name': self.name},{'$set': {subtask: status}})
+        MongoConnector.banks.update({'name': self.name}, {'$set': {subtask: status}})
 
     def wf_init(self):
         '''
@@ -194,8 +194,8 @@ class Workflow(object):
         lock_dir = self.session.config.get('lock.dir', default=data_dir)
         if not os.path.exists(lock_dir):
             os.mkdir(lock_dir)
-        lock_file = os.path.join(lock_dir,self.name+'.lock')
-        maintenance_lock_file = os.path.join(lock_dir,'biomaj.lock')
+        lock_file = os.path.join(lock_dir, self.name+'.lock')
+        maintenance_lock_file = os.path.join(lock_dir, 'biomaj.lock')
         if os.path.exists(maintenance_lock_file):
             logging.error('Biomaj is in maintenance')
             return False
@@ -216,7 +216,7 @@ class Workflow(object):
         logging.info('Workflow:wf_over')
         data_dir = self.session.config.get('data.dir')
         lock_dir = self.session.config.get('lock.dir', default=data_dir)
-        lock_file = os.path.join(lock_dir,self.name+'.lock')
+        lock_file = os.path.join(lock_dir, self.name+'.lock')
         os.remove(lock_file)
         return True
 
@@ -226,10 +226,10 @@ class RemoveWorkflow(Workflow):
     '''
 
     FLOW = [
-      { 'name': 'init', 'steps': []},
-      { 'name': 'removeprocess', 'steps': []},
-      { 'name': 'remove_release', 'steps': []},
-      { 'name': 'over', 'steps': []}
+      {'name': 'init', 'steps': []},
+      {'name': 'removeprocess', 'steps': []},
+      {'name': 'remove_release', 'steps': []},
+      {'name': 'over', 'steps': []}
     ]
 
     def __init__(self, bank, session):
@@ -271,15 +271,15 @@ class UpdateWorkflow(Workflow):
     '''
 
     FLOW = [
-      { 'name': 'init', 'steps': []},
-      { 'name': 'check', 'steps': []},
-      { 'name': 'depends', 'steps': []},
-      { 'name': 'preprocess', 'steps': []},
-      { 'name': 'release', 'steps': []},
-      { 'name': 'download', 'steps': ['uncompress','copy', 'copydepends']},
-      { 'name': 'postprocess', 'steps': ['metadata', 'stats']},
-      { 'name': 'publish', 'steps': ['old_biomaj_api', 'clean_offline', 'delete_old', 'clean_old_sessions']},
-      { 'name': 'over', 'steps': []}
+      {'name': 'init', 'steps': []},
+      {'name': 'check', 'steps': []},
+      {'name': 'depends', 'steps': []},
+      {'name': 'preprocess', 'steps': []},
+      {'name': 'release', 'steps': []},
+      {'name': 'download', 'steps': ['uncompress','copy', 'copydepends']},
+      {'name': 'postprocess', 'steps': ['metadata', 'stats']},
+      {'name': 'publish', 'steps': ['old_biomaj_api', 'clean_offline', 'delete_old', 'clean_old_sessions']},
+      {'name': 'over', 'steps': []}
     ]
 
     def __init__(self, bank):
@@ -376,7 +376,8 @@ class UpdateWorkflow(Workflow):
                 release = depbank.bank['production'][len(depbank.bank['production'])-1]['release']
                 self.session.set('release', release)
                 self.session.set('remoterelease', release)
-                MongoConnector.banks.update({'name': self.bank.name},{'$set': {'status.release.progress': str(release)}})
+                MongoConnector.banks.update({'name': self.bank.name},
+                        {'$set': {'status.release.progress': str(release)}})
                 return True
             else:
                 logging.error('Dependant bank '+str(depbank)+' has no production directory to use')
@@ -390,7 +391,7 @@ class UpdateWorkflow(Workflow):
             return True
         if self.session.config.get('release.file') == '' or self.session.config.get('release.file') is None:
             logging.debug('Workflow:wf_release:norelease')
-            self.session.set('release',None)
+            self.session.set('release', None)
             return True
         else:
             protocol = cf.get('protocol')
@@ -402,7 +403,7 @@ class UpdateWorkflow(Workflow):
             remote_dir = cf.get('remote.dir')
             if cf.get('release.remote.dir') is not None:
                 remote_dir = cf.get('release.remote.dir')
-            release_downloader = self.get_handler(protocol,server,remote_dir)
+            release_downloader = self.get_handler(protocol, server, remote_dir)
             if cf.get('server.credentials') is not None:
                 release_downloader.set_credentials(cf.get('server.credentials'))
 
@@ -453,7 +454,8 @@ class UpdateWorkflow(Workflow):
         self.session.set('release', release)
         self.session.set('remoterelease', release)
 
-        MongoConnector.banks.update({'name': self.bank.name},{'$set': {'status.release.progress': str(release)}})
+        MongoConnector.banks.update({'name': self.bank.name},
+                        {'$set': {'status.release.progress': str(release)}})
 
         # We restart from scratch, a directory with this release already exists
         # Check directory existence if from scratch to change local release
@@ -494,7 +496,7 @@ class UpdateWorkflow(Workflow):
         self.skip_all = True
         self.session._session['status'][Workflow.FLOW_OVER] = True
         self.session._session['update'] = False
-        self.session.set('download_files',[])
+        self.session.set('download_files', [])
         self.wf_over()
         return True
 
@@ -544,7 +546,7 @@ class UpdateWorkflow(Workflow):
             # Creates multiple downloaders
             i = 0
             rfile = cf.get('remote.file.'+str(i)+'.path')
-            while(rfile is not None):
+            while rfile is not None:
                 if cf.get('remote.file.'+str(i)+'.protocol') is not None:
                     protocol = cf.get('remote.file.'+str(i)+'.protocol')
                 else:
@@ -553,7 +555,7 @@ class UpdateWorkflow(Workflow):
                     server = cf.get('remote.file.'+str(i)+'.server')
                 else:
                     server = cf.get('server')
-                subdownloader = self.get_handler(protocol,server,'', [cf.get('remote.file.'+str(i)+'.path')])
+                subdownloader = self.get_handler(protocol, server, '', [cf.get('remote.file.'+str(i)+'.path')])
                 if cf.get('remote.file.'+str(i)+'.credentials') is not None:
                     credentials = cf.get('remote.file.'+str(i)+'.credentials')
                 else:
@@ -588,7 +590,7 @@ class UpdateWorkflow(Workflow):
             '''
             protocol = cf.get('protocol')
             if protocol == 'directhttp' or protocol == 'directftp':
-                downloader = self.get_handler(cf.get('protocol'),cf.get('server'),'/', [cf.get('remote.dir')[:-1]])
+                downloader = self.get_handler(cf.get('protocol'), cf.get('server'), '/', [cf.get('remote.dir')[:-1]])
                 downloader.method = cf.get('url.method')
                 if downloader.method is None:
                     downloader.method = 'GET'
@@ -600,7 +602,7 @@ class UpdateWorkflow(Workflow):
                         param = cf.get(key.strip()+'.value')
                         downloader.param[key.strip()] = param.strip()
             else:
-                downloader = self.get_handler(cf.get('protocol'),cf.get('server'),cf.get('remote.dir'))
+                downloader = self.get_handler(cf.get('protocol'), cf.get('server'), cf.get('remote.dir'))
 
         if downloader is None:
             logging.error('Protocol '+cf.get('protocol')+' not supported')
@@ -613,19 +615,19 @@ class UpdateWorkflow(Workflow):
             f['save_as'] = f['name']
             for p in cf.get('remote.files').split():
                 res = re.match('/'+p, f['name'])
-                if res is not None and res.groups() is not None and len(res.groups())>=1:
+                if res is not None and res.groups() is not None and len(res.groups()) >= 1:
                     f['save_as'] = '/'.join(res.groups())
                     break
 
 
-        self.session.set('download_files',downloader.files_to_download)
+        self.session.set('download_files', downloader.files_to_download)
         if self.session.get('release') is None:
             # Not defined, or could not get it ealier
             # Set release to most recent file to download
             release_dict = Utils.get_more_recent_file(downloader.files_to_download)
             if release_dict is None:
                 today = datetime.datetime.now()
-                release_dict = { 'year': today.year, 'month': today.month, 'day': today.day }
+                release_dict = {'year': today.year, 'month': today.month, 'day': today.day}
 
             release = str(release_dict['year']) + '-' + str(release_dict['month']) + '-' + str(release_dict['day'])
             self.session.set('release', release)
@@ -648,7 +650,8 @@ class UpdateWorkflow(Workflow):
                     release = release+'__'+str(index)
             logging.info('Workflow:wf_download:release:remoterelease:'+self.session.get('remoterelease'))
             logging.info('Workflow:wf_download:release:release:'+release)
-            MongoConnector.banks.update({'name': self.bank.name},{'$set': {'status.release.progress': str(release)}})
+            MongoConnector.banks.update({'name': self.bank.name},
+                            {'$set': {'status.release.progress': str(release)}})
             self.download_go_ahead = False
             if self.options.get_option(Options.FROM_TASK) == 'download':
                 # We want to download again in same release, that's fine, we do not care it is the same release
@@ -708,10 +711,10 @@ class UpdateWorkflow(Workflow):
             # Get last production
             last_production = self.bank.bank['production'][nb_prod_dir-1]
             # Get session corresponding to production directory
-            last_production_session = self.banks.find_one({'name': self.name, 'sessions.id': last_production['session']},{ 'sessions.$': 1})
-            last_production_dir = os.path.join(last_production['data_dir'],cf.get('dir.version'),last_production['release'])
+            last_production_session = self.banks.find_one({'name': self.name, 'sessions.id': last_production['session']}, {'sessions.$': 1})
+            last_production_dir = os.path.join(last_production['data_dir'], cf.get('dir.version'), last_production['release'])
             # Checks if some files can be copied instead of downloaded
-            downloader.download_or_copy(last_production_session['sessions'][0]['files'],last_production_dir)
+            downloader.download_or_copy(last_production_session['sessions'][0]['files'], last_production_dir)
             if len(downloader.files_to_download) == 0:
                 return self.no_need_to_update()
 
@@ -793,7 +796,7 @@ class UpdateWorkflow(Workflow):
                       self.session.config.get('dir.version'),
                       self.session.get_release_directory(), 'flat')
 
-        local_files = Utils.copy_files_with_regexp(from_dir,to_dir,regexp, True)
+        local_files = Utils.copy_files_with_regexp(from_dir, to_dir, regexp, True)
         self.session._session['files'] = local_files
         if len(self.session._session['files']) == 0:
             logging.error('Workflow:wf_copy:No file match in offline dir')
@@ -849,7 +852,7 @@ class UpdateWorkflow(Workflow):
         if os.path.lexists(future_link):
             os.remove(future_link)
         os.chdir(to_dir)
-        os.symlink(self.session.get_release_directory(),'future_release')
+        os.symlink(self.session.get_release_directory(), 'future_release')
 
         logging.info('Workflow:wf_postprocess')
         blocks = self.session._session['process']['postprocess']
@@ -885,12 +888,12 @@ class UpdateWorkflow(Workflow):
         '''
         release_dir = self.session.get_full_release_directory()
         for release_format in self.bank.session.get('formats'):
-            format_file = os.path.join(release_dir,'listingv1.'+release_format.replace('/','_'))
+            format_file = os.path.join(release_dir, 'listingv1.'+release_format.replace('/','_'))
             section = self.list_section(release_dir, release_format, release_format)
             logging.debug("Worfklow:OldAPI:WriteListing: "+format_file)
-            fd = os.open( format_file, os.O_RDWR|os.O_CREAT )
+            fd = os.open(format_file, os.O_RDWR|os.O_CREAT)
             os.write(fd, json.dumps(section).encode('utf-8'))
-            os.close( fd )
+            os.close(fd)
         return True
 
     def list_section(self, base_dir, release_format, base_format):
@@ -905,8 +908,8 @@ class UpdateWorkflow(Workflow):
         :type base_format: str
         :return: dict section details
         '''
-        section = { "name": release_format, "sections": [], "files": []}
-        format_dir = os.path.join(base_dir,release_format)
+        section = {"name": release_format, "sections": [], "files": []}
+        format_dir = os.path.join(base_dir, release_format)
         if not os.path.exists(format_dir):
             logging.info("Worfklow:OldAPI:Format directory "+release_format+" does not exists, skipping")
             return section
@@ -952,7 +955,10 @@ class UpdateWorkflow(Workflow):
             # This is a run on an already present release, skip delete
             logging.info('Workflow:wf_delete_old:Skip')
             return True
-        keep = int(self.session.config.get('keep.old.version'))
+        if not self.session.config.get('keep.old.version'):
+            keep = 1
+        else:
+            keep = int(self.session.config.get('keep.old.version'))
         # Current production dir is not yet in list
         nb_prod = len(self.bank.bank['production'])
         # save session during delete workflow
@@ -970,12 +976,12 @@ class UpdateWorkflow(Workflow):
                     # Delete init and over because we are already in a run
                     i_init = -1
                     i_over = -1
-                    for i in range(0,len(session.flow)):
+                    for i in range(0, len(session.flow)):
                         if session.flow[i]['name'] == 'init':
                             i_init = i
                     if i_init >= 0:
                         del session.flow[i_init]
-                    for i in range(0,len(session.flow)):
+                    for i in range(0, len(session.flow)):
                         if session.flow[i]['name'] == 'over':
                             i_over = i
                     if i_over >= 0:
@@ -992,6 +998,6 @@ class UpdateWorkflow(Workflow):
                 else:
                     break
         # Set session back
-        self.bank.session  = keep_session
+        self.bank.session = keep_session
 
         return True

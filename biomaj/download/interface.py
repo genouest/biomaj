@@ -72,7 +72,9 @@ class DownloadInterface(object):
             logging.debug('bank not specified, skipping record of download progress')
             return
 
-        MongoConnector.banks.update({'name': self.bank},{'$inc': {'status.download.progress': val}, '$set': {'status.download.total': max}})
+        MongoConnector.banks.update({'name': self.bank},
+                {'$inc': {'status.download.progress': val},
+                '$set': {'status.download.total': max}})
 
     def match(self, patterns, file_list, dir_list=None, prefix='', submatch=False):
         '''
@@ -151,7 +153,7 @@ class DownloadInterface(object):
         '''
         Sets file attributes to remote ones
         '''
-        ftime = datetime.date(int(file_info['year']),int(file_info['month']),int(file_info['day']))
+        ftime = datetime.date(int(file_info['year']), int(file_info['month']), int(file_info['day']))
         settime = time.mktime(ftime.timetuple())
         os.utime(file_path, (settime, settime))
 
@@ -187,7 +189,7 @@ class DownloadInterface(object):
                     new_files_to_download.append(dfile)
                     index += 1
                 else:
-                    if not check_exists or os.path.exists(os.path.join(root_dir,dfile['name'])):
+                    if not check_exists or os.path.exists(os.path.join(root_dir, dfile['name'])):
                         dfile['root'] = root_dir
                         self.files_to_copy.append(dfile)
                     else:
@@ -196,7 +198,7 @@ class DownloadInterface(object):
         else:
             # Copy everything
             for dfile in self.files_to_download:
-                if not check_exists or os.path.exists(os.path.join(root_dir,dfile['name'])):
+                if not check_exists or os.path.exists(os.path.join(root_dir, dfile['name'])):
                     dfile['root'] = root_dir
                     self.files_to_copy.apppend(dfile)
                 else:

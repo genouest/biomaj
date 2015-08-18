@@ -37,7 +37,7 @@ class FTPDownload(DownloadInterface):
         url = protocol+'://'+host
         self.rootdir = rootdir
         self.url = url
-        self.headers= {}
+        self.headers = {}
 
     def match(self, patterns, file_list, dir_list=None, prefix='', submatch=False):
         '''
@@ -142,7 +142,7 @@ class FTPDownload(DownloadInterface):
             try:
                 curl.setopt(pycurl.URL, rfile['url']+rfile['root']+'/'+rfile['name'])
             except Exception as a:
-                curl.setopt(pycurl.URL, (rfile['url']+rfile['root']+'/'+rfile['name']).encode('ascii','ignore'))
+                curl.setopt(pycurl.URL, (rfile['url']+rfile['root']+'/'+rfile['name']).encode('ascii', 'ignore'))
 
             if self.proxy is not None:
                 self.crl.setopt(pycurl.PROXY, self.proxy)
@@ -171,7 +171,7 @@ class FTPDownload(DownloadInterface):
                     nb = cur_files % 10
                 elif cur_files > 0 and cur_files % 10 == 0:
                     nb = 10
-                    do_progress= True
+                    do_progress = True
                 else:
                     do_progress = False
             if do_progress:
@@ -219,12 +219,12 @@ class FTPDownload(DownloadInterface):
         try:
             self.crl.setopt(pycurl.URL, self.url+self.rootdir+directory)
         except Exception as a:
-            self.crl.setopt(pycurl.URL, (self.url+self.rootdir+directory).encode('ascii','ignore'))
+            self.crl.setopt(pycurl.URL, (self.url+self.rootdir+directory).encode('ascii', 'ignore'))
 
         if self.proxy is not None:
             self.crl.setopt(pycurl.PROXY, self.proxy)
             if self.proxy_auth is not None:
-                curl.setopt(pycurl.PROXYUSERPWD, self.proxy_auth)
+                self.crl.setopt(pycurl.PROXYUSERPWD, self.proxy_auth)
 
         if self.credentials is not None:
             self.crl.setopt(pycurl.USERPWD, self.credentials)

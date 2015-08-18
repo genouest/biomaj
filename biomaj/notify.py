@@ -46,7 +46,7 @@ class Notify(object):
             if bank.config.get('mail.tls') is not None and str(bank.config.get('mail.tls')) == 'true':
                 server.starttls()
             if bank.config.get('mail.user') is not None and str(bank.config.get('mail.user')) != '':
-                server.login(bank.config.get('mail.user'),bank.config.get('mail.password'))
+                server.login(bank.config.get('mail.user'), bank.config.get('mail.password'))
             server.sendmail(mfrom, [mto], msg.as_string())
         except Exception as e:
             logging.error('Could not send email: '+str(e))

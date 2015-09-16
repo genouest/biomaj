@@ -11,6 +11,7 @@ import logging
 import shutil
 import datetime
 import subprocess
+from subprocess import CalledProcessError
 
 from mimetypes import MimeTypes
 
@@ -207,6 +208,7 @@ class Utils(object):
         :type file: str
         :param remove: remove archive if present
         :type remove: bool
+        :return: True if ok, False if an error occured
         '''
         is_archive = False
         #if tarfile.is_tarfile(file):
@@ -215,26 +217,29 @@ class Utils(object):
         #  tfile.extractall(os.path.basename(file))
         #  tfile.close()
         #  is_archive = True
-        if archivefile.endswith('.tar.gz'):
-            proc = subprocess.check_call("tar xfz "+archivefile+" --overwrite -C "+os.path.dirname(archivefile), shell=True)
-            #proc.wait()
-            is_archive = True
-        elif archivefile.endswith('.tar'):
-            proc = subprocess.check_call("tar xf "+archivefile+" --overwrite -C "+os.path.dirname(archivefile), shell=True)
-            #proc.wait()
-            is_archive = True
-        elif archivefile.endswith('.bz2'):
-            proc = subprocess.check_call("tar xjf "+archivefile+" --overwrite -C "+os.path.dirname(archivefile), shell=True)
-            #proc.wait()
-            is_archive = True
-        elif archivefile.endswith('.gz'):
-            proc = subprocess.check_call("gunzip -f "+archivefile, shell=True)
-            #proc.wait()
-            is_archive = True
-        elif archivefile.endswith('.zip'):
-            proc = subprocess.check_call("unzip -o "+archivefile+" -d "+os.path.dirname(archivefile), shell=True)
-            #proc.wait()
-            is_archive = True
+        try:
+            if archivefile.endswith('.tar.gz'):
+                proc = subprocess.check_call("tar xfz "+archivefile+" --overwrite -C "+os.path.dirname(archivefile), shell=True)
+                #proc.wait()
+                is_archive = True
+            elif archivefile.endswith('.tar'):
+                proc = subprocess.check_call("tar xf "+archivefile+" --overwrite -C "+os.path.dirname(archivefile), shell=True)
+                #proc.wait()
+                is_archive = True
+            elif archivefile.endswith('.bz2'):
+                proc = subprocess.check_call("tar xjf "+archivefile+" --overwrite -C "+os.path.dirname(archivefile), shell=True)
+                #proc.wait()
+                is_archive = True
+            elif archivefile.endswith('.gz'):
+                proc = subprocess.check_call("gunzip -f "+archivefile, shell=True)
+                #proc.wait()
+                is_archive = True
+            elif archivefile.endswith('.zip'):
+                proc = subprocess.check_call("unzip -o "+archivefile+" -d "+os.path.dirname(archivefile), shell=True)
+                #proc.wait()
+                is_archive = True
+        except CalledProcessError as uncompresserror:
+            return False
         #elif zipfile.is_zipfile(file):
         #  logging.debug('Uncompress:Zip:'+file)
         #  zfile = zipfile.ZipFile(file)
@@ -264,3 +269,5 @@ class Utils(object):
 
         if is_archive and remove and os.path.exists(archivefile):
             os.remove(archivefile)
+
+        return True

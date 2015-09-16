@@ -781,7 +781,14 @@ class UpdateWorkflow(Workflow):
             for file in self.downloaded_files:
                 if 'save_as' not in file:
                     file['save_as'] = file['name']
-                Utils.uncompress(self.session.get_offline_directory() + '/' + file['save_as'])
+                nb_try = 1
+                not_ok = True
+                while nb_try < 3 and not_ok:
+                    status = Utils.uncompress(self.session.get_offline_directory() + '/' + file['save_as'])
+                    if status:
+                        not_ok = False
+                    else:
+                        nb_try += 1
         return True
 
     def wf_copy(self):

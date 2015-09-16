@@ -788,7 +788,11 @@ class UpdateWorkflow(Workflow):
                     if status:
                         not_ok = False
                     else:
+                        logging.warn('Workflow:wf_uncompress:Failure:'+file['name']+':'+str(nb_try))
                         nb_try += 1
+                if not_ok:
+                    logging.error('Workflow:wf_uncompress:Failure:'+file['name'])
+                    return False
         return True
 
     def wf_copy(self):

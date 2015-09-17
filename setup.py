@@ -32,7 +32,7 @@ config = {
         'Programming Language :: Python :: 3.4'
     ],
     'install_requires': ['nose',
-                            'pymongo',
+                            'pymongo==2.7.2',
                             'pycurl',
                             'ldap3',
                             'mock',

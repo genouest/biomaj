@@ -1,3 +1,5 @@
+3.0.9:
+
 3.0.8:
   do not test index if elasticsearch is not up
   minor fixes

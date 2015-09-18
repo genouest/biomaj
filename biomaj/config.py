@@ -94,18 +94,26 @@ class BiomajConfig(object):
 
         # ElasticSearch indexation support
         do_index = False
-        if BiomajConfig.global_config.get('GENERAL','use_elastic') and \
-          BiomajConfig.global_config.get('GENERAL','use_elastic') == "1":
+        if BiomajConfig.global_config.get('GENERAL', 'use_elastic') and \
+          BiomajConfig.global_config.get('GENERAL', 'use_elastic') == "1":
             do_index = True
         if do_index:
-            if BiomajConfig.global_config.get('GENERAL','elastic_nodes'):
-                elastic_hosts = BiomajConfig.global_config.get('GENERAL','elastic_nodes').split(',')
+            if BiomajConfig.global_config.get('GENERAL', 'elastic_nodes'):
+                elastic_hosts = BiomajConfig.global_config.get('GENERAL', 'elastic_nodes').split(',')
             else:
                 elastic_hosts = ['localhost']
-            elastic_index = BiomajConfig.global_config.get('GENERAL','elastic_index')
+            elastic_index = BiomajConfig.global_config.get('GENERAL', 'elastic_index')
             if elastic_index is None:
                 elastic_index = 'biomaj'
-            BmajIndex.load(index=elastic_index, hosts=elastic_hosts, do_index=do_index)
+
+            if BiomajConfig.global_config.has_option('GENERAL', 'test') and \
+                BiomajConfig.global_config.get('GENERAL', 'test') == "1":
+                # Test connection to elasticsearch, if not available skip indexing for tests
+                BmajIndex.skip_if_failure = True
+
+
+            BmajIndex.load(index=elastic_index, hosts=elastic_hosts,
+                                                    do_index=do_index)
 
 
 
@@ -124,21 +132,21 @@ class BiomajConfig(object):
             BiomajConfig.load_config()
         self.config_bank = configparser.ConfigParser()
         conf_dir = BiomajConfig.global_config.get('GENERAL', 'conf.dir')
-        if not os.path.exists(os.path.join(conf_dir,bank+'.properties')):
+        if not os.path.exists(os.path.join(conf_dir, bank+'.properties')):
             logging.error('Bank configuration file does not exists')
             raise Exception('Configuration file '+bank+'.properties does not exists')
         try:
             config_files = [BiomajConfig.config_file]
             if BiomajConfig.user_config_file is not None:
                 config_files.append(BiomajConfig.user_config_file)
-            config_files.append(os.path.join(conf_dir,bank+'.properties'))
+            config_files.append(os.path.join(conf_dir, bank+'.properties'))
             self.config_bank.read(config_files)
         except Exception as e:
             print("Configuration file error: "+str(e))
             logging.error("Configuration file error "+str(e))
             sys.exit(1)
 
-        self.last_modified = int(os.stat(os.path.join(conf_dir,bank+'.properties')).st_mtime)
+        self.last_modified = int(os.stat(os.path.join(conf_dir, bank+'.properties')).st_mtime)
 
         if os.path.exists(os.path.expanduser('~/.biomaj.cfg')):
             logging.config.fileConfig(os.path.expanduser('~/.biomaj.cfg'))
@@ -148,7 +156,7 @@ class BiomajConfig(object):
         do_log = False
         if options is None:
             do_log = True
-        elif hasattr(options,'no_log') and not options.no_log:
+        elif hasattr(options, 'no_log') and not options.no_log:
             do_log = True
         elif type(options) is dict and 'no_log' in options and not options['no_log']:
             do_log = True
@@ -156,11 +164,11 @@ class BiomajConfig(object):
         #if options is None or (( hasattr(options,'no_log') and not options.no_log) or ('no_log' in options and not options['no_log'])):
         if do_log:
             logger = logging.getLogger()
-            bank_log_dir = os.path.join(self.get('log.dir'),bank,str(time.time()))
+            bank_log_dir = os.path.join(self.get('log.dir'), bank, str(time.time()))
             if not os.path.exists(bank_log_dir):
                 os.makedirs(bank_log_dir)
-            hdlr = logging.FileHandler(os.path.join(bank_log_dir,bank+'.log'))
-            self.log_file = os.path.join(bank_log_dir,bank+'.log')
+            hdlr = logging.FileHandler(os.path.join(bank_log_dir, bank+'.log'))
+            self.log_file = os.path.join(bank_log_dir, bank+'.log')
             if options is not None and options.get_option('log') is not None:
                 hdlr.setLevel(BiomajConfig.LOGLEVEL[options.get_option('log')])
             else:
@@ -169,7 +177,7 @@ class BiomajConfig(object):
             hdlr.setFormatter(formatter)
             logger.addHandler(hdlr)
         else:
-            self.log_file='none'
+            self.log_file = 'none'
 
 
     def set(self, prop, value, section='GENERAL'):
@@ -179,7 +187,7 @@ class BiomajConfig(object):
         '''
         Get a boolean property from bank or general configration. Optionally in section.
         '''
-        value = self.get(prop,section,escape,default)
+        value = self.get(prop, section, escape, default)
         if value is None:
             return False
         if value is True or value == 'true' or value == '1':
@@ -197,13 +205,13 @@ class BiomajConfig(object):
             if depend:
                 return depend
 
-        if self.config_bank.has_option(section,prop):
-            val = self.config_bank.get(section,prop)
+        if self.config_bank.has_option(section, prop):
+            val = self.config_bank.get(section, prop)
             if prop == 'remote.dir' and not val.endswith('/'):
                 val = val + '/'
             # If regexp, escape backslashes
             if escape and (prop == 'local.files' or prop == 'remote.files' or prop == 'http.parse.dir.line' or prop == 'http.parse.file.line'):
-                val = val.replace('\\\\','\\')
+                val = val.replace('\\\\', '\\')
             return val
 
         if BiomajConfig.user_config is not None:
@@ -261,7 +269,7 @@ class BiomajConfig(object):
             logging.warn('celery config is not set, that\'s fine if you do not use Celery for background tasks')
 
         if not self.get('mail.smtp.host'):
-            logging.warn('SMTP mail config not set, you will not be able to send emails')
+            logging.error('SMTP mail config not set, you will not be able to send emails')
             status = False
         if self.get('mail.smtp.host') and not self.get('mail.from'):
             logging.error('Mail origin mail.from not set')
@@ -305,7 +313,7 @@ class BiomajConfig(object):
             logging.error('local.files is not set')
             status = False
         # Remove processes
-        processes = ['db.remove.process','db.pre.process']
+        processes = ['db.remove.process', 'db.pre.process']
         for process in processes:
             if self.get(process):
                 metas = self.get(process).split(',')

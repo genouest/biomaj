@@ -29,7 +29,7 @@ class DownloadThread(threading.Thread):
         '''
         threads = []
         # Creates threads with copies of the downloader
-        for i in range(0,DownloadThread.NB_THREAD):
+        for i in range(0, DownloadThread.NB_THREAD):
             new_download = copy.deepcopy(downloader)
             new_download.files_to_download = []
             th = DownloadThread(new_download, local_dir)
@@ -80,7 +80,7 @@ class DownloadThread(threading.Thread):
         self.downloader.kill_received = False
         self.local_dir = local_dir
         self.error = False
-        self._stopevent = threading.Event( )
+        self._stopevent = threading.Event()
 
     def run(self):
         logging.info('Start download thread')
@@ -96,7 +96,7 @@ class DownloadThread(threading.Thread):
             self.error = True
 
     def stop(self):
-        self._stopevent.set( )
+        self._stopevent.set()
 
 
 DownloadThread.MKDIR_LOCK = threading.Lock()

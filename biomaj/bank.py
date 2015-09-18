@@ -4,8 +4,9 @@ import os
 import logging
 import time
 import shutil
-#import copy
+# import copy
 
+from datetime import datetime
 from biomaj.mongo_connector import MongoConnector
 
 from biomaj.session import Session
@@ -15,7 +16,8 @@ from biomaj.options import Options
 from biomaj.process.processfactory import ProcessFactory
 from biomaj.bmajindex import BmajIndex
 
-#from bson.objectid import ObjectId
+
+# from bson.objectid import ObjectId
 
 
 class Bank(object):
@@ -34,7 +36,7 @@ class Bank(object):
         :param no_log: create a log file for the bank
         :type no_log: bool
         '''
-        logging.debug('Initialize '+name)
+        logging.debug('Initialize ' + name)
         if BiomajConfig.global_config is None:
             raise Exception('Configuration must be loaded first')
 
@@ -44,7 +46,7 @@ class Bank(object):
 
         if no_log:
             if options is None:
-                #options = {'no_log': True}
+                # options = {'no_log': True}
                 options = Options()
                 options.no_log = True
             else:
@@ -56,17 +58,17 @@ class Bank(object):
             ProcessFactory.NB_THREAD = int(self.config.get('bank.num.threads'))
 
         if self.config.log_file is not None and self.config.log_file != 'none':
-            logging.info("Log file: "+self.config.log_file)
+            logging.info("Log file: " + self.config.log_file)
 
-        #self.options = Options(options)
+        # self.options = Options(options)
         if options is None:
             self.options = Options()
         else:
             self.options = options
 
         if MongoConnector.db is None:
-            MongoConnector(BiomajConfig.global_config.get('GENERAL','db.url'),
-                            BiomajConfig.global_config.get('GENERAL','db.name'))
+            MongoConnector(BiomajConfig.global_config.get('GENERAL', 'db.url'),
+                           BiomajConfig.global_config.get('GENERAL', 'db.name'))
 
         self.banks = MongoConnector.banks
 
@@ -74,12 +76,12 @@ class Bank(object):
 
         if self.bank is None:
             self.bank = {
-                          'name' : self.name,
-                          'current': None,
-                          'sessions': [],
-                          'production': [],
-                          'properties': self.get_properties()
-                        }
+                'name': self.name,
+                'current': None,
+                'sessions': [],
+                'production': [],
+                'properties': self.get_properties()
+            }
             self.bank['_id'] = self.banks.insert(self.bank)
 
         self.session = None
@@ -96,8 +98,8 @@ class Bank(object):
         Checks if bank is locked ie action is in progress
         '''
         data_dir = self.config.get('data.dir')
-        lock_dir = self.config.get('lock.dir',default=data_dir)
-        lock_file = os.path.join(lock_dir,self.name+'.lock')
+        lock_dir = self.config.get('lock.dir', default=data_dir)
+        lock_file = os.path.join(lock_dir, self.name + '.lock')
         if os.path.exists(lock_file):
             return True
         else:
@@ -117,11 +119,11 @@ class Bank(object):
         Get disk usage per bank and release
         '''
         if MongoConnector.db is None:
-            MongoConnector(BiomajConfig.global_config.get('GENERAL','db.url'),
-                            BiomajConfig.global_config.get('GENERAL','db.name'))
+            MongoConnector(BiomajConfig.global_config.get('GENERAL', 'db.url'),
+                           BiomajConfig.global_config.get('GENERAL', 'db.name'))
 
         bank_list = []
-        banks = MongoConnector.banks.find({},{'name': 1, 'production': 1})
+        banks = MongoConnector.banks.find({}, {'name': 1, 'production': 1})
         for b in banks:
             bank_elt = {'name': b['name'], 'size': 0, 'releases': []}
             for p in b['production']:
@@ -131,6 +133,71 @@ class Bank(object):
                 bank_elt['releases'].append({'name': p['release'], 'size': p['size']})
             bank_list.append(bank_elt)
         return bank_list
+
+    def get_bank_release_info(self, full=False):
+        '''
+        Get release info for the bank. Used with --status option from biomaj-cly.py
+        :param full: Display full for the bank
+        :type full: Boolean
+        :return: Dict with keys
+                      if full=True
+                           - info, prod, pending
+                      else
+                           - info
+        '''
+
+        _bank = self.bank
+        info = {}
+
+        if full:
+            bank_info = []
+            prod_info = []
+            pend_info = []
+            release = None
+            if 'current' in _bank and _bank['current']:
+                for prod in _bank['production']:
+                    if _bank['current'] == prod['session']:
+                        release = prod['release']
+            # Bank info header
+            bank_info.append(["Name", "Type(s)", "Last update status", "Published release"])
+            bank_info.append([_bank['name'],
+                              str(','.join(_bank['properties']['type'])),
+                              str(datetime.fromtimestamp(_bank['last_update_session']).strftime("%Y-%m-%d %H:%M:%S")),
+                              str(release)])
+            # Bank production info header
+            prod_info.append(["Session", "Remote release", "Release", "Directory", "Freeze", "Pending"])
+            for prod in _bank['production']:
+                release_dir = os.path.join(self.config.get('data.dir'),
+                                           self.config.get('dir.version'),
+                                           prod['prod_dir'])
+                date = datetime.fromtimestamp(prod['session']).strftime('%Y-%m-%d %H:%M:%S')
+                prod_info.append([date,
+                                  prod['remoterelease'],
+                                  prod['release'],
+                                  release_dir,
+                                  'yes' if 'freeze' in prod and prod['freeze'] else 'no'])
+            # Bank pending info header
+            if 'pending' in _bank and len(_bank['pending'].keys()) > 0:
+                pend_info.append(["Pending release(s)"])
+                for pending in _bank['pending'].keys():
+                    pend_info.append(pending)
+            # return [ bank_info, prod_info, pend_info ]
+            info['info'] = bank_info
+            info['prod'] = prod_info
+            info['pend'] = pend_info
+            return info
+
+        else:
+            if 'current' in _bank and _bank['current']:
+                for prod in _bank['production']:
+                    if _bank['current'] == prod['session']:
+                        release = prod['remoterelease']
+            else:
+                release = 'N/A'
+            # return [ _bank['name'], ','.join(_bank['properties']['type']), str(release), _bank['properties']['visibility'] ]
+            info['info'] = [_bank['name'], ','.join(_bank['properties']['type']),
+                            str(release), _bank['properties']['visibility']]
+            return info
 
     def update_dependencies(self):
         '''
@@ -150,15 +217,15 @@ class Bank(object):
             self.session._session['depends'][dep] = False
         for dep in depends:
             if self.session._session['depends'][dep]:
-                logging.debug('Update:Depends:'+dep+':SKIP')
+                logging.debug('Update:Depends:' + dep + ':SKIP')
                 # Bank has been marked as depends multiple times, run only once
                 continue
-            logging.info('Update:Depends:'+dep)
+            logging.info('Update:Depends:' + dep)
             b = Bank(dep)
             res = b.update()
             self.depends.append(b)
             self.session._session['depends'][dep] = res
-            logging.info('Update:Depends:'+dep+':'+str(res))
+            logging.info('Update:Depends:' + dep + ':' + str(res))
             if not res:
                 break
         return res
@@ -189,7 +256,6 @@ class Bank(object):
             deps = b.get_dependencies() + deps
         return deps
 
-
     def is_owner(self):
         '''
         Checks if current user is owner or admin
@@ -209,22 +275,20 @@ class Bank(object):
         Update bank owner, only if current owner
         '''
         if not self.is_owner():
-            logging.error('Not authorized, bank owned by '+self.bank['properties']['owner'])
-            raise Exception('Not authorized, bank owned by '+self.bank['properties']['owner'])
+            logging.error('Not authorized, bank owned by ' + self.bank['properties']['owner'])
+            raise Exception('Not authorized, bank owned by ' + self.bank['properties']['owner'])
 
-        self.banks.update({'name': self.name}, {'$set' : { 'properties': { 'owner': owner} }})
+        self.banks.update({'name': self.name}, {'$set': {'properties': {'owner': owner}}})
 
     def set_visibility(self, visibility):
         '''
         Update bank visibility, only if current owner
         '''
         if not self.is_owner():
-            logging.error('Not authorized, bank owned by '+self.bank['properties']['owner'])
-            raise Exception('Not authorized, bank owned by '+self.bank['properties']['owner'])
+            logging.error('Not authorized, bank owned by ' + self.bank['properties']['owner'])
+            raise Exception('Not authorized, bank owned by ' + self.bank['properties']['owner'])
 
-        self.banks.update({'name': self.name}, {'$set' : { 'properties': { 'visibility': visibility} }})
-
-
+        self.banks.update({'name': self.name}, {'$set': {'properties': {'visibility': visibility}}})
 
     def get_properties(self):
         '''
@@ -239,10 +303,10 @@ class Bank(object):
             owner = self.bank['properties']['owner']
 
         props = {
-          'visibility': self.config.get('visibility.default'),
-          'type': self.config.get('db.type').split(','),
-          'tags': [],
-          'owner': owner
+            'visibility': self.config.get('visibility.default'),
+            'type': self.config.get('db.type').split(','),
+            'tags': [],
+            'owner': owner
         }
 
         return props
@@ -250,7 +314,6 @@ class Bank(object):
     @staticmethod
     def searchindex(query):
         return BmajIndex.searchq(query)
-
 
     @staticmethod
     def search(formats=None, types=None, with_sessions=True):
@@ -266,15 +329,15 @@ class Bank(object):
             types = []
 
         if MongoConnector.db is None:
-            MongoConnector(BiomajConfig.global_config.get('GENERAL','db.url'),
-                            BiomajConfig.global_config.get('GENERAL','db.name'))
-        filter = {}
+            MongoConnector(BiomajConfig.global_config.get('GENERAL', 'db.url'),
+                           BiomajConfig.global_config.get('GENERAL', 'db.name'))
+        searchfilter = {}
         if formats:
-            filter['production.formats'] = {'$in': formats}
+            searchfilter['production.formats'] = {'$in': formats}
         if with_sessions:
-            res = MongoConnector.banks.find(filter)
+            res = MongoConnector.banks.find(searchfilter)
         else:
-            res = MongoConnector.banks.find(filter,{'sessions': 0})
+            res = MongoConnector.banks.find(searchfilter, {'sessions': 0})
         # Now search in which production release formats and types apply
         search_list = []
         for r in res:
@@ -301,7 +364,7 @@ class Bank(object):
                     prod_to_delete.append(p)
             for prod_del in prod_to_delete:
                 r['production'].remove(prod_del)
-            if len(r['production'])>0:
+            if len(r['production']) > 0:
                 search_list.append(r)
         return search_list
 
@@ -315,15 +378,14 @@ class Bank(object):
         :return: list of :class:`biomaj.bank.Bank`
         '''
         if MongoConnector.db is None:
-            MongoConnector(BiomajConfig.global_config.get('GENERAL','db.url'),
-                            BiomajConfig.global_config.get('GENERAL','db.name'))
-
+            MongoConnector(BiomajConfig.global_config.get('GENERAL', 'db.url'),
+                           BiomajConfig.global_config.get('GENERAL', 'db.name'))
 
         bank_list = []
         if with_sessions:
             res = MongoConnector.banks.find({})
         else:
-            res = MongoConnector.banks.find({},{'sessions': 0})
+            res = MongoConnector.banks.find({}, {'sessions': 0})
         for r in res:
             bank_list.append(r)
         return bank_list
@@ -334,20 +396,19 @@ class Bank(object):
         '''
         data_dir = self.config.get('data.dir')
         bank_dir = self.config.get('dir.version')
-        bank_dir = os.path.join(data_dir,bank_dir)
+        bank_dir = os.path.join(data_dir, bank_dir)
         if not os.path.exists(bank_dir):
             os.makedirs(bank_dir)
 
         offline_dir = self.config.get('offline.dir.name')
-        offline_dir = os.path.join(data_dir,offline_dir)
+        offline_dir = os.path.join(data_dir, offline_dir)
         if not os.path.exists(offline_dir):
             os.makedirs(offline_dir)
 
         log_dir = self.config.get('log.dir')
-        log_dir = os.path.join(log_dir,self.name)
+        log_dir = os.path.join(log_dir, self.name)
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
-
 
     def _delete(self):
         '''
@@ -363,36 +424,40 @@ class Bank(object):
         self.session._session['log_file'] = self.config.log_file
         if self.use_last_session:
             # Remove last session
-            self.banks.update({'name': self.name}, {'$pull' : { 'sessions': { 'id': self.session._session['id']} }})
+            self.banks.update({'name': self.name}, {'$pull': {'sessions': {'id': self.session._session['id']}}})
         # Insert session
         if self.session.get('action') == 'update':
             action = 'last_update_session'
         if self.session.get('action') == 'remove':
             action = 'last_remove_session'
         self.banks.update({'name': self.name}, {
-          '$set': {
-            action: self.session._session['id'],
-            'properties': self.get_properties()
-          },
-          '$push' : { 'sessions': self.session._session }
-          })
+            '$set': {
+                action: self.session._session['id'],
+                'properties': self.get_properties()
+            },
+            '$push': {'sessions': self.session._session}
+        })
         BmajIndex.add(self.name, self.session._session)
-        if self.session.get('action') == 'update' and not self.session.get_status(Workflow.FLOW_OVER) and self.session.get('release'):
-            self.banks.update({'name': self.name},{'$set': {'pending.'+self.session.get('release'): self.session._session['id']}})
-        if self.session.get('action') == 'update' and self.session.get_status(Workflow.FLOW_OVER) and self.session.get('update'):
+        if self.session.get('action') == 'update' and not self.session.get_status(
+                Workflow.FLOW_OVER) and self.session.get('release'):
+            self.banks.update({'name': self.name},
+                              {'$set': {'pending.' + self.session.get('release'): self.session._session['id']}})
+        if self.session.get('action') == 'update' and self.session.get_status(Workflow.FLOW_OVER) and self.session.get(
+                'update'):
             # We expect that a production release has reached the FLOW_OVER status.
             # If no update is needed (same release etc...), the *update* session of the session is set to False
-            logging.debug('Bank:Save:'+self.name)
+            logging.debug('Bank:Save:' + self.name)
             if len(self.bank['production']) > 0:
                 # Remove from database
-                self.banks.update({'name': self.name}, {'$pull' : { 'production': { 'release': self.session._session['release'] }}})
+                self.banks.update({'name': self.name},
+                                  {'$pull': {'production': {'release': self.session._session['release']}}})
                 # Update local object
-                #index = 0
-                #for prod in self.bank['production']:
+                # index = 0
+                # for prod in self.bank['production']:
                 #  if prod['release'] == self.session._session['release']:
                 #    break;
                 #  index += 1
-                #if index < len(self.bank['production']):
+                # if index < len(self.bank['production']):
                 #  self.bank['production'].pop(index)
             release_types = []
             for release_format in self.session._session['formats']:
@@ -404,24 +469,24 @@ class Bank(object):
             prod_dir = self.session.get_release_directory()
             if self.session.get('prod_dir'):
                 prod_dir = self.session.get('prod_dir')
-            production = { 'release': self.session.get('release'),
-                            'remoterelease': self.session.get('remoterelease'),
-                            'session': self.session._session['id'],
-                            'formats': list(self.session._session['formats'].keys()),
-                            'types': release_types,
-                            'size': self.session.get('fullsize'),
-                            'data_dir': self.session._session['data_dir'],
-                            'dir_version': self.session._session['dir_version'],
-                            'prod_dir': prod_dir,
-                            'freeze': False }
+            production = {'release': self.session.get('release'),
+                          'remoterelease': self.session.get('remoterelease'),
+                          'session': self.session._session['id'],
+                          'formats': list(self.session._session['formats'].keys()),
+                          'types': release_types,
+                          'size': self.session.get('fullsize'),
+                          'data_dir': self.session._session['data_dir'],
+                          'dir_version': self.session._session['dir_version'],
+                          'prod_dir': prod_dir,
+                          'freeze': False}
             self.bank['production'].append(production)
 
             self.banks.update({'name': self.name},
                               {'$push': {'production': production},
-                               '$unset': {'pending.'+self.session.get('release'): ''}
-                              })
+                               '$unset': {'pending.' + self.session.get('release'): ''}
+                               })
 
-            #self.banks.update({'name': self.name},
+            # self.banks.update({'name': self.name},
             #                  {'$unset': 'pending.'+self.session.get('release')
             #                  })
 
@@ -436,7 +501,7 @@ class Bank(object):
         # No previous session
         if 'sessions' not in self.bank:
             return
-        #'last_update_session' in self.bank and self.bank['last_update_session']
+        # 'last_update_session' in self.bank and self.bank['last_update_session']
         old_sessions = []
         prod_releases = []
         for session in self.bank['sessions']:
@@ -461,15 +526,15 @@ class Bank(object):
         if len(old_sessions) > 0:
             for session in old_sessions:
                 session_id = session['id']
-                self.banks.update({'name': self.name}, {'$pull' : { 'sessions': { 'id': session_id }}})
+                self.banks.update({'name': self.name}, {'$pull': {'sessions': {'id': session_id}}})
                 if session['release'] not in prod_releases and session['release'] != self.session.get('release'):
                     # There might be unfinished releases linked to session, delete them
                     # if they are not related to a production directory or latest run
                     session_dir = os.path.join(self.config.get('data.dir'),
-                                                self.config.get('dir.version'),
-                                                self.name+'-'+str(session['release']))
+                                               self.config.get('dir.version'),
+                                               self.name + '-' + str(session['release']))
                     if os.path.exists(session_dir):
-                        logging.info('Bank:DeleteOldSessionDir:'+self.name+'-'+str(session['release']))
+                        logging.info('Bank:DeleteOldSessionDir:' + self.name + '-' + str(session['release']))
                         shutil.rmtree(session_dir)
             self.bank = self.banks.find_one({'name': self.name})
 
@@ -478,8 +543,8 @@ class Bank(object):
         Set session release to *current*
         '''
         if not self.is_owner():
-            logging.error('Not authorized, bank owned by '+self.bank['properties']['owner'])
-            raise Exception('Not authorized, bank owned by '+self.bank['properties']['owner'])
+            logging.error('Not authorized, bank owned by ' + self.bank['properties']['owner'])
+            raise Exception('Not authorized, bank owned by ' + self.bank['properties']['owner'])
 
         current_link = os.path.join(self.config.get('data.dir'),
                                     self.config.get('dir.version'),
@@ -487,16 +552,16 @@ class Bank(object):
         prod_dir = self.session.get_full_release_directory()
 
         to_dir = os.path.join(self.config.get('data.dir'),
-                      self.config.get('dir.version'))
+                              self.config.get('dir.version'))
 
         if os.path.lexists(current_link):
             os.remove(current_link)
         os.chdir(to_dir)
-        os.symlink(self.session.get_release_directory(),'current')
+        os.symlink(self.session.get_release_directory(), 'current')
         self.bank['current'] = self.session._session['id']
         self.banks.update({'name': self.name},
                           {
-                          '$set': {'current': self.session._session['id']}
+                              '$set': {'current': self.session._session['id']}
                           })
 
     def unpublish(self):
@@ -504,8 +569,8 @@ class Bank(object):
         Unset *current*
         '''
         if not self.is_owner():
-            logging.error('Not authorized, bank owned by '+self.bank['properties']['owner'])
-            raise Exception('Not authorized, bank owned by '+self.bank['properties']['owner'])
+            logging.error('Not authorized, bank owned by ' + self.bank['properties']['owner'])
+            raise Exception('Not authorized, bank owned by ' + self.bank['properties']['owner'])
 
         current_link = os.path.join(self.config.get('data.dir'),
                                     self.config.get('dir.version'),
@@ -515,9 +580,8 @@ class Bank(object):
             os.remove(current_link)
         self.banks.update({'name': self.name},
                           {
-                          '$set': {'current': None}
+                              '$set': {'current': None}
                           })
-
 
     def get_production(self, release):
         '''
@@ -544,9 +608,8 @@ class Bank(object):
         :return: bool
         '''
         if not self.is_owner():
-            logging.error('Not authorized, bank owned by '+self.bank['properties']['owner'])
-            raise Exception('Not authorized, bank owned by '+self.bank['properties']['owner'])
-
+            logging.error('Not authorized, bank owned by ' + self.bank['properties']['owner'])
+            raise Exception('Not authorized, bank owned by ' + self.bank['properties']['owner'])
 
         rel = None
         for prod in self.bank['production']:
@@ -554,8 +617,8 @@ class Bank(object):
                 # Search session related to this production release
                 rel = prod['release']
         if rel is None:
-            logging.error('Release not found: '+release)
-        self.banks.update({'name': self.name, 'production.release': rel},{'$set': { 'production.$.freeze': True }})
+            logging.error('Release not found: ' + release)
+        self.banks.update({'name': self.name, 'production.release': rel}, {'$set': {'production.$.freeze': True}})
         self.bank = self.banks.find_one({'name': self.name})
         return True
 
@@ -568,8 +631,8 @@ class Bank(object):
         :return: bool
         '''
         if not self.is_owner():
-            logging.error('Not authorized, bank owned by '+self.bank['properties']['owner'])
-            raise Exception('Not authorized, bank owned by '+self.bank['properties']['owner'])
+            logging.error('Not authorized, bank owned by ' + self.bank['properties']['owner'])
+            raise Exception('Not authorized, bank owned by ' + self.bank['properties']['owner'])
 
         rel = None
         for prod in self.bank['production']:
@@ -577,8 +640,8 @@ class Bank(object):
                 # Search session related to this production release
                 rel = prod['release']
         if rel is None:
-            logging.error('Release not found: '+release)
-        self.banks.update({'name': self.name, 'production.release': rel},{'$set': { 'production.$.freeze': False }})
+            logging.error('Release not found: ' + release)
+        self.banks.update({'name': self.name, 'production.release': rel}, {'$set': {'production.$.freeze': False}})
         self.bank = self.banks.find_one({'name': self.name})
         return True
 
@@ -590,7 +653,7 @@ class Bank(object):
         :type flow: :func:`biomaj.workflow.Workflow.FLOW`
         '''
         if flow is None:
-            flow=Workflow.FLOW
+            flow = Workflow.FLOW
         return Session(self.name, self.config, flow)
 
     def get_session_from_release(self, release):
@@ -630,10 +693,10 @@ class Bank(object):
         :type flow: :func:`biomaj.workflow.Workflow.FLOW`
         '''
         if flow is None:
-            flow=Workflow.FLOW
+            flow = Workflow.FLOW
 
         if session is not None:
-            logging.debug('Load specified session '+str(session['id']))
+            logging.debug('Load specified session ' + str(session['id']))
             self.session = Session(self.name, self.config, flow)
             self.session.load(session)
             self.use_last_session = True
@@ -646,7 +709,8 @@ class Bank(object):
             self.session = Session(self.name, self.config, flow)
             session_id = None
             # Load previous session for updates only
-            if self.session.get('action') == 'update' and 'last_update_session' in self.bank and self.bank['last_update_session']:
+            if self.session.get('action') == 'update' and 'last_update_session' in self.bank and self.bank[
+                'last_update_session']:
                 session_id = self.bank['last_update_session']
                 load_session = None
                 for session in self.bank['sessions']:
@@ -654,21 +718,21 @@ class Bank(object):
                         load_session = session
                         break
                 if load_session is not None:
-                    #self.session.load(self.bank['sessions'][len(self.bank['sessions'])-1])
+                    # self.session.load(self.bank['sessions'][len(self.bank['sessions'])-1])
                     self.session.load(session)
-                    #if self.config.last_modified > self.session.get('last_modified'):
+                    # if self.config.last_modified > self.session.get('last_modified'):
                     #  # Config has changed, need to restart
                     #  self.session = Session(self.name, self.config, flow)
                     #  logging.info('Configuration file has been modified since last session, restart in any case a new session')
-                    if self.session.get_status(Workflow.FLOW_OVER) and self.options.get_option(Options.FROM_TASK) is None:
+                    if self.session.get_status(Workflow.FLOW_OVER) and self.options.get_option(
+                            Options.FROM_TASK) is None:
                         previous_release = self.session.get('remoterelease')
                         self.session = Session(self.name, self.config, flow)
                         self.session.set('previous_release', previous_release)
                         logging.debug('Start new session')
                     else:
-                        logging.debug('Load previous session '+str(self.session.get('id')))
+                        logging.debug('Load previous session ' + str(self.session.get('id')))
                         self.use_last_session = True
-
 
     def remove_session(self, sid):
         '''
@@ -684,20 +748,20 @@ class Bank(object):
             if s['id'] == sid:
                 session_release = s['release']
         if session_release is not None:
-            self.banks.update({'name': self.name},{'$pull':{
-                                                  'sessions': {'id': sid},
-                                                  'production': {'session': sid}
-                                                  },
-                                                  '$unset': {
-                                                    'pending.'+session_release: ''
-                                                  }
-                            })
+            self.banks.update({'name': self.name}, {'$pull': {
+                'sessions': {'id': sid},
+                'production': {'session': sid}
+            },
+                '$unset': {
+                    'pending.' + session_release: ''
+                }
+            })
         else:
-            self.banks.update({'name': self.name},{'$pull':{
-                                                  'sessions': {'id': sid},
-                                                  'production': {'session': sid}
-                                                  }
-                            })
+            self.banks.update({'name': self.name}, {'$pull': {
+                'sessions': {'id': sid},
+                'production': {'session': sid}
+            }
+            })
         # Update object
         self.bank = self.banks.find_one({'name': self.name})
         if session_release is not None:
@@ -711,7 +775,7 @@ class Bank(object):
         :return: str
         '''
         return os.path.join(self.config.get('data.dir'),
-                          self.config.get('dir.version'))
+                            self.config.get('dir.version'))
 
     def removeAll(self, force=False):
         '''
@@ -734,13 +798,13 @@ class Bank(object):
         self.banks.remove({'name': self.name})
         BmajIndex.delete_all_bank(self.name)
         bank_data_dir = self.get_data_dir()
-        logging.warn('DELETE '+bank_data_dir)
+        logging.warn('DELETE ' + bank_data_dir)
         if os.path.exists(bank_data_dir):
             shutil.rmtree(bank_data_dir)
-        bank_offline_dir = os.path.join(self.config.get('data.dir'),self.config.get('offline.dir.name'))
+        bank_offline_dir = os.path.join(self.config.get('data.dir'), self.config.get('offline.dir.name'))
         if os.path.exists(bank_offline_dir):
             shutil.rmtree(bank_offline_dir)
-        bank_log_dir = os.path.join(self.config.get('log.dir'),self.name)
+        bank_log_dir = os.path.join(self.config.get('log.dir'), self.name)
         if os.path.exists(bank_log_dir) and self.no_log:
             shutil.rmtree(bank_log_dir)
         return True
@@ -755,7 +819,6 @@ class Bank(object):
             return {}
         return self.bank['status']
 
-
     def remove_pending(self, release):
         '''
         Remove pending releases
@@ -764,11 +827,11 @@ class Bank(object):
         :type release: str
         :return: bool
         '''
-        logging.warning('Bank:'+self.name+':RemovePending')
+        logging.warning('Bank:' + self.name + ':RemovePending')
 
         if not self.is_owner():
-            logging.error('Not authorized, bank owned by '+self.bank['properties']['owner'])
-            raise Exception('Not authorized, bank owned by '+self.bank['properties']['owner'])
+            logging.error('Not authorized, bank owned by ' + self.bank['properties']['owner'])
+            raise Exception('Not authorized, bank owned by ' + self.bank['properties']['owner'])
 
         if not self.bank['pending']:
             return True
@@ -786,12 +849,11 @@ class Bank(object):
             else:
                 session.load(pending_session)
             if os.path.exists(session.get_full_release_directory()):
-                logging.debug("Remove:Pending:Dir:"+session.get_full_release_directory())
+                logging.debug("Remove:Pending:Dir:" + session.get_full_release_directory())
                 shutil.rmtree(session.get_full_release_directory())
             self.remove_session(pendings[release])
-        self.banks.update({'name': self.name},{'$set': {'pending': {}}})
+        self.banks.update({'name': self.name}, {'$set': {'pending': {}}})
         return True
-
 
     def remove(self, release):
         '''
@@ -801,11 +863,11 @@ class Bank(object):
         :type release: str
         :return: bool
         '''
-        logging.warning('Bank:'+self.name+':Remove')
+        logging.warning('Bank:' + self.name + ':Remove')
 
         if not self.is_owner():
-            logging.error('Not authorized, bank owned by '+self.bank['properties']['owner'])
-            raise Exception('Not authorized, bank owned by '+self.bank['properties']['owner'])
+            logging.error('Not authorized, bank owned by ' + self.bank['properties']['owner'])
+            raise Exception('Not authorized, bank owned by ' + self.bank['properties']['owner'])
 
         self.session = self.get_new_session(RemoveWorkflow.FLOW)
         oldsession = None
@@ -848,33 +910,35 @@ class Bank(object):
         :type depends: bool
         :return: bool
         '''
-        logging.warning('Bank:'+self.name+':Update')
+        logging.warning('Bank:' + self.name + ':Update')
 
         if not self.is_owner():
-            logging.error('Not authorized, bank owned by '+self.bank['properties']['owner'])
-            raise Exception('Not authorized, bank owned by '+self.bank['properties']['owner'])
+            logging.error('Not authorized, bank owned by ' + self.bank['properties']['owner'])
+            raise Exception('Not authorized, bank owned by ' + self.bank['properties']['owner'])
 
         self.run_depends = depends
 
         self.controls()
         if self.options.get_option('release'):
-            logging.info('Bank:'+self.name+':Release:'+self.options.get_option('release'))
+            logging.info('Bank:' + self.name + ':Release:' + self.options.get_option('release'))
             s = self.get_session_from_release(self.options.get_option('release'))
             # No session in prod
             if s is None:
-                logging.error('Release does not exists: '+self.options.get_option('release'))
+                logging.error('Release does not exists: ' + self.options.get_option('release'))
                 return False
             self.load_session(UpdateWorkflow.FLOW, s)
         else:
-            logging.info('Bank:'+self.name+':Release:latest')
+            logging.info('Bank:' + self.name + ':Release:latest')
             self.load_session(UpdateWorkflow.FLOW)
         # if from task, reset workflow status in session.
         if self.options.get_option('from_task'):
             set_to_false = False
             for task in self.session.flow:
                 # If task was in False status (KO) and we ask to start after this task, exit
-                if not set_to_false and not self.session.get_status(task['name']) and  task['name'] != self.options.get_option('from_task'):
-                    logging.error('Previous task '+task['name']+' was not successful, cannot restart after this task')
+                if not set_to_false and not self.session.get_status(task['name']) and task[
+                    'name'] != self.options.get_option('from_task'):
+                    logging.error(
+                        'Previous task ' + task['name'] + ' was not successful, cannot restart after this task')
                     return False
                 if task['name'] == self.options.get_option('from_task'):
                     set_to_false = True
@@ -882,16 +946,17 @@ class Bank(object):
                     # After from_task task, tasks must be set to False to be run
                     self.session.set_status(task['name'], False)
                     proc = None
-                    if task['name'] in [Workflow.FLOW_POSTPROCESS, Workflow.FLOW_PREPROCESS, Workflow.FLOW_REMOVEPROCESS]:
+                    if task['name'] in [Workflow.FLOW_POSTPROCESS, Workflow.FLOW_PREPROCESS,
+                                        Workflow.FLOW_REMOVEPROCESS]:
                         proc = self.options.get_option('process')
                         self.session.reset_proc(task['name'], proc)
-                    #if task['name'] == Workflow.FLOW_POSTPROCESS:
-                    #  self.session.reset_proc(Workflow.FLOW_POSTPROCESS, proc)
-                    #elif task['name'] == Workflow.FLOW_PREPROCESS:
-                    #  self.session.reset_proc(Workflow.FLOW_PREPROCESS, proc)
-                    #elif task['name'] == Workflow.FLOW_REMOVEPROCESS:
-                    #  self.session.reset_proc(Workflow.FLOW_REMOVEPROCESS, proc)
-        self.session.set('action','update')
+                        # if task['name'] == Workflow.FLOW_POSTPROCESS:
+                        #  self.session.reset_proc(Workflow.FLOW_POSTPROCESS, proc)
+                        # elif task['name'] == Workflow.FLOW_PREPROCESS:
+                        #  self.session.reset_proc(Workflow.FLOW_PREPROCESS, proc)
+                        # elif task['name'] == Workflow.FLOW_REMOVEPROCESS:
+                        #  self.session.reset_proc(Workflow.FLOW_REMOVEPROCESS, proc)
+        self.session.set('action', 'update')
         res = self.start_update()
         self.save_session()
         return res

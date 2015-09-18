@@ -11,6 +11,7 @@ import logging
 import shutil
 import datetime
 import subprocess
+from subprocess import CalledProcessError
 
 from mimetypes import MimeTypes
 
@@ -46,8 +47,8 @@ class Utils(object):
         '''
         if Utils.mime is None:
             Utils.mime = MimeTypes()
-            mimesfile = os.path.join(os.path.dirname(__file__),'mimes-bio.txt')
-            Utils.mime.read(mimesfile,True)
+            mimesfile = os.path.join(os.path.dirname(__file__), 'mimes-bio.txt')
+            Utils.mime.read(mimesfile, True)
         return Utils.mime.guess_type(filename, True)
 
     @staticmethod
@@ -60,10 +61,10 @@ class Utils(object):
         release = None
         for rfile in files:
             if release is None:
-                release = { 'year': rfile['year'], 'month': rfile['month'], 'day': rfile['day']}
+                release = {'year': rfile['year'], 'month': rfile['month'], 'day': rfile['day']}
             else:
-                rel_date = datetime.date(int(release['year']),int(release['month']),int(release['day']))
-                file_date = datetime.date(int(rfile['year']),int(rfile['month']),int(rfile['day']))
+                rel_date = datetime.date(int(release['year']), int(release['month']), int(release['day']))
+                file_date = datetime.date(int(rfile['year']), int(rfile['month']), int(rfile['day']))
                 if file_date > rel_date:
                     release['year'] = rfile['year']
                     release['month'] = rfile['month']
@@ -120,7 +121,7 @@ class Utils(object):
                 try:
                     if not os.path.exists(os.path.dirname(to_file)):
                         os.makedirs(os.path.dirname(to_file))
-                except Exception as  e:
+                except Exception as e:
                     logging.error(e)
                 finally:
                     lock.release()
@@ -160,7 +161,7 @@ class Utils(object):
         for root, dirs, files in os.walk(from_dir, topdown=True):
             for name in files:
                 for reg in regexps:
-                    file_relative_path = os.path.join(root, name).replace(from_dir,'')
+                    file_relative_path = os.path.join(root, name).replace(from_dir, '')
                     if file_relative_path.startswith('/'):
                         file_relative_path = file_relative_path.replace('/', '', 1)
                     if re.match(reg, file_relative_path):
@@ -207,6 +208,7 @@ class Utils(object):
         :type file: str
         :param remove: remove archive if present
         :type remove: bool
+        :return: True if ok, False if an error occured
         '''
         is_archive = False
         #if tarfile.is_tarfile(file):
@@ -215,26 +217,29 @@ class Utils(object):
         #  tfile.extractall(os.path.basename(file))
         #  tfile.close()
         #  is_archive = True
-        if archivefile.endswith('.tar.gz'):
-            proc = subprocess.check_call("tar xfz "+archivefile+" --overwrite -C "+os.path.dirname(archivefile), shell=True)
-            #proc.wait()
-            is_archive = True
-        elif archivefile.endswith('.tar'):
-            proc = subprocess.check_call("tar xf "+archivefile+" --overwrite -C "+os.path.dirname(archivefile), shell=True)
-            #proc.wait()
-            is_archive = True
-        elif archivefile.endswith('.bz2'):
-            proc = subprocess.check_call("tar xjf "+archivefile+" --overwrite -C "+os.path.dirname(archivefile), shell=True)
-            #proc.wait()
-            is_archive = True
-        elif archivefile.endswith('.gz'):
-            proc = subprocess.check_call("gunzip -f "+archivefile, shell=True)
-            #proc.wait()
-            is_archive = True
-        elif archivefile.endswith('.zip'):
-            proc = subprocess.check_call("unzip -o "+archivefile+" -d "+os.path.dirname(archivefile), shell=True)
-            #proc.wait()
-            is_archive = True
+        try:
+            if archivefile.endswith('.tar.gz'):
+                proc = subprocess.check_call("tar xfz "+archivefile+" --overwrite -C "+os.path.dirname(archivefile), shell=True)
+                #proc.wait()
+                is_archive = True
+            elif archivefile.endswith('.tar'):
+                proc = subprocess.check_call("tar xf "+archivefile+" --overwrite -C "+os.path.dirname(archivefile), shell=True)
+                #proc.wait()
+                is_archive = True
+            elif archivefile.endswith('.bz2'):
+                proc = subprocess.check_call("tar xjf "+archivefile+" --overwrite -C "+os.path.dirname(archivefile), shell=True)
+                #proc.wait()
+                is_archive = True
+            elif archivefile.endswith('.gz'):
+                proc = subprocess.check_call("gunzip -f "+archivefile, shell=True)
+                #proc.wait()
+                is_archive = True
+            elif archivefile.endswith('.zip'):
+                proc = subprocess.check_call("unzip -o "+archivefile+" -d "+os.path.dirname(archivefile), shell=True)
+                #proc.wait()
+                is_archive = True
+        except CalledProcessError as uncompresserror:
+            return False
         #elif zipfile.is_zipfile(file):
         #  logging.debug('Uncompress:Zip:'+file)
         #  zfile = zipfile.ZipFile(file)
@@ -264,3 +269,5 @@ class Utils(object):
 
         if is_archive and remove and os.path.exists(archivefile):
             os.remove(archivefile)
+
+        return True

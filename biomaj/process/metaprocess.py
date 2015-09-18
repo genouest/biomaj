@@ -43,7 +43,7 @@ class MetaProcess(threading.Thread):
         if meta_status is not None:
             self.meta_status = meta_status
 
-        self._stopevent = threading.Event( )
+        self._stopevent = threading.Event()
 
         self.bmaj_env = os.environ.copy()
         #self.bmaj_env = {}
@@ -77,7 +77,7 @@ class MetaProcess(threading.Thread):
             self.bmaj_env['mailsmtp'] = self.bank.config.get('mail.smtp.host')
             self.bmaj_only_env['mailsmtp'] = self.bmaj_env['mailsmtp']
 
-        self.bmaj_env['processdir'] = self.bank.config.get('process.dir',default='')
+        self.bmaj_env['processdir'] = self.bank.config.get('process.dir', default='')
         self.bmaj_only_env['processdir'] = self.bmaj_env['processdir']
 
         if 'PATH' in self.bmaj_env:
@@ -150,7 +150,8 @@ class MetaProcess(threading.Thread):
         '''
         logging.debug('Process:progress:'+name+"="+str(status))
         if self.workflow is not None:
-            MongoConnector.banks.update({'name': self.bank.name},{'$set': {'status.'+self.workflow+'.progress.'+name: status}})
+            MongoConnector.banks.update({'name': self.bank.name},
+                {'$set': {'status.'+self.workflow+'.progress.'+name: status}})
 
     def run(self):
         # Run meta processes
@@ -196,13 +197,13 @@ class MetaProcess(threading.Thread):
                                                 expand, self.bmaj_env, os.path.dirname(self.bank.config.log_file))
                     self.set_progress(bmaj_process.name, None)
                     if self.bank.config.get(bprocess+'.format'):
-                        bmaj_process.format =  self.bank.config.get(bprocess+'.format')
+                        bmaj_process.format = self.bank.config.get(bprocess+'.format')
                     if self.bank.config.get(bprocess+'.types'):
-                        bmaj_process.types =  self.bank.config.get(bprocess+'.types')
+                        bmaj_process.types = self.bank.config.get(bprocess+'.types')
                     if self.bank.config.get(bprocess+'.tags'):
-                        bmaj_process.tags =  self.bank.config.get(bprocess+'.tags')
+                        bmaj_process.tags = self.bank.config.get(bprocess+'.tags')
                     if self.bank.config.get(bprocess+'.files'):
-                        bmaj_process.files =  self.bank.config.get(bprocess+'.files')
+                        bmaj_process.files = self.bank.config.get(bprocess+'.files')
                     res = bmaj_process.run(self.simulate)
                     processes_status[bprocess] = res
                     self.set_progress(bmaj_process.name, res)
@@ -273,4 +274,4 @@ class MetaProcess(threading.Thread):
 
 
     def stop(self):
-        self._stopevent.set( )
+        self._stopevent.set()

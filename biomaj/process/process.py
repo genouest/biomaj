@@ -33,13 +33,13 @@ class Process(object):
         '''
         # Replace env vars in args
         if args:
-            for key,value in bank_env.items():
+            for key, value in bank_env.items():
                 if value is not None:
                     args = args.replace('${'+key+'}', value)
 
         self.name = name
         self.exe = exe
-        self.desc= desc
+        self.desc = desc
         if args is not None:
             self.args = args.split()
         else:
@@ -48,8 +48,8 @@ class Process(object):
         self.type = proc_type
         self.expand = expand
         if log_dir is not None:
-            self.output_file = os.path.join(log_dir,name+'.out')
-            self.error_file = os.path.join(log_dir,name+'.err')
+            self.output_file = os.path.join(log_dir, name+'.out')
+            self.error_file = os.path.join(log_dir, name+'.err')
         else:
             self.output_file = name+'.out'
             self.error_file = name+'.err'
@@ -67,13 +67,13 @@ class Process(object):
         :type simulate: bool
         :return: exit code of process
         '''
-        args = [ self.exe ] + self.args
+        args = [self.exe] + self.args
         logging.debug('PROCESS:EXEC:'+str(self.args))
-        err= False
+        err = False
         if not simulate:
             logging.info('PROCESS:RUN:'+self.name)
-            with open(self.output_file,'w') as fout:
-                with open(self.error_file,'w') as ferr:
+            with open(self.output_file, 'w') as fout:
+                with open(self.error_file, 'w') as ferr:
                     if self.expand:
                         args = " ".join(args)
                         proc = subprocess.Popen(args, stdout=fout, stderr=ferr, env=self.bank_env, shell=True)
@@ -122,31 +122,31 @@ class DockerProcess(Process):
     {sudo} docker run --rm -w {bank_dir}  -v {data_dir}:{data_dir} {env} {container_id} \
     bash -c "groupadd --gid {gid} {group_biomaj} && useradd --uid {uid} --gid {gid} {user_biomaj}; \
     {exe} {args}; \
-    chown -R {uid}:{gid} {bank_dir}"'''.format(uid = os.getuid(),
-                                              gid = os.getgid(),
-                                              data_dir = self.bank_env['datadir'],
-                                              env = env,
-                                              container_id = self.docker,
-                                              group_biomaj = 'biomaj',
-                                              user_biomaj = 'biomaj',
-                                              exe = self.exe,
-                                              args = ' '.join(self.args),
+    chown -R {uid}:{gid} {bank_dir}"'''.format(uid=os.getuid(),
+                                              gid=os.getgid(),
+                                              data_dir=self.bank_env['datadir'],
+                                              env=env,
+                                              container_id=self.docker,
+                                              group_biomaj='biomaj',
+                                              user_biomaj='biomaj',
+                                              exe=self.exe,
+                                              args=' '.join(self.args),
                                               bank_dir=release_dir,
                                               sudo=use_sudo
                                               )
 
         (handler, tmpfile) = tempfile.mkstemp('biomaj')
-        os.write(handler,cmd)
+        os.write(handler, cmd)
         os.close(handler)
         os.chmod(tmpfile, 0o755)
-        args = [ tmpfile ]
+        args = [tmpfile]
         logging.debug('PROCESS:EXEC:Docker:'+str(self.args))
         logging.debug('PROCESS:EXEC:Docker:Tmpfile:'+tmpfile)
-        err= False
+        err = False
         if not simulate:
             logging.info('PROCESS:RUN:Docker:'+self.docker+':'+self.name)
-            with open(self.output_file,'w') as fout:
-                with open(self.error_file,'w') as ferr:
+            with open(self.output_file, 'w') as fout:
+                with open(self.error_file, 'w') as ferr:
                     if self.expand:
                         args = " ".join(args)
                         proc = subprocess.Popen(args, stdout=fout, stderr=ferr, env=self.bank_env, shell=True)
@@ -180,9 +180,9 @@ class DrmaaProcess(Process):
         :type simulate: bool
         :return: exit code of process
         '''
-        args = [ self.exe ] + self.args
+        args = [self.exe] + self.args
         logging.debug('PROCESS:EXEC:'+str(self.args))
-        err= False
+        err = False
         if not simulate:
             logging.info('Run process '+self.name)
             # Execute on DRMAA
@@ -192,7 +192,7 @@ class DrmaaProcess(Process):
                     jt = s.createJobTemplate()
                     jt.remoteCommand = self.exe
                     jt.args = self.args
-                    jt.joinFiles=False
+                    jt.joinFiles = False
                     jt.workingDirectory = os.path.dirname(os.path.realpath(self.output_file))
                     jt.jobEnvironment = self.bank_env
                     if self.native:

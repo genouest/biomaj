@@ -140,10 +140,13 @@ class Workflow(object):
                             res = getattr(self, 'wf_'+step)()
                             if not res:
                                 logging.error('Error during '+flow['name']+' subtask: wf_' + step)
+                                logging.error('Revert main task status '+flow['name']+' to error status') 
+                                self.session._session['status'][flow['name']] = False
                                 self.wf_over()
                                 return False
                         except Exception as e:
                             logging.error('Workflow:'+flow['name']+' subtask: wf_' + step+ ':Exception:'+str(e))
+                            self.session._session['status'][flow['name']] = False
                             logging.debug(traceback.format_exc())
                             self.wf_over()
                             return False

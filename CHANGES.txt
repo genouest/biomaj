@@ -1,3 +1,10 @@
+3.0.9:
+  Fix thread synchro issue:
+      during download some download threads could be alive while main thread continues worflow
+      the fix prevents using Ctrl-C during download
+  Workflow fix:
+      if subtask of workflow fails, fail main task
+osallou authored 14 hours ago
 3.0.8:
   do not test index if elasticsearch is not up
   minor fixes

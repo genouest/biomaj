@@ -140,10 +140,13 @@ class Workflow(object):
                             res = getattr(self, 'wf_'+step)()
                             if not res:
                                 logging.error('Error during '+flow['name']+' subtask: wf_' + step)
+                                logging.error('Revert main task status '+flow['name']+' to error status') 
+                                self.session._session['status'][flow['name']] = False
                                 self.wf_over()
                                 return False
                         except Exception as e:
                             logging.error('Workflow:'+flow['name']+' subtask: wf_' + step+ ':Exception:'+str(e))
+                            self.session._session['status'][flow['name']] = False
                             logging.debug(traceback.format_exc())
                             self.wf_over()
                             return False
@@ -739,7 +742,7 @@ class UpdateWorkflow(Workflow):
         for th in thlist:
             running_th.append(th)
             th.start()
-
+        '''
         while len(running_th) > 0:
             try:
                     # Join all threads using a timeout so it doesn't block
@@ -752,8 +755,10 @@ class UpdateWorkflow(Workflow):
                 for t in running_th:
                     t.downloader.kill_received = True
         logging.info("Workflow:wf_download:Download:Threads:Over")
-        #for th in thlist:
-        #  th.join()
+        '''
+        for th in thlist:
+          th.join()
+        logging.info("Workflow:wf_download:Download:Threads:Over")
         is_error = False
         for th in thlist:
             if th.error:

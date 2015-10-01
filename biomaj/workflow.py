@@ -742,7 +742,7 @@ class UpdateWorkflow(Workflow):
         for th in thlist:
             running_th.append(th)
             th.start()
-
+        '''
         while len(running_th) > 0:
             try:
                     # Join all threads using a timeout so it doesn't block
@@ -755,8 +755,10 @@ class UpdateWorkflow(Workflow):
                 for t in running_th:
                     t.downloader.kill_received = True
         logging.info("Workflow:wf_download:Download:Threads:Over")
-        #for th in thlist:
-        #  th.join()
+        '''
+        for th in thlist:
+          th.join()
+        logging.info("Workflow:wf_download:Download:Threads:Over")
         is_error = False
         for th in thlist:
             if th.error:

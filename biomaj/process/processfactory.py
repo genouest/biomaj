@@ -2,6 +2,7 @@ from builtins import range
 from builtins import object
 import threading
 import logging
+import os
 from biomaj.process.metaprocess import MetaProcess
 
 class ProcessFactory(object):
@@ -38,6 +39,7 @@ class ProcessFactory(object):
         :return: tuple global execution status and status per meta process
         '''
         logging.debug('Start meta threads')
+        os.chdir(self.bank.config.get('process.dir'))
         threads = []
         running_th = []
         for thread_tasks in self.threads_tasks:

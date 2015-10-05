@@ -1,3 +1,6 @@
+3.0.10:
+  Change dir to process.dir to find processes in subdirs
+
 3.0.9:
   Fix thread synchro issue:
       during download some download threads could be alive while main thread continues worflow

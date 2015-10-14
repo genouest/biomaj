@@ -328,8 +328,8 @@ class UpdateWorkflow(Workflow):
                 if bdep.session.get('update'):
                     depend_updated = True
                     break
-            if not depend_updated:
-                return self.no_need_to_update()
+            #if not depend_updated:
+            #    return self.no_need_to_update()
 
         return res
 

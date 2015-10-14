@@ -321,6 +321,16 @@ class UpdateWorkflow(Workflow):
         self.session.set('depends', {})
         res = self.bank.update_dependencies()
         logging.info('Workflow:wf_depends:'+str(res))
+        if res and len(self.bank.depends)>0:
+            depend_updated = False
+            for bdep in self.bank.depends:
+                logging.info('Workflow:wf_depends:'+bdep.name+':'+str(bdep.session.get('update')))
+                if bdep.session.get('update'):
+                    depend_updated = True
+                    break
+            if not depend_updated:
+                return self.no_need_to_update()
+
         return res
 
     def wf_copydepends(self):

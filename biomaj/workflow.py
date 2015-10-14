@@ -140,7 +140,7 @@ class Workflow(object):
                             res = getattr(self, 'wf_'+step)()
                             if not res:
                                 logging.error('Error during '+flow['name']+' subtask: wf_' + step)
-                                logging.error('Revert main task status '+flow['name']+' to error status') 
+                                logging.error('Revert main task status '+flow['name']+' to error status')
                                 self.session._session['status'][flow['name']] = False
                                 self.wf_over()
                                 return False
@@ -698,11 +698,16 @@ class UpdateWorkflow(Workflow):
                 else:
                     keep_files.append(file_to_download)
             downloader.files_to_download = keep_files
+            # If everything was already in offline dir
+            if len(downloader.files_to_download) == 0:
+                self.downloaded_files = []
+                return True
 
         self.download_go_ahead = False
         if self.options.get_option(Options.FROM_TASK) == 'download':
             # We want to download again in same release, that's fine, we do not care it is the same release
             self.download_go_ahead = True
+
 
         if not self.options.get_option(Options.FROMSCRATCH) and not self.download_go_ahead and nb_prod_dir > 0:
             #for prod in self.bank.bank['production']:

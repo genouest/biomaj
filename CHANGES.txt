@@ -1,5 +1,6 @@
 3.0.10:
   Change dir to process.dir to find processes in subdirs
+  If all files found in offline dir, continue workflow with no download
 
 3.0.9:
   Fix thread synchro issue:

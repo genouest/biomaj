@@ -935,6 +935,12 @@ class TestBiomajFunctional(unittest.TestCase):
     res = b.update(True)
     self.assertTrue(res)
     self.assertTrue(os.path.exists(b.session.get_full_release_directory()+'/sub1/flat/test_100.txt'))
+    self.assertTrue(b.session.get('update'))
+    # Check that, with depends non updated, bank is not updated itself
+    nextb = Bank('computed')
+    res = nextb.update(True)
+    self.assertFalse(nextb.session.get('update'))
+
 
   def test_computed_ref_release(self):
     b = Bank('computed2')

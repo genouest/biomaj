@@ -951,6 +951,15 @@ class TestBiomajFunctional(unittest.TestCase):
     self.assertTrue(res)
     self.assertTrue(brelease == b2release)
 
+  @attr('computed')
+  def test_computed_ref_release(self):
+    b = Bank('computed2')
+    res = b.update(True)
+    self.assertTrue(b.session.get('update'))
+    b2 = Bank('computed2')
+    res = b2.update(True)
+    self.assertFalse(b2.session.get('update'))
+
   def test_computederror(self):
     b = Bank('computederror')
     res = b.update(True)

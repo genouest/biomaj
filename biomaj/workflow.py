@@ -403,7 +403,7 @@ class UpdateWorkflow(Workflow):
             MongoConnector.banks.update({'name': self.bank.name},
                                         {'$set': {'status.release.progress': str(release)}})
 
-            logging.info('Workflow:wf_release:FromDepends:'+depbank.name+':'+dep.session.get('release'))
+            logging.info('Workflow:wf_release:FromDepends:'+depbank.name+':'+self.session.get('release'))
             if got_update:
                 index = 0
                 # Release directory exits, set index to 1

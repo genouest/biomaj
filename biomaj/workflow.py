@@ -382,26 +382,51 @@ class UpdateWorkflow(Workflow):
         logging.info('Workflow:wf_release')
         cf = self.session.config
         if cf.get('ref.release') and self.bank.depends:
-                # Bank is a computed bank and we ask to set release to the same
-                # than an other dependant bank
-            depbank = self.bank.get_bank(cf.get('ref.release'))
-            if depbank and depbank.bank['production']:
-                release = depbank.bank['production'][len(depbank.bank['production'])-1]['release']
-                self.session.set('release', release)
-                self.session.set('remoterelease', release)
-                MongoConnector.banks.update({'name': self.bank.name},
-                        {'$set': {'status.release.progress': str(release)}})
-                return True
-            else:
-                logging.error('Dependant bank '+str(depbank)+' has no production directory to use')
+            # Bank is a computed bank and we ask to set release to the same
+            # than an other dependant bank
+            depbank = self.bank.get_bank(cf.get('ref.release'), no_log=True)
+            got_match = False
+            got_update = False
+            for dep in self.bank.depends:
+                if dep.session.get('update'):
+                    got_update = True
+                if dep.name == depbank.name:
+                    self.session.set('release', dep.session.get('release'))
+                    self.session.set('remoterelease', dep.session.get('remoterelease'))
+                    got_match = True
+
+            if not got_match:
+                logging.error('Workflow:wf_release: no release found for bank '+depbank.name)
                 return False
 
+            release = self.session.get('release')
+            MongoConnector.banks.update({'name': self.bank.name},
+                                        {'$set': {'status.release.progress': str(release)}})
+
+            logging.info('Workflow:wf_release:FromDepends:'+depbank.name+':'+dep.session.get('release'))
+            if got_update:
+                index = 0
+                # Release directory exits, set index to 1
+                if os.path.exists(self.session.get_full_release_directory()):
+                    index = 1
+                for x in range(1, 100):
+                    if os.path.exists(self.session.get_full_release_directory()+'__'+str(x)):
+                        index = x + 1
+                if index > 0:
+                    self.session.set('release', release+'__'+str(index))
+                    release = release+'__'+str(index)
+
         self.session.previous_release = self.session.get('previous_release')
+
         logging.info('Workflow:wf_release:previous_session:'+str(self.session.previous_release))
         if self.session.get('release'):
-            # Release already set from a previous run
+            # Release already set from a previous run or an other bank
             logging.info('Workflow:wf_release:session:'+str(self.session.get('release')))
-            return True
+            if self.session.previous_release == self.session.get('release'):
+                logging.info('Workflow:wf_release:same_as_previous_session')
+                return self.no_need_to_update()
+            else:
+                return True
         if self.session.config.get('release.file') == '' or self.session.config.get('release.file') is None:
             logging.debug('Workflow:wf_release:norelease')
             self.session.set('release', None)
@@ -997,6 +1022,8 @@ class UpdateWorkflow(Workflow):
 
         if nb_prod > keep:
             for prod in self.bank.bank['production']:
+                if prod['release'] == keep_session.get('release'):
+                    continue
                 if 'freeze' in prod and prod['freeze']:
                     continue
                 if self.bank.bank['current'] == prod['session']:

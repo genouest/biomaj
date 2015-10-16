@@ -670,8 +670,21 @@ class UpdateWorkflow(Workflow):
             release = str(release_dict['year']) + '-' + str(release_dict['month']) + '-' + str(release_dict['day'])
             self.session.set('release', release)
             self.session.set('remoterelease', release)
+
+            logging.info('Workflow:wf_download:release:remoterelease:'+self.session.get('remoterelease'))
+            logging.info('Workflow:wf_download:release:release:'+release)
+            MongoConnector.banks.update({'name': self.bank.name},
+                            {'$set': {'status.release.progress': str(release)}})
+            self.download_go_ahead = False
+            if self.options.get_option(Options.FROM_TASK) == 'download':
+                # We want to download again in same release, that's fine, we do not care it is the same release
+                self.download_go_ahead = True
+            if not self.download_go_ahead and self.session.previous_release == self.session.get('remoterelease'):
+                logging.info('Workflow:wf_release:same_as_previous_session')
+                return self.no_need_to_update()
+
             # We restart from scratch, check if directory with this release already exists
-            if self.options.get_option(Options.FROMSCRATCH):
+            if self.options.get_option(Options.FROMSCRATCH) or self.options.get_option('release') is None:
                 index = 0
                 # Release directory exits, set index to 1
                 if os.path.exists(self.session.get_full_release_directory()):
@@ -686,17 +699,8 @@ class UpdateWorkflow(Workflow):
                 if index > 0:
                     self.session.set('release', release+'__'+str(index))
                     release = release+'__'+str(index)
-            logging.info('Workflow:wf_download:release:remoterelease:'+self.session.get('remoterelease'))
-            logging.info('Workflow:wf_download:release:release:'+release)
-            MongoConnector.banks.update({'name': self.bank.name},
-                            {'$set': {'status.release.progress': str(release)}})
-            self.download_go_ahead = False
-            if self.options.get_option(Options.FROM_TASK) == 'download':
-                # We want to download again in same release, that's fine, we do not care it is the same release
-                self.download_go_ahead = True
-            if not self.download_go_ahead and self.session.previous_release == self.session.get('remoterelease'):
-                logging.info('Workflow:wf_release:same_as_previous_session')
-                return self.no_need_to_update()
+                    logging.info('Workflow:wf_download:release:incr_release:'+release)
+
 
         self.banks = MongoConnector.banks
         self.bank.bank = self.banks.find_one({'name': self.name})

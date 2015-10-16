@@ -178,10 +178,11 @@ class Bank(object):
                                   'yes' if 'freeze' in prod and prod['freeze'] else 'no'])
             # Bank pending info header
             if 'pending' in _bank and len(_bank['pending'].keys()) > 0:
-                pend_info.append(["Pending release(s)"])
+                pend_info.append(["Pending release", "Last run"])
                 for pending in _bank['pending'].keys():
-                    pend_info.append(pending)
-            # return [ bank_info, prod_info, pend_info ]
+                    run = datetime.fromtimestamp(_bank['pending'][pending]).strftime('%Y-%m-%d %H:%M:%S')
+                    pend_info.append([pending, run])
+
             info['info'] = bank_info
             info['prod'] = prod_info
             info['pend'] = pend_info

@@ -1,8 +1,23 @@
+3.0.10:
+  Change dir to process.dir to find processes in subdirs
+  If all files found in offline dir, continue workflow with no download
+  Remove extra log files for bank dependencies (computed banks)
+  Fix computed bank update when sub banks are not updated
+  Fix #15 when remote reverts to a previous release
+
+3.0.9:
+  Fix thread synchro issue:
+      during download some download threads could be alive while main thread continues worflow
+      the fix prevents using Ctrl-C during download
+  Workflow fix:
+      if subtask of workflow fails, fail main task
+osallou authored 14 hours ago
 3.0.8:
   do not test index if elasticsearch is not up
   minor fixes
   add http proxy support
   pylint fixes
+  retry uncompress once in case of failure (#13)
 3.0.7:
   Reindent code, pep8 fixes
   Various fixes on var names and OrderedDict suport for Python < 2.7

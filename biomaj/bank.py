@@ -252,7 +252,7 @@ class Bank(object):
         deps = deps.split(',')
         # Now search in deps if they themselves depend on other banks
         for dep in deps:
-            b = Bank(dep)
+            b = Bank(dep, no_log = True)
             deps = b.get_dependencies() + deps
         return deps
 

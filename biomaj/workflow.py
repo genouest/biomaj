@@ -140,10 +140,13 @@ class Workflow(object):
                             res = getattr(self, 'wf_'+step)()
                             if not res:
                                 logging.error('Error during '+flow['name']+' subtask: wf_' + step)
+                                logging.error('Revert main task status '+flow['name']+' to error status')
+                                self.session._session['status'][flow['name']] = False
                                 self.wf_over()
                                 return False
                         except Exception as e:
                             logging.error('Workflow:'+flow['name']+' subtask: wf_' + step+ ':Exception:'+str(e))
+                            self.session._session['status'][flow['name']] = False
                             logging.debug(traceback.format_exc())
                             self.wf_over()
                             return False
@@ -318,6 +321,16 @@ class UpdateWorkflow(Workflow):
         self.session.set('depends', {})
         res = self.bank.update_dependencies()
         logging.info('Workflow:wf_depends:'+str(res))
+        if res and len(self.bank.depends)>0:
+            depend_updated = False
+            for bdep in self.bank.depends:
+                logging.info('Workflow:wf_depends:'+bdep.name+':'+str(bdep.session.get('update')))
+                if bdep.session.get('update'):
+                    depend_updated = True
+                    break
+            #if not depend_updated:
+            #    return self.no_need_to_update()
+
         return res
 
     def wf_copydepends(self):
@@ -369,26 +382,51 @@ class UpdateWorkflow(Workflow):
         logging.info('Workflow:wf_release')
         cf = self.session.config
         if cf.get('ref.release') and self.bank.depends:
-                # Bank is a computed bank and we ask to set release to the same
-                # than an other dependant bank
-            depbank = self.bank.get_bank(cf.get('ref.release'))
-            if depbank and depbank.bank['production']:
-                release = depbank.bank['production'][len(depbank.bank['production'])-1]['release']
-                self.session.set('release', release)
-                self.session.set('remoterelease', release)
-                MongoConnector.banks.update({'name': self.bank.name},
-                        {'$set': {'status.release.progress': str(release)}})
-                return True
-            else:
-                logging.error('Dependant bank '+str(depbank)+' has no production directory to use')
+            # Bank is a computed bank and we ask to set release to the same
+            # than an other dependant bank
+            depbank = self.bank.get_bank(cf.get('ref.release'), no_log=True)
+            got_match = False
+            got_update = False
+            for dep in self.bank.depends:
+                if dep.session.get('update'):
+                    got_update = True
+                if dep.name == depbank.name:
+                    self.session.set('release', dep.session.get('release'))
+                    self.session.set('remoterelease', dep.session.get('remoterelease'))
+                    got_match = True
+
+            if not got_match:
+                logging.error('Workflow:wf_release: no release found for bank '+depbank.name)
                 return False
 
+            release = self.session.get('release')
+            MongoConnector.banks.update({'name': self.bank.name},
+                                        {'$set': {'status.release.progress': str(release)}})
+
+            logging.info('Workflow:wf_release:FromDepends:'+depbank.name+':'+self.session.get('release'))
+            if got_update:
+                index = 0
+                # Release directory exits, set index to 1
+                if os.path.exists(self.session.get_full_release_directory()):
+                    index = 1
+                for x in range(1, 100):
+                    if os.path.exists(self.session.get_full_release_directory()+'__'+str(x)):
+                        index = x + 1
+                if index > 0:
+                    self.session.set('release', release+'__'+str(index))
+                    release = release+'__'+str(index)
+
         self.session.previous_release = self.session.get('previous_release')
+
         logging.info('Workflow:wf_release:previous_session:'+str(self.session.previous_release))
         if self.session.get('release'):
-            # Release already set from a previous run
+            # Release already set from a previous run or an other bank
             logging.info('Workflow:wf_release:session:'+str(self.session.get('release')))
-            return True
+            if self.session.previous_release == self.session.get('release'):
+                logging.info('Workflow:wf_release:same_as_previous_session')
+                return self.no_need_to_update()
+            else:
+                return True
         if self.session.config.get('release.file') == '' or self.session.config.get('release.file') is None:
             logging.debug('Workflow:wf_release:norelease')
             self.session.set('release', None)
@@ -632,8 +670,21 @@ class UpdateWorkflow(Workflow):
             release = str(release_dict['year']) + '-' + str(release_dict['month']) + '-' + str(release_dict['day'])
             self.session.set('release', release)
             self.session.set('remoterelease', release)
+
+            logging.info('Workflow:wf_download:release:remoterelease:'+self.session.get('remoterelease'))
+            logging.info('Workflow:wf_download:release:release:'+release)
+            MongoConnector.banks.update({'name': self.bank.name},
+                            {'$set': {'status.release.progress': str(release)}})
+            self.download_go_ahead = False
+            if self.options.get_option(Options.FROM_TASK) == 'download':
+                # We want to download again in same release, that's fine, we do not care it is the same release
+                self.download_go_ahead = True
+            if not self.download_go_ahead and self.session.previous_release == self.session.get('remoterelease'):
+                logging.info('Workflow:wf_release:same_as_previous_session')
+                return self.no_need_to_update()
+
             # We restart from scratch, check if directory with this release already exists
-            if self.options.get_option(Options.FROMSCRATCH):
+            if self.options.get_option(Options.FROMSCRATCH) or self.options.get_option('release') is None:
                 index = 0
                 # Release directory exits, set index to 1
                 if os.path.exists(self.session.get_full_release_directory()):
@@ -648,17 +699,8 @@ class UpdateWorkflow(Workflow):
                 if index > 0:
                     self.session.set('release', release+'__'+str(index))
                     release = release+'__'+str(index)
-            logging.info('Workflow:wf_download:release:remoterelease:'+self.session.get('remoterelease'))
-            logging.info('Workflow:wf_download:release:release:'+release)
-            MongoConnector.banks.update({'name': self.bank.name},
-                            {'$set': {'status.release.progress': str(release)}})
-            self.download_go_ahead = False
-            if self.options.get_option(Options.FROM_TASK) == 'download':
-                # We want to download again in same release, that's fine, we do not care it is the same release
-                self.download_go_ahead = True
-            if not self.download_go_ahead and self.session.previous_release == self.session.get('remoterelease'):
-                logging.info('Workflow:wf_release:same_as_previous_session')
-                return self.no_need_to_update()
+                    logging.info('Workflow:wf_download:release:incr_release:'+release)
+
 
         self.banks = MongoConnector.banks
         self.bank.bank = self.banks.find_one({'name': self.name})
@@ -695,11 +737,16 @@ class UpdateWorkflow(Workflow):
                 else:
                     keep_files.append(file_to_download)
             downloader.files_to_download = keep_files
+            # If everything was already in offline dir
+            if len(downloader.files_to_download) == 0:
+                self.downloaded_files = []
+                return True
 
         self.download_go_ahead = False
         if self.options.get_option(Options.FROM_TASK) == 'download':
             # We want to download again in same release, that's fine, we do not care it is the same release
             self.download_go_ahead = True
+
 
         if not self.options.get_option(Options.FROMSCRATCH) and not self.download_go_ahead and nb_prod_dir > 0:
             #for prod in self.bank.bank['production']:
@@ -739,7 +786,7 @@ class UpdateWorkflow(Workflow):
         for th in thlist:
             running_th.append(th)
             th.start()
-
+        '''
         while len(running_th) > 0:
             try:
                     # Join all threads using a timeout so it doesn't block
@@ -752,8 +799,10 @@ class UpdateWorkflow(Workflow):
                 for t in running_th:
                     t.downloader.kill_received = True
         logging.info("Workflow:wf_download:Download:Threads:Over")
-        #for th in thlist:
-        #  th.join()
+        '''
+        for th in thlist:
+          th.join()
+        logging.info("Workflow:wf_download:Download:Threads:Over")
         is_error = False
         for th in thlist:
             if th.error:
@@ -781,7 +830,18 @@ class UpdateWorkflow(Workflow):
             for file in self.downloaded_files:
                 if 'save_as' not in file:
                     file['save_as'] = file['name']
-                Utils.uncompress(self.session.get_offline_directory() + '/' + file['save_as'])
+                nb_try = 1
+                not_ok = True
+                while nb_try < 3 and not_ok:
+                    status = Utils.uncompress(self.session.get_offline_directory() + '/' + file['save_as'])
+                    if status:
+                        not_ok = False
+                    else:
+                        logging.warn('Workflow:wf_uncompress:Failure:'+file['name']+':'+str(nb_try))
+                        nb_try += 1
+                if not_ok:
+                    logging.error('Workflow:wf_uncompress:Failure:'+file['name'])
+                    return False
         return True
 
     def wf_copy(self):
@@ -966,6 +1026,8 @@ class UpdateWorkflow(Workflow):
 
         if nb_prod > keep:
             for prod in self.bank.bank['production']:
+                if prod['release'] == keep_session.get('release'):
+                    continue
                 if 'freeze' in prod and prod['freeze']:
                     continue
                 if self.bank.bank['current'] == prod['session']:

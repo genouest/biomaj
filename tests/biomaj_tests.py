@@ -935,6 +935,12 @@ class TestBiomajFunctional(unittest.TestCase):
     res = b.update(True)
     self.assertTrue(res)
     self.assertTrue(os.path.exists(b.session.get_full_release_directory()+'/sub1/flat/test_100.txt'))
+    self.assertTrue(b.session.get('update'))
+    # Check that, with depends non updated, bank is not updated itself
+    nextb = Bank('computed')
+    res = nextb.update(True)
+    self.assertFalse(nextb.session.get('update'))
+
 
   def test_computed_ref_release(self):
     b = Bank('computed2')
@@ -944,6 +950,15 @@ class TestBiomajFunctional(unittest.TestCase):
     brelease = b.bank['production'][len(b.bank['production'])-1]['release']
     self.assertTrue(res)
     self.assertTrue(brelease == b2release)
+
+  @attr('computed')
+  def test_computed_ref_release(self):
+    b = Bank('computed2')
+    res = b.update(True)
+    self.assertTrue(b.session.get('update'))
+    b2 = Bank('computed2')
+    res = b2.update(True)
+    self.assertFalse(b2.session.get('update'))
 
   def test_computederror(self):
     b = Bank('computederror')

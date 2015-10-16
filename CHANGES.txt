@@ -3,6 +3,7 @@
   If all files found in offline dir, continue workflow with no download
   Remove extra log files for bank dependencies (computed banks)
   Fix computed bank update when sub banks are not updated
+  Fix #15 when remote reverts to a previous release
 
 3.0.9:
   Fix thread synchro issue:

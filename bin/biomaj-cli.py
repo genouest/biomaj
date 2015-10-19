@@ -278,13 +278,16 @@ def main():
             if options.query:
                 res = Bank.searchindex(options.query)
                 print("Query matches for :"+options.query)
-                print("Release\tFormat\tType\tFiles\n")
+                res = [{'_source':{'release': '1', 'format': 'format1','types':'nucl,prot','files':['file1','file2','file3']}},
+                       {'_source':{'release': '2', 'format': 'format2','types':'nucl','files':['file4','file5','file6']}},
+                       {'_source':{'release': '3', 'format': 'format3','types':'nucl,prot','files':['file1','file2','file3']}}]
+                results = [["Release", "Format(s)", "Type(s)", "Files"]]
                 for match in res:
-                    print(match['_source']['release'] + "\t" + \
-                          str(match['_source']['format']) + "\t" + \
-                          str(match['_source']['types']) + "\n")
-                    for f in match['_source']['files']:
-                        print("\t\t\t"+f+"\n")
+                    results.append([match['_source']['release'],
+                                    str(match['_source']['format']),
+                                    str(match['_source']['types']),
+                                    ','.join(match['_source']['files'])])
+                print(tabulate(results, headers="firstrow", tablefmt="grid"))
             else:
                 formats = []
                 if options.formats:
@@ -295,8 +298,9 @@ def main():
                 print("Search by formats="+str(formats)+", types="+str(types))
                 res = Bank.search(formats, types, False)
                 results = [["Name", "Release", "Format(s)", "Type(s)", 'Current']]
-                for bank in sorted(res, key=lambda bank: (bank['name'], bank['production'])):
+                for bank in sorted(res, key=lambda bank: (bank['name'])):
                     b = bank['name']
+                    bank['production'].sort(key=lambda n: n['release'], reverse=True)
                     for prod in bank['production']:
                         iscurrent = ""
                         if prod['session'] == bank['current']:
@@ -312,27 +316,34 @@ def main():
                 print("Bank option is required")
                 sys.exit(1)
 
-            bank = Bank(options.bank, no_log=False)
+            bank = Bank(options.bank, no_log=True)
+            results = [["Name", "Release", "Format(s)", "Type(s)", "Tag(s)", "File(s)"]]
+            current = None
+            if 'current' in bank.bank and bank.bank['current']:
+                current = bank.bank['current']
             for prod in bank.bank['production']:
                 include = True
+                release = prod['release']
+                if current == prod['session']:
+                    release += ' (current)'
                 if options.release and (prod['release'] != options.release and prod['prod_dir'] != options.release):
                     include =False
                 if include:
                     session = bank.get_session_from_release(prod['release'])
-                    print('#' * 80)
-                    print("# Name:\t"+bank.bank['name'])
-                    print("# Release:\t"+prod['release'])
                     formats = session['formats']
+                    afiles = []
+                    atags = []
+                    atypes = []
                     for fformat in list(formats.keys()):
-                        print("# \tFormat:\t"+fformat)
                         for elt in formats[fformat]:
-                            print("# \t\tTypes:\t"+','.join(elt['types']))
-                            print("# \t\tTags:")
+                            atypes.append(','.join(elt['types']))
                             for tag in list(elt['tags'].keys()):
-                                print("# \t\t\t"+tag+":"+elt['tags'][tag])
-                            print("# \t\tFiles:")
+                                atags.append(elt['tags'][tag])
                             for eltfile in elt['files']:
-                                print("# \t\t\t"+eltfile)
+                                afiles.append(elfile)
+                    results.append([bank.bank['name'], release, fformat, ','.join(atypes),
+                                ','.join(atags), ','.join(afiles)])
+            print(tabulate(results, headers="firstrow", tablefmt="grid"))
             sys.exit(0)
 
         if options.check:

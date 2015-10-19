@@ -141,7 +141,7 @@ class Bank(object):
         :type full: Boolean
         :return: Dict with keys
                       if full=True
-                           - info, prod, pending
+                           - info, prod, pend
                       else
                            - info
         '''
@@ -189,13 +189,11 @@ class Bank(object):
             return info
 
         else:
+            release = 'N/A'
             if 'current' in _bank and _bank['current']:
                 for prod in _bank['production']:
                     if _bank['current'] == prod['session']:
                         release = prod['remoterelease']
-            else:
-                release = 'N/A'
-            # return [ _bank['name'], ','.join(_bank['properties']['type']), str(release), _bank['properties']['visibility'] ]
             info['info'] = [_bank['name'], ','.join(_bank['properties']['type']),
                             str(release), _bank['properties']['visibility']]
             return info

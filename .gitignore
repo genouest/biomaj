@@ -55,3 +55,18 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# PyCharm
+.idea
+
+# Vim
+.viminfo
+# Less history
+.lesshst
+
+.dbshell
+.emacs*
+.ipython
+.mongo*
+*.properties
+

@@ -5,7 +5,8 @@ standard_library.install_aliases()
 from builtins import str
 from tabulate import tabulate
 
-import os,sys
+import os
+import sys
 #from optparse import OptionParser
 import argparse
 import pkg_resources
@@ -29,35 +30,35 @@ def main():
     parser.add_argument('-p', '--publish', dest="publish", help="Publish", action="store_true", default=False)
     parser.add_argument('--unpublish', dest="unpublish", help="Unpublish", action="store_true", default=False)
 
-    parser.add_argument('--release', dest="release",help="release of the bank")
-    parser.add_argument('--from-task', dest="from_task",help="Start cycle at a specific task (init always executed)")
-    parser.add_argument('--process', dest="process",help="Linked to from-task, optionally specify a block, meta or process name to start from")
-    parser.add_argument('-l', '--log', dest="log",help="log level")
+    parser.add_argument('--release', dest="release", help="release of the bank")
+    parser.add_argument('--from-task', dest="from_task", help="Start cycle at a specific task (init always executed)")
+    parser.add_argument('--process', dest="process", help="Linked to from-task, optionally specify a block, meta or process name to start from")
+    parser.add_argument('-l', '--log', dest="log", help="log level")
     parser.add_argument('-r', '--remove', dest="remove", help="Remove a bank release", action="store_true", default=False)
     parser.add_argument('--remove-all', dest="removeall", help="Remove all bank releases and database records", action="store_true", default=False)
     parser.add_argument('--remove-pending', dest="removepending", help="Remove pending release", action="store_true", default=False)
     parser.add_argument('-s', '--status', dest="status", help="Get status", action="store_true", default=False)
-    parser.add_argument('-b', '--bank', dest="bank",help="bank name")
+    parser.add_argument('-b', '--bank', dest="bank", help="bank name")
     parser.add_argument('--owner', dest="owner", help="change owner of the bank")
-    parser.add_argument('--stop-before', dest="stop_before",help="Store workflow before task")
-    parser.add_argument('--stop-after', dest="stop_after",help="Store workflow after task")
+    parser.add_argument('--stop-before', dest="stop_before", help="Store workflow before task")
+    parser.add_argument('--stop-after', dest="stop_after", help="Store workflow after task")
     parser.add_argument('--freeze', dest="freeze", help="Freeze a bank release", action="store_true", default=False)
     parser.add_argument('--unfreeze', dest="unfreeze", help="Unfreeze a bank release", action="store_true", default=False)
     parser.add_argument('-f', '--force', dest="force", help="Force action", action="store_true", default=False)
     parser.add_argument('-h', '--help', dest="help", help="Show usage", action="store_true", default=False)
 
     parser.add_argument('--search', dest="search", help="Search by format and types", action="store_true", default=False)
-    parser.add_argument('--formats', dest="formats",help="List of formats to search, comma separated")
-    parser.add_argument('--types', dest="types",help="List of types to search, comma separated")
-    parser.add_argument('--query', dest="query",help="Lucene query syntax to search in index")
+    parser.add_argument('--formats', dest="formats", help="List of formats to search, comma separated")
+    parser.add_argument('--types', dest="types", help="List of types to search, comma separated")
+    parser.add_argument('--query', dest="query", help="Lucene query syntax to search in index")
 
     parser.add_argument('--show', dest="show", help="Show format files for selected bank", action="store_true", default=False)
 
-    parser.add_argument('-n', '--change-dbname', dest="newbank",help="Change old bank name to this new bank name")
+    parser.add_argument('-n', '--change-dbname', dest="newbank", help="Change old bank name to this new bank name")
     parser.add_argument('-e', '--move-production-directories', dest="newdir",help="Change bank production directories location to this new path, path must exists")
-    parser.add_argument('--visibility', dest="visibility",help="visibility status of the bank")
+    parser.add_argument('--visibility', dest="visibility", help="visibility status of the bank")
 
-    parser.add_argument('--maintenance', dest="maintenance",help="Maintenance mode (on/off/status)")
+    parser.add_argument('--maintenance', dest="maintenance", help="Maintenance mode (on/off/status)")
 
     parser.add_argument('--version', dest="version", help="Show version", action="store_true", default=False)
 
@@ -207,7 +208,6 @@ def main():
                 print("Maintenance set to Off")
                 sys.exit(0)
 
-
         if options.owner:
             if not options.bank:
                 print("Bank option is missing")
@@ -234,7 +234,7 @@ def main():
                 sys.exit(1)
             if not os.path.exists(options.newdir):
                 print("Destination directory does not exists")
-            bank = Bank(options.bank, options= options, no_log=True)
+            bank = Bank(options.bank, options=options, no_log=True)
             if not bank.bank['production']:
                 print("Nothing to move, no production directory")
                 sys.exit(0)
@@ -278,13 +278,13 @@ def main():
             if options.query:
                 res = Bank.searchindex(options.query)
                 print("Query matches for :"+options.query)
-                print("Release\tFormat\tType\tFiles\n")
+                results = [["Release", "Format(s)", "Type(s)", "Files"]]
                 for match in res:
-                    print(match['_source']['release'] + "\t" + \
-                          str(match['_source']['format']) + "\t" + \
-                          str(match['_source']['types']) + "\n")
-                    for f in match['_source']['files']:
-                        print("\t\t\t"+f+"\n")
+                    results.append([match['_source']['release'],
+                                    str(match['_source']['format']),
+                                    str(match['_source']['types']),
+                                    ','.join(match['_source']['files'])])
+                print(tabulate(results, headers="firstrow", tablefmt="grid"))
             else:
                 formats = []
                 if options.formats:
@@ -294,17 +294,18 @@ def main():
                     types = options.types.split(',')
                 print("Search by formats="+str(formats)+", types="+str(types))
                 res = Bank.search(formats, types, False)
-                print('#' * 80)
-                print("# Name\tRelease")
-                for bank in res:
-                    print(" "+bank['name'])
+                results = [["Name", "Release", "Format(s)", "Type(s)", 'Current']]
+                for bank in sorted(res, key=lambda bank: (bank['name'])):
+                    b = bank['name']
+                    bank['production'].sort(key=lambda n: n['release'], reverse=True)
                     for prod in bank['production']:
                         iscurrent = ""
                         if prod['session'] == bank['current']:
-                            iscurrent = "current"
-                        print(" \t"+prod['release']+"\t"+','.join(prod['formats'])+"\t"+','.join(prod['types'])+"\t"+iscurrent)
-
-                print('#' * 80)
+                            iscurrent = "yes"
+                        results.append([b if b else '', prod['release'], ','.join(prod['formats']),
+                                        ','.join(prod['types']), iscurrent])
+                        b = None
+                print(tabulate(results, headers="firstrow", tablefmt="grid"))
                 sys.exit(0)
 
         if options.show:
@@ -312,27 +313,34 @@ def main():
                 print("Bank option is required")
                 sys.exit(1)
 
-            bank = Bank(options.bank, no_log=False)
+            bank = Bank(options.bank, no_log=True)
+            results = [["Name", "Release", "Format(s)", "Type(s)", "Tag(s)", "File(s)"]]
+            current = None
+            if 'current' in bank.bank and bank.bank['current']:
+                current = bank.bank['current']
             for prod in bank.bank['production']:
                 include = True
+                release = prod['release']
+                if current == prod['session']:
+                    release += ' (current)'
                 if options.release and (prod['release'] != options.release and prod['prod_dir'] != options.release):
                     include =False
                 if include:
                     session = bank.get_session_from_release(prod['release'])
-                    print('#' * 80)
-                    print("# Name:\t"+bank.bank['name'])
-                    print("# Release:\t"+prod['release'])
                     formats = session['formats']
+                    afiles = []
+                    atags = []
+                    atypes = []
                     for fformat in list(formats.keys()):
-                        print("# \tFormat:\t"+fformat)
                         for elt in formats[fformat]:
-                            print("# \t\tTypes:\t"+','.join(elt['types']))
-                            print("# \t\tTags:")
+                            atypes.append(','.join(elt['types']))
                             for tag in list(elt['tags'].keys()):
-                                print("# \t\t\t"+tag+":"+elt['tags'][tag])
-                            print("# \t\tFiles:")
+                                atags.append(elt['tags'][tag])
                             for eltfile in elt['files']:
-                                print("# \t\t\t"+eltfile)
+                                afiles.append(elfile)
+                    results.append([bank.bank['name'], release, fformat, ','.join(atypes),
+                                ','.join(atags), ','.join(afiles)])
+            print(tabulate(results, headers="firstrow", tablefmt="grid"))
             sys.exit(0)
 
         if options.check:
@@ -343,7 +351,6 @@ def main():
             print(options.bank+" check: "+str(bank.check())+"\n")
             sys.exit(0)
 
-
         if options.status:
             if options.bank:
                 bank = Bank(options.bank, no_log=True)
@@ -351,8 +358,8 @@ def main():
                 print(tabulate(info['info'], headers='firstrow', tablefmt='psql'))
                 print(tabulate(info['prod'], headers='firstrow', tablefmt='psql'))
                 # do we have some pending release(s)
-                if 'pending' in info and len(info['pending']) > 1:
-                    print(tabulate(info['pending'], headers='firstrow', tablefmt='psql'))
+                if 'pend' in info and len(info['pend']) > 1:
+                    print(tabulate(info['pend'], headers='firstrow', tablefmt='psql'))
             else:
                 banks = Bank.list()
                 # Headers of output table

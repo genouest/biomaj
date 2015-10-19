@@ -316,6 +316,7 @@ def main():
             bank = Bank(options.bank, no_log=True)
             results = [["Name", "Release", "Format(s)", "Type(s)", "Tag(s)", "File(s)"]]
             current = None
+            fformat = None
             if 'current' in bank.bank and bank.bank['current']:
                 current = bank.bank['current']
             for prod in bank.bank['production']:
@@ -337,7 +338,7 @@ def main():
                             for tag in list(elt['tags'].keys()):
                                 atags.append(elt['tags'][tag])
                             for eltfile in elt['files']:
-                                afiles.append(elfile)
+                                afiles.append(eltfile)
                     results.append([bank.bank['name'], release, fformat, ','.join(atypes),
                                 ','.join(atags), ','.join(afiles)])
             print(tabulate(results, headers="firstrow", tablefmt="grid"))

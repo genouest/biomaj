@@ -278,9 +278,6 @@ def main():
             if options.query:
                 res = Bank.searchindex(options.query)
                 print("Query matches for :"+options.query)
-                res = [{'_source':{'release': '1', 'format': 'format1','types':'nucl,prot','files':['file1','file2','file3']}},
-                       {'_source':{'release': '2', 'format': 'format2','types':'nucl','files':['file4','file5','file6']}},
-                       {'_source':{'release': '3', 'format': 'format3','types':'nucl,prot','files':['file1','file2','file3']}}]
                 results = [["Release", "Format(s)", "Type(s)", "Files"]]
                 for match in res:
                     results.append([match['_source']['release'],

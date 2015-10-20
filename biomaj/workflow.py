@@ -548,6 +548,17 @@ class UpdateWorkflow(Workflow):
         cf = self.session.config
         self.session.previous_release = self.session.get('previous_release')
 
+        if cf.get('protocol') == 'none':
+            if self.session.get('release') is None:
+                logging.error('Workflow:wf_download:no download file but no release found')
+                return False
+            else:
+                logging.info('Workflow:wf_download:no download file expected')
+                self.downloaded_files = []
+                if not os.path.exists(self.session.get_full_release_directory()):
+                    os.makedirs(self.session.get_full_release_directory())
+                return True
+
         if cf.get('protocol') == 'multi':
             '''
             Search for:
@@ -825,6 +836,9 @@ class UpdateWorkflow(Workflow):
         Uncompress files if archives and no.extract = false
         '''
         logging.info('Workflow:wf_uncompress')
+        if len(self.downloaded_files) == 0:
+            logging.info("Workflow:wf_uncompress:NoFileDownload:NoExtract")
+            return True
         no_extract = self.session.config.get('no.extract')
         if no_extract is None or no_extract == 'false':
             for file in self.downloaded_files:
@@ -849,6 +863,9 @@ class UpdateWorkflow(Workflow):
         Copy files from offline directory to release directory
         '''
         logging.info('Workflow:wf_copy')
+        if len(self.downloaded_files) == 0:
+            logging.info("Workflow:wf_copy:NoFileDownload:NoCopy")
+            return True
         from_dir = os.path.join(self.session.config.get('data.dir'),
                       self.session.config.get('offline.dir.name'))
         regexp = self.session.config.get('local.files').split()

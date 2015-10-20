@@ -942,6 +942,17 @@ class TestBiomajFunctional(unittest.TestCase):
     self.assertFalse(nextb.session.get('update'))
 
 
+  @attr('nofile')
+  def test_computed_nofile(self):
+    b = Bank('computed2')
+    b.load_session(UpdateWorkflow.FLOW)
+    b.session.config.set('protocol', 'none')
+    b.session.config.set('sub1.files.move', 'flat/test_.*')
+    res = b.update(True)
+    self.assertTrue(res)
+    self.assertTrue(os.path.exists(b.session.get_full_release_directory()+'/sub1/flat/test_100.txt'))
+
+
   def test_computed_ref_release(self):
     b = Bank('computed2')
     res = b.update(True)

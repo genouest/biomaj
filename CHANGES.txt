@@ -4,6 +4,8 @@
   Remove extra log files for bank dependencies (computed banks)
   Fix computed bank update when sub banks are not updated
   Fix #15 when remote reverts to a previous release
+  Feature #16: get possibility not to download files (for computed banks for
+               example). Set protocol='none' in bank properties.
 
 3.0.9:
   Fix thread synchro issue:

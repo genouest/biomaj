@@ -83,11 +83,12 @@ class UtilsForTest():
   def __copy_test_bank_properties(self):
     if self.bank_properties is not None:
       return
-    self.bank_properties = ['alu', 'local', 'testhttp']
+    self.bank_properties = ['alu', 'local', 'testhttp','directhttp']
     curdir = os.path.dirname(os.path.realpath(__file__))
-    from_file = os.path.join(curdir, 'alu.properties')
-    to_file = os.path.join(self.conf_dir, 'alu.properties')
-    shutil.copyfile(from_file, to_file)
+    for b in self.bank_properties:
+        from_file = os.path.join(curdir, b+'.properties')
+        to_file = os.path.join(self.conf_dir, b+'.properties')
+        shutil.copyfile(from_file, to_file)
 
     self.bank_process = ['test.sh']
     curdir = os.path.dirname(os.path.realpath(__file__))
@@ -978,6 +979,15 @@ class TestBiomajFunctional(unittest.TestCase):
     self.assertTrue(b.session._session['depends']['sub2'])
     self.assertFalse(b.session._session['depends']['error'])
 
+
+  @attr('directrelease')
+  def test_directhttp_release(self):
+      b = Bank('directhttp')
+      res = b.update()
+      self.assertTrue(b.session.get('update'))
+      self.assertTrue(os.path.exists(b.session.get_full_release_directory()+'/flat/debian/README.html'))
+      #print str(b.session.get('release'))
+      #print str(b.session.get('remoterelease'))
 
   @attr('network')
   def test_multi(self):

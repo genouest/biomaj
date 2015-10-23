@@ -441,7 +441,27 @@ class UpdateWorkflow(Workflow):
             remote_dir = cf.get('remote.dir')
             if cf.get('release.remote.dir') is not None:
                 remote_dir = cf.get('release.remote.dir')
-            release_downloader = self.get_handler(protocol, server, remote_dir)
+
+
+            protocol = cf.get('protocol')
+            release_downloader = None
+            if protocol == 'directhttp' or protocol == 'directftp':
+                release_downloader = self.get_handler(protocol, server, '/', [remote_dir])
+                release_downloader.method = cf.get('release.url.method')
+                if release_downloader.method is None:
+                    release_downloader.method = 'GET'
+                release_downloader.save_as = cf.get('release.file')
+                keys = cf.get('release.url.params')
+                if keys is not None:
+                    keys = keys.split(',')
+                    for key in keys:
+                        param = cf.get(key.strip()+'.value')
+                        release_downloader.param[key.strip()] = param.strip()
+            else:
+                release_downloader = self.get_handler(protocol, server, remote_dir)
+
+
+            #release_downloader = self.get_handler(protocol, server, remote_dir)
             if cf.get('server.credentials') is not None:
                 release_downloader.set_credentials(cf.get('server.credentials'))
 

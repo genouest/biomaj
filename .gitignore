@@ -68,5 +68,5 @@ target/
 .emacs*
 .ipython
 .mongo*
-*.properties
+#*.properties
 

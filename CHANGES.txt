@@ -6,6 +6,7 @@
   Fix #15 when remote reverts to a previous release
   Feature #16: get possibility not to download files (for computed banks for
                example). Set protocol='none' in bank properties.
+  Fix on --check with some protocols
 
 3.0.9:
   Fix thread synchro issue:

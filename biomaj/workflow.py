@@ -65,6 +65,8 @@ class Workflow(object):
 
         self.session._session['update'] = False
         self.session._session['remove'] = False
+        self.session.config.set('localrelease', None)
+        self.session.config.set('remoterelease', None)
 
     def get_handler(self, protocol, server, remote_dir, list_file=None):
         '''
@@ -568,6 +570,10 @@ class UpdateWorkflow(Workflow):
         cf = self.session.config
         self.session.previous_release = self.session.get('previous_release')
 
+        if self.session.get('release') is not None:
+            self.session.config.set('localrelease', self.session.get('release'))
+            self.session.config.set('remoterelease', self.session.get('remoterelease'))
+
         if cf.get('protocol') == 'none':
             if self.session.get('release') is None:
                 logging.error('Workflow:wf_download:no download file but no release found')
@@ -732,6 +738,9 @@ class UpdateWorkflow(Workflow):
                     release = release+'__'+str(index)
                     logging.info('Workflow:wf_download:release:incr_release:'+release)
 
+
+        self.session.config.set('localrelease', self.session.get('release'))
+        self.session.config.set('remoterelease', self.session.get('remoterelease'))
 
         self.banks = MongoConnector.banks
         self.bank.bank = self.banks.find_one({'name': self.name})

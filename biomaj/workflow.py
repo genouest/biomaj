@@ -541,7 +541,7 @@ class UpdateWorkflow(Workflow):
             # We want to download again in same release, that's fine, we do not care it is the same release
             self.download_go_ahead = True
         if not self.download_go_ahead and self.session.previous_release == self.session.get('remoterelease'):
-            if not not self.session.config.get_bool('release.control', default=False):
+            if not self.session.config.get_bool('release.control', default=False):
                 logging.info('Workflow:wf_release:same_as_previous_session')
                 return self.no_need_to_update()
 

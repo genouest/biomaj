@@ -8,6 +8,9 @@
                example). Set protocol='none' in bank properties.
   Fix on --check with some protocols
   Fix #21 release.file not supported for directhttp protocol
+  Feature #22: add localrelease and remoterelease bank properties to use the
+               remote release as an expression in other properties
+               => remote.dir = xx/yy/%(remoterelease)s/zz
 
 3.0.9:
   Fix thread synchro issue:

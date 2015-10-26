@@ -65,8 +65,8 @@ class Workflow(object):
 
         self.session._session['update'] = False
         self.session._session['remove'] = False
-        self.session.config.set('localrelease', None)
-        self.session.config.set('remoterelease', None)
+        self.session.config.set('localrelease', '')
+        self.session.config.set('remoterelease', '')
 
     def get_handler(self, protocol, server, remote_dir, list_file=None):
         '''

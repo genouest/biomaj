@@ -558,8 +558,26 @@ class UpdateWorkflow(Workflow):
         self.session._session['status'][Workflow.FLOW_OVER] = True
         self.session._session['update'] = False
         self.session.set('download_files', [])
+        last_session = self.get_last_prod_session_for_release(self.session.get('remoterelease'))
+        self.session.set('release', last_session['release'])
         self.wf_over()
         return True
+
+
+
+    def get_last_prod_session_for_release(self, release):
+        '''
+        find last session matching a release in production
+        '''
+        last_session = None
+        for prod in self.bank.bank['production']:
+            if prod['remoterelease'] == release:
+                # Search session related to this production release
+                for s in self.bank.bank['sessions']:
+                    if s['id'] == prod['session']:
+                        last_session = s
+                        break
+        return last_session
 
     def is_previous_release_content_identical(self):
         '''
@@ -573,6 +591,8 @@ class UpdateWorkflow(Workflow):
             logging.info('Workflow:wf_download:DifferentRelease')
             return False
         # Same release number, check further
+        previous_release_session = self.get_last_prod_session_for_release(self.session.previous_release)
+        '''
         previous_release_session = None
         # Search production release matching release
         for prod in self.bank.bank['production']:
@@ -582,6 +602,7 @@ class UpdateWorkflow(Workflow):
                     if s['id'] == prod['session']:
                         previous_release_session = s
                         break
+        '''
 
         if previous_release_session is None:
             return False

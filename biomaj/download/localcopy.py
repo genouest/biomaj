@@ -7,6 +7,7 @@ import io
 import re
 import os
 import datetime
+import hashlib
 
 from biomaj.utils import Utils
 from biomaj.download.interface import DownloadInterface
@@ -69,6 +70,7 @@ class LocalDownload(DownloadInterface):
             rfile['day'] = fstat_mtime.day
             rfile['year'] = fstat_mtime.year
             rfile['name'] = file_in_files
+            rfile['hash'] = hashlib.md5(rfile['name']+str(fstat.st_mtime)+rfile['size']).hexdigest()
 
             is_dir = False
             if os.path.isdir(os.path.join(self.rootdir + directory, file_in_files)):

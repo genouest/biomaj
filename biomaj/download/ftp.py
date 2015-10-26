@@ -7,9 +7,11 @@ import io
 import re
 import os
 from datetime import datetime
+import hashlib
 
 from biomaj.utils import Utils
 from biomaj.download.interface import DownloadInterface
+
 
 try:
     from io import BytesIO
@@ -270,6 +272,7 @@ class FTPDownload(DownloadInterface):
             rfile['size'] = parts[4]
             rfile['month'] = Utils.month_to_num(parts[5])
             rfile['day'] = parts[6]
+            rfile['hash'] = hashlib.md5(line).hexdigest()
             try:
                 rfile['year'] = int(parts[7])
             except Exception as e:

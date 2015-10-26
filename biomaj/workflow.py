@@ -560,6 +560,39 @@ class UpdateWorkflow(Workflow):
         self.wf_over()
         return True
 
+    def is_previous_release_content_identical(self):
+        '''
+        Checks if releases (previous_release and remoterelease) are identical in release id and content
+        '''
+        # Different releases, so different
+        if self.session.get('remoterelease') != self.session.previous_release:
+            logging.info('Workflow:wf_download:DifferentRelease')
+            return False
+        # Same release number, check further
+
+        previous_release_session = self.bank.get_session_from_release(self.session.previous_release)
+        previous_downloaded_files = previous_release_session.get('download_files', None)
+
+        if previous_downloaded_files is None:
+            # No info on previous download, consider that base release is enough
+            logging.warn('Workflow:wf_download:SameRelease:download_files not available, cannot compare to previous release')
+            return True
+
+        nb_elts = len(previous_downloaded_files)
+        if nb_elts != len(self.session.get('download_files',[])):
+            # Number of files to download vs previously downloaded files differ
+            logging.info('Workflow:wf_download:SameRelease:Number of files differ')
+            return False
+
+        # Same number of files, check hash of files
+        list1 = sorted(previous_downloaded_files, key=lambda k: k['hash'])
+        list2 = sorted(self.session.get('download_files'), key=lambda k: k['hash'])
+        for index in range(0, nb_elts):
+            if list1[i]['hash'] != list2[i]['hash']:
+                return False
+        return True
+
+
     def wf_download(self):
         '''
         Download remote files or use an available local copy from last production directory if possible.

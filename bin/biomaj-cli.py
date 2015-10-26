@@ -348,7 +348,7 @@ def main():
             if not options.bank:
                 print("Bank name is missing")
                 sys.exit(1)
-            bank = Bank(options.bank, no_log=False)
+            bank = Bank(options.bank, no_log=True)
             print(options.bank+" check: "+str(bank.check())+"\n")
             sys.exit(0)
 

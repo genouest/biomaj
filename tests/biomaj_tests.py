@@ -689,6 +689,28 @@ class TestBiomajFunctional(unittest.TestCase):
       self.assertFalse(b.session.get('update'))
       self.assertFalse(b.session.get_status(Workflow.FLOW_POSTPROCESS))
 
+  @attr('release')
+  def test_release_control(self):
+    '''
+    Try updating twice, at second time, modify one file (same date),
+     bank should update
+    '''
+    b = Bank('local')
+    b.update()
+    b.session.config.set('keep.old.version', '3')
+    self.assertTrue(b.session.get('update'))
+    remote_file = b.session.config.get('remote.dir') + 'test2.fasta'
+    os.utime(remote_file, None)
+    # Update test2.fasta and set release.control
+    b.session.config.set('release.control', 'true')
+    b.update()
+    self.assertTrue(b.session.get('update'))
+    b.update()
+    self.assertFalse(b.session.get('update'))
+    b.session.config.set('remote.files', '^test2.fasta')
+    b.update()
+    self.assertTrue(b.session.get('update'))
+
   def test_fromscratch_update(self):
       '''
       Try updating twice, at second time, bank should  be updated (force with fromscratc)

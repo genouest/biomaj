@@ -239,6 +239,9 @@ class BiomajConfig(object):
         '''
         Check configuration
         '''
+        self.set('localrelease', '')
+        self.set('remoterelease', '')
+
         status = True
         if not self.get('data.dir'):
             logging.error('data.dir is not set')

@@ -70,7 +70,8 @@ class LocalDownload(DownloadInterface):
             rfile['day'] = fstat_mtime.day
             rfile['year'] = fstat_mtime.year
             rfile['name'] = file_in_files
-            rfile['hash'] = hashlib.md5(rfile['name']+str(fstat.st_mtime)+rfile['size']).hexdigest()
+            filehash = (rfile['name']+str(fstat.st_mtime)+rfile['size']).encode('utf-8')
+            rfile['hash'] = hashlib.md5(filehash).hexdigest()
 
             is_dir = False
             if os.path.isdir(os.path.join(self.rootdir + directory, file_in_files)):

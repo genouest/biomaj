@@ -123,7 +123,8 @@ class HTTPDownload(FTPDownload):
                 rfile['day'] = parts[0]
                 rfile['year'] = parts[2]
                 rfile['name'] = foundfile[int(self.config.get('http.group.file.name'))-1]
-                rfile['hash'] = hashlib.md5(rfile['name']+str(date)+str(rfile['size'])).hexdigest()
+                filehash = (rfile['name']+str(date)+str(rfile['size'])).encode('utf-8')
+                rfile['hash'] = hashlib.md5(filehash).hexdigest()
                 rfiles.append(rfile)
 
         return (rfiles, rdirs)

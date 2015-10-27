@@ -272,7 +272,7 @@ class FTPDownload(DownloadInterface):
             rfile['size'] = parts[4]
             rfile['month'] = Utils.month_to_num(parts[5])
             rfile['day'] = parts[6]
-            rfile['hash'] = hashlib.md5(line).hexdigest()
+            rfile['hash'] = hashlib.md5(line.encode('utf-8')).hexdigest()
             try:
                 rfile['year'] = int(parts[7])
             except Exception as e:

@@ -424,7 +424,7 @@ class UpdateWorkflow(Workflow):
         if self.session.get('release'):
             # Release already set from a previous run or an other bank
             logging.info('Workflow:wf_release:session:'+str(self.session.get('release')))
-            if self.session.previous_release == self.session.get('release'):
+            if self.session.previous_release == self.session.get('release') and not self.session.config.get_bool('release.control', default=False):
                 logging.info('Workflow:wf_release:same_as_previous_session')
                 return self.no_need_to_update()
             else:
@@ -541,8 +541,9 @@ class UpdateWorkflow(Workflow):
             # We want to download again in same release, that's fine, we do not care it is the same release
             self.download_go_ahead = True
         if not self.download_go_ahead and self.session.previous_release == self.session.get('remoterelease'):
-            logging.info('Workflow:wf_release:same_as_previous_session')
-            return self.no_need_to_update()
+            if not self.session.config.get_bool('release.control', default=False):
+                logging.info('Workflow:wf_release:same_as_previous_session')
+                return self.no_need_to_update()
 
         logging.info('Session:RemoteRelease:'+self.session.get('remoterelease'))
         logging.info('Session:Release:'+self.session.get('release'))
@@ -557,8 +558,100 @@ class UpdateWorkflow(Workflow):
         self.session._session['status'][Workflow.FLOW_OVER] = True
         self.session._session['update'] = False
         self.session.set('download_files', [])
+        last_session = self.get_last_prod_session_for_release(self.session.get('remoterelease'))
+        self.session.set('release', last_session['release'])
         self.wf_over()
         return True
+
+
+
+    def get_last_prod_session_for_release(self, release):
+        '''
+        find last session matching a release in production
+        '''
+        last_session = None
+        for prod in self.bank.bank['production']:
+            if prod['remoterelease'] == release:
+                # Search session related to this production release
+                for s in self.bank.bank['sessions']:
+                    if s['id'] == prod['session']:
+                        last_session = s
+                        break
+        return last_session
+
+    def is_previous_release_content_identical(self):
+        '''
+        Checks if releases (previous_release and remoterelease) are identical in release id and content.
+        Expects release.control parameter to be set to true or 1, else skip control.
+        '''
+        if not self.session.config.get_bool('release.control', default=False):
+            return True
+        # Different releases, so different
+        if self.session.get('remoterelease') != self.session.previous_release:
+            logging.info('Workflow:wf_download:DifferentRelease')
+            return False
+        # Same release number, check further
+        previous_release_session = self.get_last_prod_session_for_release(self.session.previous_release)
+        '''
+        previous_release_session = None
+        # Search production release matching release
+        for prod in self.bank.bank['production']:
+            if prod['remoterelease'] == self.session.previous_release:
+                # Search session related to this production release
+                for s in self.bank.bank['sessions']:
+                    if s['id'] == prod['session']:
+                        previous_release_session = s
+                        break
+        '''
+
+        if previous_release_session is None:
+            return False
+        previous_downloaded_files = previous_release_session.get('download_files', None)
+
+        if previous_downloaded_files is None:
+            # No info on previous download, consider that base release is enough
+            logging.warn('Workflow:wf_download:SameRelease:download_files not available, cannot compare to previous release')
+            return True
+
+        nb_elts = len(previous_downloaded_files)
+        if self.session.get('download_files') is not None and nb_elts != len(self.session.get('download_files')):
+            # Number of files to download vs previously downloaded files differ
+            logging.info('Workflow:wf_download:SameRelease:Number of files differ')
+            return False
+
+        # Same number of files, check hash of files
+        list1 = sorted(previous_downloaded_files, key=lambda k: k['hash'])
+        list2 = sorted(self.session.get('download_files'), key=lambda k: k['hash'])
+        for index in range(0, nb_elts):
+            if list1[index]['hash'] != list2[index]['hash']:
+                return False
+        return True
+
+    def check_and_incr_release(self):
+        '''
+        Checks if local release already exists on disk. If it exists, create a new
+         local release, appending __X to the release.
+
+        :returns: str local release
+        '''
+        index = 0
+        release = self.session.get('release')
+        # Release directory exits, set index to 1
+        if os.path.exists(self.session.get_full_release_directory()):
+            index = 1
+        for x in range(1, 100):
+            if os.path.exists(self.session.get_full_release_directory()+'__'+str(x)):
+                index = x + 1
+
+        #while os.path.exists(self.session.get_full_release_directory()+'__'+str(index)):
+        #  index += 1
+        # If we found a directory for this release:   XX or XX__Y
+        if index > 0:
+            self.session.set('release', release+'__'+str(index))
+            release = release+'__'+str(index)
+            logging.info('Workflow:wf_download:release:incr_release:'+release)
+        return release
+
 
     def wf_download(self):
         '''
@@ -696,6 +789,15 @@ class UpdateWorkflow(Workflow):
 
 
         self.session.set('download_files', downloader.files_to_download)
+
+        if self.session.get('release') and self.session.config.get_bool('release.control', default=False):
+            if self.session.previous_release == self.session.get('remoterelease'):
+                if self.is_previous_release_content_identical():
+                    logging.info('Workflow:wf_release:same_as_previous_session')
+                    return self.no_need_to_update()
+                else:
+                    release = self.check_and_incr_release()
+
         if self.session.get('release') is None:
             # Not defined, or could not get it ealier
             # Set release to most recent file to download
@@ -716,27 +818,13 @@ class UpdateWorkflow(Workflow):
             if self.options.get_option(Options.FROM_TASK) == 'download':
                 # We want to download again in same release, that's fine, we do not care it is the same release
                 self.download_go_ahead = True
-            if not self.download_go_ahead and self.session.previous_release == self.session.get('remoterelease'):
+            if not self.download_go_ahead and self.session.previous_release == self.session.get('remoterelease') and self.is_previous_release_content_identical():
                 logging.info('Workflow:wf_release:same_as_previous_session')
                 return self.no_need_to_update()
 
             # We restart from scratch, check if directory with this release already exists
             if self.options.get_option(Options.FROMSCRATCH) or self.options.get_option('release') is None:
-                index = 0
-                # Release directory exits, set index to 1
-                if os.path.exists(self.session.get_full_release_directory()):
-                    index = 1
-                for x in range(1, 100):
-                    if os.path.exists(self.session.get_full_release_directory()+'__'+str(x)):
-                        index = x + 1
-
-                #while os.path.exists(self.session.get_full_release_directory()+'__'+str(index)):
-                #  index += 1
-                # If we found a directory for this release:   XX or XX__Y
-                if index > 0:
-                    self.session.set('release', release+'__'+str(index))
-                    release = release+'__'+str(index)
-                    logging.info('Workflow:wf_download:release:incr_release:'+release)
+                release = self.check_and_incr_release()
 
 
         self.session.config.set('localrelease', self.session.get('release'))

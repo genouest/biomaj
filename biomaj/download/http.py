@@ -5,6 +5,7 @@ import pycurl
 import io
 import re
 import os
+import hashlib
 
 from biomaj.utils import Utils
 from biomaj.download.ftp import FTPDownload
@@ -122,6 +123,7 @@ class HTTPDownload(FTPDownload):
                 rfile['day'] = parts[0]
                 rfile['year'] = parts[2]
                 rfile['name'] = foundfile[int(self.config.get('http.group.file.name'))-1]
+                rfile['hash'] = hashlib.md5(rfile['name']+str(date)+str(rfile['size'])).hexdigest()
                 rfiles.append(rfile)
 
         return (rfiles, rdirs)

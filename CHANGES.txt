@@ -11,6 +11,10 @@
   Feature #22: add localrelease and remoterelease bank properties to use the
                remote release as an expression in other properties
                => remote.dir = xx/yy/%(remoterelease)s/zz
+  Feature #17,#20: detect remote modifications even if release is the same
+               new parameter release.control (true, false) to force a check
+               even if remote release (file controlled or date) is the same.
+  Fix on 'multi' protocol
 
 3.0.9:
   Fix thread synchro issue:

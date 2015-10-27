@@ -445,7 +445,7 @@ class UpdateWorkflow(Workflow):
                 remote_dir = cf.get('release.remote.dir')
 
 
-            protocol = cf.get('protocol')
+            #protocol = cf.get('protocol')
             release_downloader = None
             if protocol == 'directhttp' or protocol == 'directftp':
                 release_downloader = self.get_handler(protocol, server, '/', [remote_dir])
@@ -778,10 +778,11 @@ class UpdateWorkflow(Workflow):
 
         (file_list, dir_list) = downloader.list()
 
-        downloader.match(cf.get('remote.files').split(), file_list, dir_list)
+        downloader.match(cf.get('remote.files',default='.*').split(), file_list, dir_list)
+
         for f in downloader.files_to_download:
             f['save_as'] = f['name']
-            for p in cf.get('remote.files').split():
+            for p in cf.get('remote.files', default='.*').split():
                 res = re.match('/'+p, f['name'])
                 if res is not None and res.groups() is not None and len(res.groups()) >= 1:
                     f['save_as'] = '/'.join(res.groups())
@@ -985,7 +986,7 @@ class UpdateWorkflow(Workflow):
             return True
         from_dir = os.path.join(self.session.config.get('data.dir'),
                       self.session.config.get('offline.dir.name'))
-        regexp = self.session.config.get('local.files').split()
+        regexp = self.session.config.get('local.files', default='**/*').split()
         to_dir = os.path.join(self.session.config.get('data.dir'),
                       self.session.config.get('dir.version'),
                       self.session.get_release_directory(), 'flat')

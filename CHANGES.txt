@@ -1,3 +1,22 @@
+3.0.10:
+  Change dir to process.dir to find processes in subdirs
+  If all files found in offline dir, continue workflow with no download
+  Remove extra log files for bank dependencies (computed banks)
+  Fix computed bank update when sub banks are not updated
+  Fix #15 when remote reverts to a previous release
+  Feature #16: get possibility not to download files (for computed banks for
+               example). Set protocol='none' in bank properties.
+  Fix on --check with some protocols
+  Fix #21 release.file not supported for directhttp protocol
+  Feature #22: add localrelease and remoterelease bank properties to use the
+               remote release as an expression in other properties
+               => remote.dir = xx/yy/%(remoterelease)s/zz
+  Feature #17,#20: detect remote modifications even if release is the same
+               new parameter release.control (true, false) to force a check
+               even if remote release (file controlled or date) is the same.
+  Fix on 'multi' protocol
+  Fix on "save_as" regexp when remote.files starts with a ^ character.
+
 3.0.9:
   Fix thread synchro issue:
       during download some download threads could be alive while main thread continues worflow

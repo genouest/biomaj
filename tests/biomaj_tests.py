@@ -83,11 +83,12 @@ class UtilsForTest():
   def __copy_test_bank_properties(self):
     if self.bank_properties is not None:
       return
-    self.bank_properties = ['alu', 'local', 'testhttp']
+    self.bank_properties = ['alu', 'local', 'testhttp','directhttp']
     curdir = os.path.dirname(os.path.realpath(__file__))
-    from_file = os.path.join(curdir, 'alu.properties')
-    to_file = os.path.join(self.conf_dir, 'alu.properties')
-    shutil.copyfile(from_file, to_file)
+    for b in self.bank_properties:
+        from_file = os.path.join(curdir, b+'.properties')
+        to_file = os.path.join(self.conf_dir, b+'.properties')
+        shutil.copyfile(from_file, to_file)
 
     self.bank_process = ['test.sh']
     curdir = os.path.dirname(os.path.realpath(__file__))
@@ -688,6 +689,28 @@ class TestBiomajFunctional(unittest.TestCase):
       self.assertFalse(b.session.get('update'))
       self.assertFalse(b.session.get_status(Workflow.FLOW_POSTPROCESS))
 
+  @attr('release')
+  def test_release_control(self):
+    '''
+    Try updating twice, at second time, modify one file (same date),
+     bank should update
+    '''
+    b = Bank('local')
+    b.update()
+    b.session.config.set('keep.old.version', '3')
+    self.assertTrue(b.session.get('update'))
+    remote_file = b.session.config.get('remote.dir') + 'test2.fasta'
+    os.utime(remote_file, None)
+    # Update test2.fasta and set release.control
+    b.session.config.set('release.control', 'true')
+    b.update()
+    self.assertTrue(b.session.get('update'))
+    b.update()
+    self.assertFalse(b.session.get('update'))
+    b.session.config.set('remote.files', '^test2.fasta')
+    b.update()
+    self.assertTrue(b.session.get('update'))
+
   def test_fromscratch_update(self):
       '''
       Try updating twice, at second time, bank should  be updated (force with fromscratc)
@@ -935,6 +958,23 @@ class TestBiomajFunctional(unittest.TestCase):
     res = b.update(True)
     self.assertTrue(res)
     self.assertTrue(os.path.exists(b.session.get_full_release_directory()+'/sub1/flat/test_100.txt'))
+    self.assertTrue(b.session.get('update'))
+    # Check that, with depends non updated, bank is not updated itself
+    nextb = Bank('computed')
+    res = nextb.update(True)
+    self.assertFalse(nextb.session.get('update'))
+
+
+  @attr('nofile')
+  def test_computed_nofile(self):
+    b = Bank('computed2')
+    b.load_session(UpdateWorkflow.FLOW)
+    b.session.config.set('protocol', 'none')
+    b.session.config.set('sub1.files.move', 'flat/test_.*')
+    res = b.update(True)
+    self.assertTrue(res)
+    self.assertTrue(os.path.exists(b.session.get_full_release_directory()+'/sub1/flat/test_100.txt'))
+
 
   def test_computed_ref_release(self):
     b = Bank('computed2')
@@ -945,6 +985,15 @@ class TestBiomajFunctional(unittest.TestCase):
     self.assertTrue(res)
     self.assertTrue(brelease == b2release)
 
+  @attr('computed')
+  def test_computed_ref_release(self):
+    b = Bank('computed2')
+    res = b.update(True)
+    self.assertTrue(b.session.get('update'))
+    b2 = Bank('computed2')
+    res = b2.update(True)
+    self.assertFalse(b2.session.get('update'))
+
   def test_computederror(self):
     b = Bank('computederror')
     res = b.update(True)
@@ -952,6 +1001,15 @@ class TestBiomajFunctional(unittest.TestCase):
     self.assertTrue(b.session._session['depends']['sub2'])
     self.assertFalse(b.session._session['depends']['error'])
 
+
+  @attr('directrelease')
+  def test_directhttp_release(self):
+      b = Bank('directhttp')
+      res = b.update()
+      self.assertTrue(b.session.get('update'))
+      self.assertTrue(os.path.exists(b.session.get_full_release_directory()+'/flat/debian/README.html'))
+      #print str(b.session.get('release'))
+      #print str(b.session.get('remoterelease'))
 
   @attr('network')
   def test_multi(self):

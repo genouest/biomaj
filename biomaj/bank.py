@@ -141,7 +141,7 @@ class Bank(object):
         :type full: Boolean
         :return: Dict with keys
                       if full=True
-                           - info, prod, pending
+                           - info, prod, pend
                       else
                            - info
         '''
@@ -178,23 +178,22 @@ class Bank(object):
                                   'yes' if 'freeze' in prod and prod['freeze'] else 'no'])
             # Bank pending info header
             if 'pending' in _bank and len(_bank['pending'].keys()) > 0:
-                pend_info.append(["Pending release(s)"])
+                pend_info.append(["Pending release", "Last run"])
                 for pending in _bank['pending'].keys():
-                    pend_info.append(pending)
-            # return [ bank_info, prod_info, pend_info ]
+                    run = datetime.fromtimestamp(_bank['pending'][pending]).strftime('%Y-%m-%d %H:%M:%S')
+                    pend_info.append([pending, run])
+
             info['info'] = bank_info
             info['prod'] = prod_info
             info['pend'] = pend_info
             return info
 
         else:
+            release = 'N/A'
             if 'current' in _bank and _bank['current']:
                 for prod in _bank['production']:
                     if _bank['current'] == prod['session']:
                         release = prod['remoterelease']
-            else:
-                release = 'N/A'
-            # return [ _bank['name'], ','.join(_bank['properties']['type']), str(release), _bank['properties']['visibility'] ]
             info['info'] = [_bank['name'], ','.join(_bank['properties']['type']),
                             str(release), _bank['properties']['visibility']]
             return info
@@ -252,7 +251,7 @@ class Bank(object):
         deps = deps.split(',')
         # Now search in deps if they themselves depend on other banks
         for dep in deps:
-            b = Bank(dep)
+            b = Bank(dep, no_log = True)
             deps = b.get_dependencies() + deps
         return deps
 

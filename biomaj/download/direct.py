@@ -8,6 +8,7 @@ import io
 import os
 import re
 import urllib.request, urllib.parse, urllib.error
+import hashlib
 
 from biomaj.download.interface import DownloadInterface
 from biomaj.download.ftp import FTPDownload
@@ -102,6 +103,7 @@ class DirectFTPDownload(FTPDownload):
             rfile['day'] = today.day
             rfile['year'] = today.year
             rfile['name'] = file
+            rfile['hash'] = None
             self.files_to_download.append(rfile)
 
     def list(self, directory=''):
@@ -297,6 +299,7 @@ class DirectHttpDownload(DirectFTPDownload):
                     # Sun, 06 Nov 1994
                     res = re.match('(\w+),\s+(\d+)\s+(\w+)\s+(\d+)', parts[1].strip())
                     if res:
+                        file['hash'] = hashlib.md5(str(res.group(0)).encode('utf-8')).hexdigest()
                         file['day'] = res.group(2)
                         file['month'] = Utils.month_to_num(res.group(3))
                         file['year'] = res.group(4)
@@ -304,6 +307,7 @@ class DirectHttpDownload(DirectFTPDownload):
                     #Sunday, 06-Nov-94
                     res = re.match('(\w+),\s+(\d+)-(\w+)-(\d+)', parts[1].strip())
                     if res:
+                        file['hash'] = hashlib.md5(str(res.group(0)).encode('utf-8')).hexdigest()
                         file['day'] = res.group(2)
                         file['month'] = Utils.month_to_num(res.group(3))
                         file['year'] = str(2000 + int(res.group(4)))
@@ -311,6 +315,7 @@ class DirectHttpDownload(DirectFTPDownload):
                     #Sun Nov  6 08:49:37 1994
                     res = re.match('(\w+)\s+(\w+)\s+(\d+)\s+\d{2}:\d{2}:\d{2}\s+(\d+)', parts[1].strip())
                     if res:
+                        file['hash'] = hashlib.md5(str(res.group(0)).encode('utf-8')).hexdigest()
                         file['day'] = res.group(3)
                         file['month'] = Utils.month_to_num(res.group(2))
                         file['year'] = res.group(4)

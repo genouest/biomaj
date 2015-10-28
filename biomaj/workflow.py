@@ -783,7 +783,11 @@ class UpdateWorkflow(Workflow):
         for f in downloader.files_to_download:
             f['save_as'] = f['name']
             for p in cf.get('remote.files', default='.*').split():
-                res = re.match('/'+p, f['name'])
+                if p.startswith('^'):
+                    p = p.replace('^','^/')
+                else:
+                    p = '/' + p
+                res = re.match(p, f['name'])
                 if res is not None and res.groups() is not None and len(res.groups()) >= 1:
                     f['save_as'] = '/'.join(res.groups())
                     break

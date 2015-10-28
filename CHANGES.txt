@@ -15,6 +15,7 @@
                new parameter release.control (true, false) to force a check
                even if remote release (file controlled or date) is the same.
   Fix on 'multi' protocol
+  Fix on "save_as" regexp when remote.files starts with a ^ character.
 
 3.0.9:
   Fix thread synchro issue:

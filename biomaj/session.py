@@ -100,7 +100,6 @@ class Session(object):
         '''
         Reloads processes in config order
         '''
-        print str(otherprocess)
         if self.config.get(cfg_type) is None or not self.config.get(cfg_type):
             return otherprocess
         copy_postprocess = Session.get_ordered_dict()

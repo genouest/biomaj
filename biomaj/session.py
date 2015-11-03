@@ -22,7 +22,9 @@ class Session(object):
         if sys.version_info < (2, 7):
             return {}
         else:
-            return OrderedDict()
+            import collections
+            return collections.OrderedDict()
+            #return {}
 
 
     OVER = 0
@@ -94,14 +96,15 @@ class Session(object):
                     copy_postprocess[block][meta][process] = postprocess[block][meta][process]
         return copy_postprocess
 
-    def reload_in_order(self, otherprocess):
+    def reload_in_order(self, cfg_type, otherprocess):
         '''
         Reloads processes in config order
         '''
-        if self.config.get(otherprocess.strip()) is None:
+        print str(otherprocess)
+        if self.config.get(cfg_type) is None or not self.config.get(cfg_type):
             return otherprocess
         copy_postprocess = Session.get_ordered_dict()
-        metas = self.config.get(otherprocess.strip()).split(',')
+        metas = self.config.get(cfg_type).split(',')
         for meta in metas:
             copy_postprocess[meta] = Session.get_ordered_dict()
             processes = self.config.get(meta.strip()).split(',')
@@ -126,10 +129,10 @@ class Session(object):
                 for elt in list(self._session['process']['postprocess'].keys()):
                     self.reset_meta(self._session['process']['postprocess'][elt], proc)
         elif type_proc == Workflow.FLOW_PREPROCESS:
-            self._session['process']['preprocess'] = self.reload_in_order(self._session['process']['preprocess'])
+            self._session['process']['preprocess'] = self.reload_in_order('db.pre.process', self._session['process']['preprocess'])
             self.reset_meta(self._session['process']['preprocess'])
         elif type_proc == Workflow.FLOW_REMOVEPROCESS:
-            self._session['process']['removeprocess'] = self.reload_in_order(self._session['process']['removeprocess'])
+            self._session['process']['removeprocess'] = self.reload_in_order('db.remove.process', self._session['process']['removeprocess'])
             self.reset_meta(self._session['process']['removeprocess'], proc)
 
     def reset_meta(self, metas, proc=None):
@@ -184,10 +187,14 @@ class Session(object):
         '''
         return os.path.join(self.config.get('data.dir'), self.config.get('offline.dir.name'))
 
-    def get(self, attr):
+
+    def get(self, attr=None):
         '''
         Return an attribute of session
         '''
+        if attr is None:
+            return self._session
+
         if attr in self._session:
             return self._session[attr]
         else:

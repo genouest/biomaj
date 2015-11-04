@@ -18,6 +18,8 @@ from biomaj.config import BiomajConfig
 from biomaj.notify import Notify
 from biomaj.options import Options
 from biomaj.workflow import Workflow
+from biomaj.workflow import UpdateWorkflow, RemoveWorkflow, Workflow
+
 
 def main():
 
@@ -167,6 +169,25 @@ def main():
         version = pkg_resources.require('biomaj')[0].version
         print('Version: '+str(version))
         return
+
+    if options.stop_after or options.stop_before or options.from_task:
+        available_steps = []
+        for flow in UpdateWorkflow.FLOW:
+            available_steps.append(flow['name'])
+        for flow in RemoveWorkflow.FLOW:
+            available_steps.append(flow['name'])
+        if options.stop_after:
+            if options.stop_after not in available_steps:
+                print('Invalid step: '+options.stop_after)
+                sys.exit(1)
+        if options.stop_before:
+            if options.stop_before not in available_steps:
+                print('Invalid step: '+options.stop_before)
+                sys.exit(1)
+        if options.from_task:
+            if options.from_task not in available_steps:
+                print('Invalid step: '+options.from_task)
+                sys.exit(1)
 
     bmaj = None
     try:

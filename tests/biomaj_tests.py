@@ -1180,7 +1180,6 @@ class TestElastic(unittest.TestCase):
           }
         BmajIndex.delete_all_bank('test')
         res = BmajIndex.search(query)
-        print "##DEBUG "+str(res)
         self.assertTrue(len(res)==0)
 
 

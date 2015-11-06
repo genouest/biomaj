@@ -1090,85 +1090,98 @@ class TestBiomajFunctional(unittest.TestCase):
 
 @attr('elastic')
 class TestElastic(unittest.TestCase):
-  '''
-  test indexing and search
-  '''
+    '''
+    test indexing and search
+    '''
 
-  def setUp(self):
-    BmajIndex.es = None
-    self.utils = UtilsForTest()
-    curdir = os.path.dirname(os.path.realpath(__file__))
-    BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
-    if BmajIndex.do_index == False:
-        self.skipTest("Skipping indexing tests due to elasticsearch not available")
-  # Delete all banks
-    b = Bank('local')
-    b.banks.remove({})
+    def setUp(self):
+        BmajIndex.es = None
+        self.utils = UtilsForTest()
+        curdir = os.path.dirname(os.path.realpath(__file__))
+        BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
+        if BmajIndex.do_index == False:
+            self.skipTest("Skipping indexing tests due to elasticsearch not available")
+        # Delete all banks
+        b = Bank('local')
+        b.banks.remove({})
 
-    self.config = BiomajConfig('local')
-    data_dir = self.config.get('data.dir')
-    lock_file = os.path.join(data_dir,'local.lock')
-    if os.path.exists(lock_file):
-      os.remove(lock_file)
+        self.config = BiomajConfig('local')
+        data_dir = self.config.get('data.dir')
+        lock_file = os.path.join(data_dir,'local.lock')
+        if os.path.exists(lock_file):
+          os.remove(lock_file)
 
-  def tearDown(self):
-    data_dir = self.config.get('data.dir')
-    lock_file = os.path.join(data_dir,'local.lock')
-    if os.path.exists(lock_file):
-      os.remove(lock_file)
-    self.utils.clean()
-    BmajIndex.delete_all_bank('test')
+    def tearDown(self):
+        data_dir = self.config.get('data.dir')
+        lock_file = os.path.join(data_dir,'local.lock')
+        if os.path.exists(lock_file):
+          os.remove(lock_file)
+        self.utils.clean()
+        BmajIndex.delete_all_bank('test')
 
-  def test_index(self):
-    prod = {
-			"data_dir" : "/tmp/test/data",
-			"formats" : {
-				"fasta" : [
-					{
-						"files" : [
-							"fasta/chr1.fa",
-							"fasta/chr2.fa"
-						],
-						"types" : [
-							"nucleic"
-						],
-						"tags" : {
-							"organism" : "hg19"
-						}
-					}
-				],
-				"blast": [
-					{
-						"files" : [
-							"blast/chr1/chr1db"
-						],
-						"types" : [
-							"nucleic"
-						],
-						"tags" : {
-							"chr" : "chr1",
-							"organism" : "hg19"
-						}
-					}
-				]
+    def test_index(self):
+        prod = {
+    			"data_dir" : "/tmp/test/data",
+    			"formats" : {
+    				"fasta" : [
+    					{
+    						"files" : [
+    							"fasta/chr1.fa",
+    							"fasta/chr2.fa"
+    						],
+    						"types" : [
+    							"nucleic"
+    						],
+    						"tags" : {
+    							"organism" : "hg19"
+    						}
+    					}
+    				],
+    				"blast": [
+    					{
+    						"files" : [
+    							"blast/chr1/chr1db"
+    						],
+    						"types" : [
+    							"nucleic"
+    						],
+    						"tags" : {
+    							"chr" : "chr1",
+    							"organism" : "hg19"
+    						}
+    					}
+    				]
 
-			},
-			"freeze" : False,
-			"session" : 1416229253.930908,
-			"prod_dir" : "alu-2003-11-26",
-			"release" : "2003-11-26",
-			"types" : [
-				"nucleic"
-			]
-		}
-    BmajIndex.add('test',prod, True)
-    query = {
-      'query' : {
-        'match' : {'bank': 'test'}
-        }
-      }
-    res = BmajIndex.search(query)
-    self.assertTrue(len(res)==2)
+    			},
+    			"freeze" : False,
+    			"session" : 1416229253.930908,
+    			"prod_dir" : "alu-2003-11-26",
+    			"release" : "2003-11-26",
+    			"types" : [
+    				"nucleic"
+    			]
+    		}
+        BmajIndex.add('test',prod, True)
+        query = {
+          'query' : {
+            'match' : {'bank': 'test'}
+            }
+          }
+        res = BmajIndex.search(query)
+        self.assertTrue(len(res)==2)
+
+
+    def test_remove_all(self):
+        self.test_index()
+        query = {
+          'query' : {
+            'match' : {'bank': 'test'}
+            }
+          }
+        BmajIndex.delete_all_bank('test')
+        res = BmajIndex.search(query)
+        print "##DEBUG "+str(res)
+        self.assertTrue(len(res)==0)
 
 
 class MockLdapConn(object):

@@ -2,6 +2,7 @@
   Fix in session management with pre and rm processes
   Fix #23: Check workflow step name passed to
            --stop-after/--start-after/--from-task
+  Fix #24: deprecated delete_by_query method in elasticsearch
 
 3.0.10:
   Change dir to process.dir to find processes in subdirs

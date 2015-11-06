@@ -73,6 +73,42 @@ class BmajIndex(object):
                 else:
                     raise e
 
+    @staticmethod
+    def _bulk_delete(query, flush=True):
+        try:
+            page = BmajIndex.es.search(
+              index = BmajIndex.index,
+              scroll = '1m',
+              search_type = 'scan',
+              size = 1000,
+              body = {
+                "query": {
+                    "match" : query
+                    }
+                }
+            )
+            sid = page['_scroll_id']
+            scroll_size = page['hits']['total']
+            bulk_delete = ''
+            while (scroll_size > 0):
+                page = BmajIndex.es.scroll(scroll_id = sid, scroll = '1m')
+                # Update the scroll ID
+                sid = page['_scroll_id']
+                # Get the number of results that we returned in the last scroll
+                scroll_size = len(page['hits']['hits'])
+                for dataset_index in page['hits']['hits']:
+                    bulk_delete += "{ \"delete\" : { \"_index\": \""+BmajIndex.index+"\",\"_type\":\"production\", \"_id\" : \""+dataset_index['_id']+"\" } }\n"
+
+            if bulk_delete:
+                BmajIndex.es.bulk(body=bulk_delete)
+                if flush:
+                    BmajIndex.es.indices.flush(index=BmajIndex.index, force=True)
+        except Exception as e:
+            if BmajIndex.skip_if_failure:
+                BmajIndex.do_index = False
+            else:
+                raise e
+
 
     @staticmethod
     def delete_all_bank(bank_name):
@@ -81,6 +117,8 @@ class BmajIndex(object):
         '''
         if not BmajIndex.do_index:
             return
+        BmajIndex._bulk_delete({"bank" : bank_name})
+        '''
         query = {
           "query" : {
             "term" : {"bank" : bank_name}
@@ -93,6 +131,7 @@ class BmajIndex(object):
                 BmajIndex.do_index = False
             else:
                 raise e
+        '''
 
     @staticmethod
     def remove(bank_name, release):
@@ -106,6 +145,8 @@ class BmajIndex(object):
         '''
         if not BmajIndex.do_index:
             return
+        BmajIndex._bulk_delete({"release" : release, "bank": bank_name})
+        '''
         try:
             query = {
               "query" : {
@@ -117,6 +158,7 @@ class BmajIndex(object):
             logging.error('Index:Remove:'+bank_name+'_'+str(release)+':Exception:'+str(e))
             if BmajIndex.skip_if_failure:
                 BmajIndex.do_index = False
+        '''
 
     @staticmethod
     def search(query):

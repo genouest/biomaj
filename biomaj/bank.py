@@ -459,6 +459,15 @@ class Bank(object):
                 # if index < len(self.bank['production']):
                 #  self.bank['production'].pop(index)
             release_types = []
+            if self.config.get('db.type'):
+                release_types = self.config.get('db.type').split(',')
+            release_formats = list(self.session._session['formats'].keys())
+            if self.config.get('db.formats'):
+                config_formats = self.config.get('db.formats').split(',')
+                for config_format in config_formats:
+                    if config_format not in release_formats:
+                        release_formats.append(config_format)
+
             for release_format in self.session._session['formats']:
                 for release_files in self.session._session['formats'][release_format]:
                     if release_files['types']:
@@ -471,7 +480,7 @@ class Bank(object):
             production = {'release': self.session.get('release'),
                           'remoterelease': self.session.get('remoterelease'),
                           'session': self.session._session['id'],
-                          'formats': list(self.session._session['formats'].keys()),
+                          'formats': release_formats,
                           'types': release_types,
                           'size': self.session.get('fullsize'),
                           'data_dir': self.session._session['data_dir'],

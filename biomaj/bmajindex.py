@@ -76,22 +76,18 @@ class BmajIndex(object):
     @staticmethod
     def _bulk_delete(query, flush=True):
         try:
-            page = BmajIndex.es.search(
-              index = BmajIndex.index,
-              scroll = '1m',
-              search_type = 'scan',
-              size = 1000,
-              body = {
-                "query": {
-                    "match" : {'bank': query['bank']}
-                    }
-                }
-            )
+            page = BmajIndex.es.search(index=BmajIndex.index,
+                 doc_type='production',
+                 search_type = "query_then_fetch",
+                 size=1000,
+                 body= {'query': {'match': {'bank': query['bank']}}})
+
+            if page is None:
+                return
             bulk_delete = ''
             for del_hit in page['hits']['hits']:
-                if ('release' in query and query['release'] == del_hit['release']) or 'release' not in query:
-                   bulk_delete += "{ \"delete\" : {\"_index\":\""+BmajIndex.index+"\",\"_type\":\"production\", \"_id\" : \""+del_hit['_id']+"\" } }\n" 
-
+                if ('release' in query and query['release'] == del_hit['_source']['release']) or 'release' not in query:
+                   bulk_delete += "{ \"delete\" : {\"_index\":\""+BmajIndex.index+"\",\"_type\":\"production\", \"_id\" : \""+del_hit['_id']+"\" } }\n"
             if bulk_delete:
                 BmajIndex.es.bulk(body=bulk_delete)
                 if flush:
@@ -110,7 +106,7 @@ class BmajIndex(object):
         '''
         if not BmajIndex.do_index:
             return
-        BmajIndex._bulk_delete({"bank" : bank_name})
+        BmajIndex._bulk_delete({"bank" : bank_name}, True)
         '''
         query = {
           "query" : {
@@ -157,7 +153,10 @@ class BmajIndex(object):
     def search(query):
         if not BmajIndex.do_index:
             return None
-        res = BmajIndex.es.search(index=BmajIndex.index, doc_type='production', body=query)
+        res = BmajIndex.es.search(index=BmajIndex.index,
+                                  doc_type='production',
+                                  search_type = "query_then_fetch",
+                                  body=query)
         return res['hits']['hits']
 
     @staticmethod

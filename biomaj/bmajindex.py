@@ -83,21 +83,14 @@ class BmajIndex(object):
               size = 1000,
               body = {
                 "query": {
-                    "match" : query
+                    "match" : {'bank': query['bank']}
                     }
                 }
             )
-            sid = page['_scroll_id']
-            scroll_size = page['hits']['total']
             bulk_delete = ''
-            while (scroll_size > 0):
-                page = BmajIndex.es.scroll(scroll_id = sid, scroll = '1m')
-                # Update the scroll ID
-                sid = page['_scroll_id']
-                # Get the number of results that we returned in the last scroll
-                scroll_size = len(page['hits']['hits'])
-                for dataset_index in page['hits']['hits']:
-                    bulk_delete += "{ \"delete\" : { \"_index\": \""+BmajIndex.index+"\",\"_type\":\"production\", \"_id\" : \""+dataset_index['_id']+"\" } }\n"
+            for del_hit in page['hits']['hits']:
+                if ('release' in query and query['release'] == del_hit['release']) or 'release' not in query:
+                   bulk_delete += "{ \"delete\" : {\"_index\":\""+BmajIndex.index+"\",\"_type\":\"production\", \"_id\" : \""+del_hit['_id']+"\" } }\n" 
 
             if bulk_delete:
                 BmajIndex.es.bulk(body=bulk_delete)

@@ -165,6 +165,10 @@ class DirectHttpDownload(DirectFTPDownload):
             if keep_dirs:
                 file_dir = local_dir + os.path.dirname(self.save_as)
             file_path = file_dir + '/' + os.path.basename(self.save_as)
+
+            # For unit tests only, workflow will take in charge directory creation before to avoid thread multi access
+            if not os.path.exists(file_dir):
+                os.makedirs(file_dir)
             '''
             self.mkdir_lock.acquire()
             try:

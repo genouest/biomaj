@@ -653,6 +653,27 @@ class UpdateWorkflow(Workflow):
         return release
 
 
+    def _create_dir_structure(self, downloader, offline_dir):
+        '''
+        Create expected directory structure in offline directory before download
+        '''
+        logging.debug('Workflow:wf_download:create_dir_structure:start')
+        for rfile in downloader.files_to_download:
+            save_as = None
+            if 'save_as' not in rfile or rfile['save_as'] is None:
+                save_as = rfile['name']
+            else:
+                save_as = rfile['save_as']
+
+            file_dir = offline_dir + '/' + os.path.dirname(save_as)
+
+            try:
+                if not os.path.exists(file_dir):
+                    os.makedirs(file_dir)
+            except Exception as e:
+                logging.error(e)
+        logging.debug('Workflow:wf_download:create_dir_structure:done')
+
     def wf_download(self):
         '''
         Download remote files or use an available local copy from last production directory if possible.
@@ -874,6 +895,8 @@ class UpdateWorkflow(Workflow):
             if len(downloader.files_to_download) == 0:
                 self.downloaded_files = []
                 return True
+
+        self._create_dir_structure(downloader, offline_dir)
 
         self.download_go_ahead = False
         if self.options.get_option(Options.FROM_TASK) == 'download':

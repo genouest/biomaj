@@ -126,6 +126,10 @@ class FTPDownload(DownloadInterface):
                 file_dir = local_dir + '/' + os.path.dirname(rfile['save_as'])
             file_path = file_dir + '/' + os.path.basename(rfile['save_as'])
 
+            # For unit tests only, workflow will take in charge directory creation before to avoid thread multi access
+            if not os.path.exists(file_dir):
+                os.makedirs(file_dir)
+            '''
             self.mkdir_lock.acquire()
             try:
                 if not os.path.exists(file_dir):
@@ -134,6 +138,7 @@ class FTPDownload(DownloadInterface):
                 logging.error(e)
             finally:
                 self.mkdir_lock.release() # release lock, no matter what
+            '''
             logging.debug('FTP:Download:Progress:'+str(cur_files)+'/'+str(nb_files)+' downloading file '+rfile['name'])
             logging.debug('FTP:Download:Progress:'+str(cur_files)+'/'+str(nb_files)+' save as '+rfile['save_as'])
             cur_files += 1

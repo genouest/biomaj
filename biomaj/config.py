@@ -188,6 +188,15 @@ class BiomajConfig(object):
         if not os.path.exists(cache_dir):
             os.makedirs(cache_dir)
 
+        process_dir = self.get('process.dir')
+        if process_dir is None:
+            print("Configuration file error: process.dir empty")
+            logging.error("process.dir is not defined")
+            sys.exit(1)
+
+        if not os.path.exists(process_dir):
+            os.makedirs(process_dir)
+
         data_dir = self.get('data.dir')
         if data_dir is None:
             print("Configuration file error: data.dir empty")

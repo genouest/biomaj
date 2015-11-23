@@ -609,19 +609,7 @@ class UpdateWorkflow(Workflow):
             return False
         # Same release number, check further
         previous_release_session = self.get_last_prod_session_for_release(self.session.previous_release)
-        '''
-        previous_release_session = None
-        # Search production release matching release
-        for prod in self.bank.bank['production']:
-            if prod['remoterelease'] == self.session.previous_release:
-                # Search session related to this production release
-                for s in self.bank.bank['sessions']:
-                    if s['id'] == prod['session']:
-                        previous_release_session = s
-                        break
-        '''
-
-
+        
         if previous_release_session is None:
             return False
 

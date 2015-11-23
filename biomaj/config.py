@@ -178,16 +178,40 @@ class BiomajConfig(object):
             logger.addHandler(hdlr)
         else:
             self.log_file = 'none'
+
         log_dir = self.get('log.dir')
+        if log_dir is None:
+            print("Configuration file error: log.dir empty")
+            logging.error("log.dir is not defined")
+            sys.exit(1)
+
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
+
         cache_dir = self.get('cache.dir')
+        if cache_dir is None:
+            print("Configuration file error: cache.dir empty")
+            logging.error("cache.dir is not defined")
+            sys.exit(1)
+
         if not os.path.exists(cache_dir):
             os.makedirs(cache_dir)
+
         data_dir = self.get('data.dir')
+        if data_dir is None:
+            print("Configuration file error: data.dir empty")
+            logging.error("data.dir is not defined")
+            sys.exit(1)
+
         if not os.path.exists(data_dir):
             os.makedirs(data_dir)
+
         lock_dir = self.get('lock.dir')
+        if lock_dir is None:
+            print("Configuration file error: lock.dir empty")
+            logging.error("lock.dir is not defined")
+            sys.exit(1)
+
         if not os.path.exists(lock_dir):
             os.makedirs(lock_dir)
 

@@ -267,6 +267,14 @@ class BiomajConfig(object):
         if not self.get('process.dir'):
             logging.error('process.dir is not set')
             status = False
+        if not self.get('lock.dir'):
+            logging.error('lock.dir is not set')
+            status = False
+        if not self.get('cache.dir'):
+            logging.error('cache.dir is not set')
+            status = False
+
+
         if not self.get('db.fullname'):
             logging.warn('db.fullname is not set')
         if not self.get('db.formats'):

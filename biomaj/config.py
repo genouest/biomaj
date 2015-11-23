@@ -179,15 +179,6 @@ class BiomajConfig(object):
         else:
             self.log_file = 'none'
 
-        log_dir = self.get('log.dir')
-        if log_dir is None:
-            print("Configuration file error: log.dir empty")
-            logging.error("log.dir is not defined")
-            sys.exit(1)
-
-        if not os.path.exists(log_dir):
-            os.makedirs(log_dir)
-
         cache_dir = self.get('cache.dir')
         if cache_dir is None:
             print("Configuration file error: cache.dir empty")

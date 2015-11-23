@@ -579,6 +579,23 @@ class UpdateWorkflow(Workflow):
                         break
         return last_session
 
+
+    def _load_download_files_from_session(self, session_id):
+        '''
+        Load download files for sessions from cache directory
+        '''
+
+        cache_dir = self.bank.config.get('cache.dir')
+        f_downloaded_files = None
+        file_path = os.path.join(cache_dir, 'files_'+str(session_id))
+        if not os.path.exists(file_path):
+            return f_downloaded_files
+
+        with open(file_path) as data_file:
+            f_downloaded_files = json.load(data_file)
+
+        return f_downloaded_files
+
     def is_previous_release_content_identical(self):
         '''
         Checks if releases (previous_release and remoterelease) are identical in release id and content.
@@ -604,9 +621,14 @@ class UpdateWorkflow(Workflow):
                         break
         '''
 
+
         if previous_release_session is None:
             return False
-        previous_downloaded_files = previous_release_session.get('download_files', None)
+
+        previous_downloaded_files = self._load_download_files_from_session(previous_release_session.get('id'))
+        previous_release_session['download_files'] = previous_downloaded_files
+
+        #previous_downloaded_files = previous_release_session.get('download_files', None)
 
         if previous_downloaded_files is None:
             # No info on previous download, consider that base release is enough
@@ -614,11 +636,11 @@ class UpdateWorkflow(Workflow):
             return True
 
         nb_elts = len(previous_downloaded_files)
+
         if self.session.get('download_files') is not None and nb_elts != len(self.session.get('download_files')):
             # Number of files to download vs previously downloaded files differ
             logging.info('Workflow:wf_download:SameRelease:Number of files differ')
             return False
-
         # Same number of files, check hash of files
         list1 = sorted(previous_downloaded_files, key=lambda k: k['hash'])
         list2 = sorted(self.session.get('download_files'), key=lambda k: k['hash'])

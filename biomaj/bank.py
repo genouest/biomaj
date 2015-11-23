@@ -5,6 +5,7 @@ import logging
 import time
 import shutil
 # import copy
+import json
 
 from datetime import datetime
 from biomaj.mongo_connector import MongoConnector
@@ -429,6 +430,16 @@ class Bank(object):
             action = 'last_update_session'
         if self.session.get('action') == 'remove':
             action = 'last_remove_session'
+
+
+        cache_dir = self.config.get('cache.dir')
+        download_files = self.session.get('download_files')
+        if download_files is not None:
+            f_downloaded_files = open(os.path.join(cache_dir, 'files_'+str(self.session.get('id'))), 'w')
+            f_downloaded_files.write(json.dumps(download_files))
+            f_downloaded_files.close()
+            self.session.set('download_files',[])
+
         self.banks.update({'name': self.name}, {
             '$set': {
                 action: self.session._session['id'],
@@ -755,6 +766,13 @@ class Bank(object):
         for s in _tmpbank['sessions']:
             if s['id'] == sid:
                 session_release = s['release']
+
+
+        cache_dir = self.config.get('cache.dir')
+        download_files = os.path.join(cache_dir, 'files_'+str(sid))
+        if os.path.exists(download_files):
+            os.remove(download_files)
+
         if session_release is not None:
             self.banks.update({'name': self.name}, {'$pull': {
                 'sessions': {'id': sid},

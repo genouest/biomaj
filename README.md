@@ -118,6 +118,7 @@ You can use BioMAJ with Docker (genouest/biomaj)
 
 Copy your bank properties in directory *local_path*/data and post-processes (if any) in *local_path*/process
 
+You can override global.properties in /etc/biomaj/global.properties (-v xx/global.properties:/etc/biomaj/global.properties)
 
 
 API documentation

@@ -101,6 +101,24 @@ installation.
 
 The tools/process contains example process files (python and shell).
 
+Docker
+======
+
+You can use BioMAJ with Docker (genouest/biomaj)
+
+
+    docker pull genouest/biomaj
+    docker pull mongo
+    docker run --name biomaj-mongodb -d mongo
+    # Wait ~10 seconds for mongo to initialize
+    # Create a local directory where databases will be permanently stored
+    # *local_path*
+    docker run --rm -v local_path:/var/lib/biomaj --link biomaj-mongodb:biomaj-mongodb --help
+
+
+Copy your bank properties in directory *local_path*/data and post-processes (if any) in *local_path*/process
+
+
 
 API documentation
 =================

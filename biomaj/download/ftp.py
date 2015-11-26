@@ -101,6 +101,46 @@ class FTPDownload(DownloadInterface):
         if not submatch and len(self.files_to_download) == 0:
             raise Exception('no file found matching expressions')
 
+    def curl_download(self, file_path, file_to_download):
+        error = True
+        nbtry = 1
+        while(error==True and nbtry<3):
+            fp = open(file_path, "wb")
+            curl = pycurl.Curl()
+            try:
+                curl.setopt(pycurl.URL, file_to_download)
+            except Exception as a:
+                curl.setopt(pycurl.URL, file_to_download.encode('ascii', 'ignore'))
+            if self.proxy is not None:
+                self.crl.setopt(pycurl.PROXY, self.proxy)
+                if self.proxy_auth is not None:
+                    curl.setopt(pycurl.PROXYUSERPWD, self.proxy_auth)
+
+            if self.credentials is not None:
+                curl.setopt(pycurl.USERPWD, self.credentials)
+
+            curl.setopt(pycurl.CONNECTTIMEOUT, 300)
+            # Download should not take more than 5minutes
+            curl.setopt(pycurl.TIMEOUT, self.timeout)
+            curl.setopt(pycurl.NOSIGNAL, 1)
+
+            curl.setopt(pycurl.WRITEDATA, fp)
+
+            try:
+                curl.perform()
+                errcode = curl.getinfo(pycurl.HTTP_CODE)
+                if int(errcode) != 226 and int(errcode) != 200:
+                    error = True
+                    logging.error('Error while downloading '+file_to_download+' - '+str(errcode))
+                else:
+                    error = False
+            except Exception as e:
+                logging.error('Could not get errcode:' + str(e))
+            nbtry += 1
+            curl.close()
+            fp.close()
+        return error
+
     def download(self, local_dir, keep_dirs=True):
         '''
         Download remote files to local_dir
@@ -144,28 +184,11 @@ class FTPDownload(DownloadInterface):
             cur_files += 1
             if not 'url' in rfile:
                 rfile['url'] = self.url
-            fp = open(file_path, "wb")
-            curl = pycurl.Curl()
-            try:
-                curl.setopt(pycurl.URL, rfile['url']+rfile['root']+'/'+rfile['name'])
-            except Exception as a:
-                curl.setopt(pycurl.URL, (rfile['url']+rfile['root']+'/'+rfile['name']).encode('ascii', 'ignore'))
 
-            if self.proxy is not None:
-                self.crl.setopt(pycurl.PROXY, self.proxy)
-                if self.proxy_auth is not None:
-                    curl.setopt(pycurl.PROXYUSERPWD, self.proxy_auth)
+            error = self.curl_download(file_path, rfile['url']+rfile['root']+'/'+rfile['name'])
+            if error:
+                raise Exception("FTP:Download:Error:"+rfile['url']+rfile['root']+'/'+rfile['name'])
 
-            if self.credentials is not None:
-                curl.setopt(pycurl.USERPWD, self.credentials)
-            curl.setopt(pycurl.WRITEDATA, fp)
-            curl.perform()
-            #errcode = curl.getinfo(pycurl.HTTP_CODE)
-            #if int(errcode) != 200:
-            #  self.error = True
-            #  logging.error('Error while downloading '+rfile['name']+' - '+str(errcode))
-            curl.close()
-            fp.close()
             #logging.debug('downloaded!')
             self.set_permissions(file_path, rfile)
             # Add progress only per 10 files to limit db requests

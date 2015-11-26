@@ -92,6 +92,11 @@ class Workflow(object):
         proxy_auth = self.bank.config.get('proxy_auth')
         if proxy is not None and proxy:
             downloader.set_proxy(proxy, proxy_auth)
+
+        timeout_download = self.bank.config.get('timeout.download')
+        if timeout_download is not None and timeout_download:
+            downloader.timeout = int(timeout_download)
+
         return downloader
 
 
@@ -609,7 +614,7 @@ class UpdateWorkflow(Workflow):
             return False
         # Same release number, check further
         previous_release_session = self.get_last_prod_session_for_release(self.session.previous_release)
-        
+
         if previous_release_session is None:
             return False
 

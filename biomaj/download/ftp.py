@@ -262,7 +262,17 @@ class FTPDownload(DownloadInterface):
         # lets assign this buffer to pycurl object
         self.crl.setopt(pycurl.WRITEFUNCTION, output.write)
         self.crl.setopt(pycurl.HEADERFUNCTION, self.header_function)
-        self.crl.perform()
+
+
+        self.crl.setopt(pycurl.CONNECTTIMEOUT, 300)
+        # Download should not take more than 5minutes
+        self.crl.setopt(pycurl.TIMEOUT, self.timeout)
+        self.crl.setopt(pycurl.NOSIGNAL, 1)
+        try:
+            self.crl.perform()
+        except Exception as e:
+            logging.error('Could not get errcode:' + str(e))
+
         # Figure out what encoding was sent with the response, if any.
         # Check against lowercased header name.
         encoding = None

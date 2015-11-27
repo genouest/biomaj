@@ -35,6 +35,7 @@ class DownloadInterface(object):
     files_num_threads = 4
 
     def __init__(self):
+        self.config = None
         self.files_to_download = []
         self.files_to_copy = []
         self.error = False

@@ -29,8 +29,11 @@ class DownloadThread(threading.Thread):
         '''
         threads = []
         # Creates threads with copies of the downloader
+        download_config = downloader.config
         for i in range(0, DownloadThread.NB_THREAD):
+            downloader.config = None
             new_download = copy.deepcopy(downloader)
+            new_download.config = download_config
             new_download.files_to_download = []
             th = DownloadThread(new_download, local_dir)
             threads.append(th)

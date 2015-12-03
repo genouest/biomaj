@@ -278,7 +278,7 @@ class Bank(object):
             logging.error('Not authorized, bank owned by ' + self.bank['properties']['owner'])
             raise Exception('Not authorized, bank owned by ' + self.bank['properties']['owner'])
 
-        self.banks.update({'name': self.name}, {'$set': {'properties': {'owner': owner}}})
+        self.banks.update({'name': self.name}, {'$set': {'properties.owner': owner}})
 
     def set_visibility(self, visibility):
         '''

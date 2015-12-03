@@ -1,3 +1,5 @@
+3.0.14:
+  Fix in method set_owner
 3.0.13:
   Fix #27: Thread lock issue during download
            New optional attribute in bank properties: timeout.download

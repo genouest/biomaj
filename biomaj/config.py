@@ -179,6 +179,42 @@ class BiomajConfig(object):
         else:
             self.log_file = 'none'
 
+        cache_dir = self.get('cache.dir')
+        if cache_dir is None:
+            print("Configuration file error: cache.dir empty")
+            logging.error("cache.dir is not defined")
+            sys.exit(1)
+
+        if not os.path.exists(cache_dir):
+            os.makedirs(cache_dir)
+
+        process_dir = self.get('process.dir')
+        if process_dir is None:
+            print("Configuration file error: process.dir empty")
+            logging.error("process.dir is not defined")
+            sys.exit(1)
+
+        if not os.path.exists(process_dir):
+            os.makedirs(process_dir)
+
+        data_dir = self.get('data.dir')
+        if data_dir is None:
+            print("Configuration file error: data.dir empty")
+            logging.error("data.dir is not defined")
+            sys.exit(1)
+
+        if not os.path.exists(data_dir):
+            os.makedirs(data_dir)
+
+        lock_dir = self.get('lock.dir')
+        if lock_dir is None:
+            print("Configuration file error: lock.dir empty")
+            logging.error("lock.dir is not defined")
+            sys.exit(1)
+
+        if not os.path.exists(lock_dir):
+            os.makedirs(lock_dir)
+
 
     def set(self, prop, value, section='GENERAL'):
         self.config_bank.set(section, prop, value)
@@ -255,6 +291,14 @@ class BiomajConfig(object):
         if not self.get('process.dir'):
             logging.error('process.dir is not set')
             status = False
+        if not self.get('lock.dir'):
+            logging.error('lock.dir is not set')
+            status = False
+        if not self.get('cache.dir'):
+            logging.error('cache.dir is not set')
+            status = False
+
+
         if not self.get('db.fullname'):
             logging.warn('db.fullname is not set')
         if not self.get('db.formats'):

@@ -5,6 +5,7 @@ import logging
 import time
 import shutil
 # import copy
+import json
 
 from datetime import datetime
 from biomaj.mongo_connector import MongoConnector
@@ -277,7 +278,7 @@ class Bank(object):
             logging.error('Not authorized, bank owned by ' + self.bank['properties']['owner'])
             raise Exception('Not authorized, bank owned by ' + self.bank['properties']['owner'])
 
-        self.banks.update({'name': self.name}, {'$set': {'properties': {'owner': owner}}})
+        self.banks.update({'name': self.name}, {'$set': {'properties.owner': owner}})
 
     def set_visibility(self, visibility):
         '''
@@ -429,6 +430,16 @@ class Bank(object):
             action = 'last_update_session'
         if self.session.get('action') == 'remove':
             action = 'last_remove_session'
+
+
+        cache_dir = self.config.get('cache.dir')
+        download_files = self.session.get('download_files')
+        if download_files is not None:
+            f_downloaded_files = open(os.path.join(cache_dir, 'files_'+str(self.session.get('id'))), 'w')
+            f_downloaded_files.write(json.dumps(download_files))
+            f_downloaded_files.close()
+            self.session.set('download_files',[])
+
         self.banks.update({'name': self.name}, {
             '$set': {
                 action: self.session._session['id'],
@@ -459,6 +470,15 @@ class Bank(object):
                 # if index < len(self.bank['production']):
                 #  self.bank['production'].pop(index)
             release_types = []
+            if self.config.get('db.type'):
+                release_types = self.config.get('db.type').split(',')
+            release_formats = list(self.session._session['formats'].keys())
+            if self.config.get('db.formats'):
+                config_formats = self.config.get('db.formats').split(',')
+                for config_format in config_formats:
+                    if config_format not in release_formats:
+                        release_formats.append(config_format)
+
             for release_format in self.session._session['formats']:
                 for release_files in self.session._session['formats'][release_format]:
                     if release_files['types']:
@@ -471,7 +491,7 @@ class Bank(object):
             production = {'release': self.session.get('release'),
                           'remoterelease': self.session.get('remoterelease'),
                           'session': self.session._session['id'],
-                          'formats': list(self.session._session['formats'].keys()),
+                          'formats': release_formats,
                           'types': release_types,
                           'size': self.session.get('fullsize'),
                           'data_dir': self.session._session['data_dir'],
@@ -746,6 +766,13 @@ class Bank(object):
         for s in _tmpbank['sessions']:
             if s['id'] == sid:
                 session_release = s['release']
+
+
+        cache_dir = self.config.get('cache.dir')
+        download_files = os.path.join(cache_dir, 'files_'+str(sid))
+        if os.path.exists(download_files):
+            os.remove(download_files)
+
         if session_release is not None:
             self.banks.update({'name': self.name}, {'$pull': {
                 'sessions': {'id': sid},

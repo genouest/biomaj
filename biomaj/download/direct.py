@@ -165,6 +165,11 @@ class DirectHttpDownload(DirectFTPDownload):
             if keep_dirs:
                 file_dir = local_dir + os.path.dirname(self.save_as)
             file_path = file_dir + '/' + os.path.basename(self.save_as)
+
+            # For unit tests only, workflow will take in charge directory creation before to avoid thread multi access
+            if not os.path.exists(file_dir):
+                os.makedirs(file_dir)
+            '''
             self.mkdir_lock.acquire()
             try:
                 if not os.path.exists(file_dir):
@@ -173,6 +178,7 @@ class DirectHttpDownload(DirectFTPDownload):
                 logging.error(e)
             finally:
                 self.mkdir_lock.release() # release lock, no matter what
+            '''
             logging.debug('DirectHTTP:Download:Progress'+str(cur_files)+'/'+str(nb_files)+' downloading file '+rfile['name']+', save as '+self.save_as)
             cur_files += 1
             if not 'url' in rfile:

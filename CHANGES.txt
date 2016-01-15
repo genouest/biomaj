@@ -1,8 +1,20 @@
+3.0.14:
+  Fix in method set_owner
+3.0.13:
+  Fix #27: Thread lock issue during download
+           New optional attribute in bank properties: timeout.download
+  HTTP protocol fix (deepcopy error)
+3.0.12:
+  Fix index deletion on bank removal
+  Fix lock errors on dir creation for multi-threads,
+      pre-create directroy structure in offline directory
+  Fix #26: save error when too many files in bank
 3.0.11:
   Fix in session management with pre and rm processes
   Fix #23: Check workflow step name passed to
            --stop-after/--start-after/--from-task
   Fix #24: deprecated delete_by_query method in elasticsearch
+  Add some controls on base directories
 
 3.0.10:
   Change dir to process.dir to find processes in subdirs

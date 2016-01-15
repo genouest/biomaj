@@ -35,6 +35,7 @@ class DownloadInterface(object):
     files_num_threads = 4
 
     def __init__(self):
+        self.config = None
         self.files_to_download = []
         self.files_to_copy = []
         self.error = False
@@ -44,6 +45,9 @@ class DownloadInterface(object):
         self.mkdir_lock = _FakeLock()
         self.kill_received = False
         self.proxy = None
+        # 24h timeout
+        self.timeout = 3600 * 24
+
 
     def set_proxy(self, proxy, proxy_auth=None):
         '''

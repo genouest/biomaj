@@ -92,6 +92,11 @@ class Workflow(object):
         proxy_auth = self.bank.config.get('proxy_auth')
         if proxy is not None and proxy:
             downloader.set_proxy(proxy, proxy_auth)
+
+        timeout_download = self.bank.config.get('timeout.download')
+        if timeout_download is not None and timeout_download:
+            downloader.timeout = int(timeout_download)
+
         return downloader
 
 
@@ -579,6 +584,23 @@ class UpdateWorkflow(Workflow):
                         break
         return last_session
 
+
+    def _load_download_files_from_session(self, session_id):
+        '''
+        Load download files for sessions from cache directory
+        '''
+
+        cache_dir = self.bank.config.get('cache.dir')
+        f_downloaded_files = None
+        file_path = os.path.join(cache_dir, 'files_'+str(session_id))
+        if not os.path.exists(file_path):
+            return f_downloaded_files
+
+        with open(file_path) as data_file:
+            f_downloaded_files = json.load(data_file)
+
+        return f_downloaded_files
+
     def is_previous_release_content_identical(self):
         '''
         Checks if releases (previous_release and remoterelease) are identical in release id and content.
@@ -592,21 +614,14 @@ class UpdateWorkflow(Workflow):
             return False
         # Same release number, check further
         previous_release_session = self.get_last_prod_session_for_release(self.session.previous_release)
-        '''
-        previous_release_session = None
-        # Search production release matching release
-        for prod in self.bank.bank['production']:
-            if prod['remoterelease'] == self.session.previous_release:
-                # Search session related to this production release
-                for s in self.bank.bank['sessions']:
-                    if s['id'] == prod['session']:
-                        previous_release_session = s
-                        break
-        '''
 
         if previous_release_session is None:
             return False
-        previous_downloaded_files = previous_release_session.get('download_files', None)
+
+        previous_downloaded_files = self._load_download_files_from_session(previous_release_session.get('id'))
+        previous_release_session['download_files'] = previous_downloaded_files
+
+        #previous_downloaded_files = previous_release_session.get('download_files', None)
 
         if previous_downloaded_files is None:
             # No info on previous download, consider that base release is enough
@@ -614,11 +629,11 @@ class UpdateWorkflow(Workflow):
             return True
 
         nb_elts = len(previous_downloaded_files)
+
         if self.session.get('download_files') is not None and nb_elts != len(self.session.get('download_files')):
             # Number of files to download vs previously downloaded files differ
             logging.info('Workflow:wf_download:SameRelease:Number of files differ')
             return False
-
         # Same number of files, check hash of files
         list1 = sorted(previous_downloaded_files, key=lambda k: k['hash'])
         list2 = sorted(self.session.get('download_files'), key=lambda k: k['hash'])
@@ -652,6 +667,27 @@ class UpdateWorkflow(Workflow):
             logging.info('Workflow:wf_download:release:incr_release:'+release)
         return release
 
+
+    def _create_dir_structure(self, downloader, offline_dir):
+        '''
+        Create expected directory structure in offline directory before download
+        '''
+        logging.debug('Workflow:wf_download:create_dir_structure:start')
+        for rfile in downloader.files_to_download:
+            save_as = None
+            if 'save_as' not in rfile or rfile['save_as'] is None:
+                save_as = rfile['name']
+            else:
+                save_as = rfile['save_as']
+
+            file_dir = offline_dir + '/' + os.path.dirname(save_as)
+
+            try:
+                if not os.path.exists(file_dir):
+                    os.makedirs(file_dir)
+            except Exception as e:
+                logging.error(e)
+        logging.debug('Workflow:wf_download:create_dir_structure:done')
 
     def wf_download(self):
         '''
@@ -874,6 +910,8 @@ class UpdateWorkflow(Workflow):
             if len(downloader.files_to_download) == 0:
                 self.downloaded_files = []
                 return True
+
+        self._create_dir_structure(downloader, offline_dir)
 
         self.download_go_ahead = False
         if self.options.get_option(Options.FROM_TASK) == 'download':

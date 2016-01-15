@@ -8,6 +8,7 @@ import tempfile
 import logging
 import copy
 import stat
+import time
 
 from mock import patch
 
@@ -1104,6 +1105,7 @@ class TestElastic(unittest.TestCase):
         # Delete all banks
         b = Bank('local')
         b.banks.remove({})
+        BmajIndex.delete_all_bank('local')
 
         self.config = BiomajConfig('local')
         data_dir = self.config.get('data.dir')
@@ -1120,6 +1122,7 @@ class TestElastic(unittest.TestCase):
         BmajIndex.delete_all_bank('test')
 
     def test_index(self):
+        BmajIndex.do_index = True
         prod = {
     			"data_dir" : "/tmp/test/data",
     			"formats" : {
@@ -1161,7 +1164,9 @@ class TestElastic(unittest.TestCase):
     				"nucleic"
     			]
     		}
+
         BmajIndex.add('test',prod, True)
+
         query = {
           'query' : {
             'match' : {'bank': 'test'}

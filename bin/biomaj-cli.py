@@ -402,6 +402,11 @@ def main():
                 options.bank = bank
                 bmaj = Bank(bank, options)
                 print('Log file: '+bmaj.config.log_file)
+                check_status = bmaj.check()
+                if not check_status:
+                    print('Skip bank ' + options.bank + ': wrong config')
+                    gres = False
+                    continue
                 res = bmaj.update(depends=True)
                 if not res:
                     gres = False

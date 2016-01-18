@@ -1,5 +1,5 @@
 mock
 nose
-pymongo==2.7.2
+pymongo==3.2
 pycurl
 tabulate

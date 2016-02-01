@@ -610,6 +610,7 @@ class Bank(object):
         :type release: str
         :return: production field
         '''
+        release = str(release)
         production = None
         for prod in self.bank['production']:
             if prod['release'] == release or prod['prod_dir'] == release:
@@ -626,6 +627,7 @@ class Bank(object):
         :type release: str
         :return: bool
         '''
+        release = str(release)
         if not self.is_owner():
             logging.error('Not authorized, bank owned by ' + self.bank['properties']['owner'])
             raise Exception('Not authorized, bank owned by ' + self.bank['properties']['owner'])
@@ -649,6 +651,7 @@ class Bank(object):
         :type release: str
         :return: bool
         '''
+        release = str(release)
         if not self.is_owner():
             logging.error('Not authorized, bank owned by ' + self.bank['properties']['owner'])
             raise Exception('Not authorized, bank owned by ' + self.bank['properties']['owner'])
@@ -683,6 +686,7 @@ class Bank(object):
         :type release: str
         :return: :class:`biomaj.session.Session`
         '''
+        release = str(release)
         oldsession = None
         # Search production release matching release
         for prod in self.bank['production']:
@@ -853,6 +857,7 @@ class Bank(object):
         :type release: str
         :return: bool
         '''
+        release = str(release)
         logging.warning('Bank:' + self.name + ':RemovePending')
 
         if not self.is_owner():
@@ -889,6 +894,7 @@ class Bank(object):
         :type release: str
         :return: bool
         '''
+        release = str(release)
         logging.warning('Bank:' + self.name + ':Remove')
 
         if not self.is_owner():

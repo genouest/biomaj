@@ -1,6 +1,7 @@
 3.0.14:
   Fix in method set_owner
   Force release to be a str
+  Fix #32: fix --from-task issue when calling a meta process
 3.0.13:
   Fix #27: Thread lock issue during download
            New optional attribute in bank properties: timeout.download

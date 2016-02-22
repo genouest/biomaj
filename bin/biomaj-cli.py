@@ -471,7 +471,7 @@ def main():
             if not options.bank:
                 print("Bank name is missing")
                 sys.exit(1)
-            bmaj = Bank(options.bank, options)
+            bmaj = Bank(options.bank, options, no_log=True)
             bmaj.load_session()
             bmaj.unpublish()
             sys.exit(0)
@@ -480,7 +480,7 @@ def main():
             if not options.bank:
                 print("Bank name or release is missing")
                 sys.exit(1)
-            bmaj = Bank(options.bank, options)
+            bmaj = Bank(options.bank, options, no_log=True)
             print('Log file: '+bmaj.config.log_file)
             bmaj.load_session()
             bank = bmaj.bank

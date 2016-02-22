@@ -546,6 +546,11 @@ class Bank(object):
             for session in old_sessions:
                 session_id = session['id']
                 self.banks.update({'name': self.name}, {'$pull': {'sessions': {'id': session_id}}})
+                # Check if in pending sessions
+                for rel in list(self.bank['pending'].keys()):
+                    rel_session = self.bank['pending'][rel]
+                    if rel_session == session_id:
+                        self.banks.update({'name': self.name}, {'$unset': {'pending': {str(session['release']): ""}}})
                 if session['release'] not in prod_releases and session['release'] != self.session.get('release'):
                     # There might be unfinished releases linked to session, delete them
                     # if they are not related to a production directory or latest run

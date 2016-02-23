@@ -63,6 +63,7 @@ def main():
     parser.add_argument('--maintenance', dest="maintenance", help="Maintenance mode (on/off/status)")
 
     parser.add_argument('--version', dest="version", help="Show version", action="store_true", default=False)
+    parser.add_argument('--status-ko', dest="statusko", help="Get bank in KO status", action="store_true", default=False)
 
 
     options = Options()
@@ -77,6 +78,8 @@ def main():
     --status: list of banks with published release
         [OPTIONAL]
         --bank xx / bank: Get status details of bank
+
+    --status-ko: list of banks in error status (last run)
 
     --log DEBUG|INFO|WARN|ERR  [OPTIONAL]: set log level in logs for this run, default is set in global.properties file
 
@@ -391,6 +394,17 @@ def main():
                     banks_list.append(bank.get_bank_release_info()['info'])
                 print(tabulate(banks_list, headers="firstrow", tablefmt="psql"))
             sys.exit(0)
+
+        if options.statusko:
+            banks = Bank.list()
+            banks_list = [["Name", "Type(s)", "Release", "Visibility"]]
+            for bank in sorted(banks, key=lambda k: k['name']):
+                bank = Bank(bank['name'], no_log=True)
+                bank.load_session(UpdateWorkflow.FLOW)
+                if bank.session is not None:
+                    if bank.use_last_session and not bank.session.get_status(Workflow.FLOW_OVER):
+                        banks_list.append(bank.get_bank_release_info()['info'])
+            print(tabulate(banks_list, headers="firstrow", tablefmt="psql"))
 
         if options.update:
             if not options.bank:

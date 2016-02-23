@@ -399,11 +399,14 @@ def main():
             banks = Bank.list()
             banks_list = [["Name", "Type(s)", "Release", "Visibility"]]
             for bank in sorted(banks, key=lambda k: k['name']):
-                bank = Bank(bank['name'], no_log=True)
-                bank.load_session(UpdateWorkflow.FLOW)
-                if bank.session is not None:
-                    if bank.use_last_session and not bank.session.get_status(Workflow.FLOW_OVER):
-                        banks_list.append(bank.get_bank_release_info()['info'])
+                try:
+                    bank = Bank(bank['name'], no_log=True)
+                    bank.load_session(UpdateWorkflow.FLOW)
+                    if bank.session is not None:
+                        if bank.use_last_session and not bank.session.get_status(Workflow.FLOW_OVER):
+                            banks_list.append(bank.get_bank_release_info()['info'])
+                except Exception as e:
+                    print(str(e))
             print(tabulate(banks_list, headers="firstrow", tablefmt="psql"))
 
         if options.update:

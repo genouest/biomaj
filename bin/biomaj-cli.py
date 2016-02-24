@@ -404,7 +404,9 @@ def main():
                     bank.load_session(UpdateWorkflow.FLOW)
                     if bank.session is not None:
                         if bank.use_last_session and not bank.session.get_status(Workflow.FLOW_OVER):
-                            banks_list.append(bank.get_bank_release_info()['info'])
+                            wf_status = bank.session.get('workflow_status')
+                            if wf_status is None or not wf_status:
+                                banks_list.append(bank.get_bank_release_info()['info'])
                 except Exception as e:
                     print(str(e))
             print(tabulate(banks_list, headers="firstrow", tablefmt="psql"))

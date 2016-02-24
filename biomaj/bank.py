@@ -935,6 +935,8 @@ class Bank(object):
         self.session = session
         # Reset status, we take an update session
         res = self.start_remove(session)
+        self.session.set('workflow_status', res)
+
         self.save_session()
 
         return res
@@ -995,6 +997,7 @@ class Bank(object):
                         #  self.session.reset_proc(Workflow.FLOW_REMOVEPROCESS, proc)
         self.session.set('action', 'update')
         res = self.start_update()
+        self.session.set('workflow_status', res)
         self.save_session()
         return res
 

@@ -5,6 +5,7 @@
   Fix #34: remove release from pending when doing cleanup of old sessions
   Remove logs on some operations
   Add --status-ko option to list bank in error state
+  Fix #36 diffentiate workflows over by error or unfinished
 3.0.13:
   Fix #27: Thread lock issue during download
            New optional attribute in bank properties: timeout.download

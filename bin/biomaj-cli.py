@@ -63,6 +63,7 @@ def main():
     parser.add_argument('--maintenance', dest="maintenance", help="Maintenance mode (on/off/status)")
 
     parser.add_argument('--version', dest="version", help="Show version", action="store_true", default=False)
+    parser.add_argument('--status-ko', dest="statusko", help="Get bank in KO status", action="store_true", default=False)
 
 
     options = Options()
@@ -77,6 +78,8 @@ def main():
     --status: list of banks with published release
         [OPTIONAL]
         --bank xx / bank: Get status details of bank
+
+    --status-ko: list of banks in error status (last run)
 
     --log DEBUG|INFO|WARN|ERR  [OPTIONAL]: set log level in logs for this run, default is set in global.properties file
 
@@ -369,7 +372,7 @@ def main():
             if not options.bank:
                 print("Bank name is missing")
                 sys.exit(1)
-            bank = Bank(options.bank, no_log=False)
+            bank = Bank(options.bank, no_log=True)
             print(options.bank+" check: "+str(bank.check())+"\n")
             sys.exit(0)
 
@@ -392,6 +395,22 @@ def main():
                 print(tabulate(banks_list, headers="firstrow", tablefmt="psql"))
             sys.exit(0)
 
+        if options.statusko:
+            banks = Bank.list()
+            banks_list = [["Name", "Type(s)", "Release", "Visibility"]]
+            for bank in sorted(banks, key=lambda k: k['name']):
+                try:
+                    bank = Bank(bank['name'], no_log=True)
+                    bank.load_session(UpdateWorkflow.FLOW)
+                    if bank.session is not None:
+                        if bank.use_last_session and not bank.session.get_status(Workflow.FLOW_OVER):
+                            wf_status = bank.session.get('workflow_status')
+                            if wf_status is None or not wf_status:
+                                banks_list.append(bank.get_bank_release_info()['info'])
+                except Exception as e:
+                    print(str(e))
+            print(tabulate(banks_list, headers="firstrow", tablefmt="psql"))
+
         if options.update:
             if not options.bank:
                 print("Bank name is missing")
@@ -402,6 +421,11 @@ def main():
                 options.bank = bank
                 bmaj = Bank(bank, options)
                 print('Log file: '+bmaj.config.log_file)
+                check_status = bmaj.check()
+                if not check_status:
+                    print('Skip bank ' + options.bank + ': wrong config')
+                    gres = False
+                    continue
                 res = bmaj.update(depends=True)
                 if not res:
                     gres = False
@@ -466,7 +490,7 @@ def main():
             if not options.bank:
                 print("Bank name is missing")
                 sys.exit(1)
-            bmaj = Bank(options.bank, options)
+            bmaj = Bank(options.bank, options, no_log=True)
             bmaj.load_session()
             bmaj.unpublish()
             sys.exit(0)
@@ -475,7 +499,7 @@ def main():
             if not options.bank:
                 print("Bank name or release is missing")
                 sys.exit(1)
-            bmaj = Bank(options.bank, options)
+            bmaj = Bank(options.bank, options, no_log=True)
             print('Log file: '+bmaj.config.log_file)
             bmaj.load_session()
             bank = bmaj.bank

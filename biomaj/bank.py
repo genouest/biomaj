@@ -546,6 +546,11 @@ class Bank(object):
             for session in old_sessions:
                 session_id = session['id']
                 self.banks.update({'name': self.name}, {'$pull': {'sessions': {'id': session_id}}})
+                # Check if in pending sessions
+                for rel in list(self.bank['pending'].keys()):
+                    rel_session = self.bank['pending'][rel]
+                    if rel_session == session_id:
+                        self.banks.update({'name': self.name}, {'$unset': {'pending': {str(session['release']): ""}}})
                 if session['release'] not in prod_releases and session['release'] != self.session.get('release'):
                     # There might be unfinished releases linked to session, delete them
                     # if they are not related to a production directory or latest run
@@ -610,6 +615,7 @@ class Bank(object):
         :type release: str
         :return: production field
         '''
+        release = str(release)
         production = None
         for prod in self.bank['production']:
             if prod['release'] == release or prod['prod_dir'] == release:
@@ -626,6 +632,7 @@ class Bank(object):
         :type release: str
         :return: bool
         '''
+        release = str(release)
         if not self.is_owner():
             logging.error('Not authorized, bank owned by ' + self.bank['properties']['owner'])
             raise Exception('Not authorized, bank owned by ' + self.bank['properties']['owner'])
@@ -649,6 +656,7 @@ class Bank(object):
         :type release: str
         :return: bool
         '''
+        release = str(release)
         if not self.is_owner():
             logging.error('Not authorized, bank owned by ' + self.bank['properties']['owner'])
             raise Exception('Not authorized, bank owned by ' + self.bank['properties']['owner'])
@@ -683,6 +691,7 @@ class Bank(object):
         :type release: str
         :return: :class:`biomaj.session.Session`
         '''
+        release = str(release)
         oldsession = None
         # Search production release matching release
         for prod in self.bank['production']:
@@ -853,6 +862,7 @@ class Bank(object):
         :type release: str
         :return: bool
         '''
+        release = str(release)
         logging.warning('Bank:' + self.name + ':RemovePending')
 
         if not self.is_owner():
@@ -889,6 +899,7 @@ class Bank(object):
         :type release: str
         :return: bool
         '''
+        release = str(release)
         logging.warning('Bank:' + self.name + ':Remove')
 
         if not self.is_owner():
@@ -924,6 +935,8 @@ class Bank(object):
         self.session = session
         # Reset status, we take an update session
         res = self.start_remove(session)
+        self.session.set('workflow_status', res)
+
         self.save_session()
 
         return res
@@ -984,6 +997,7 @@ class Bank(object):
                         #  self.session.reset_proc(Workflow.FLOW_REMOVEPROCESS, proc)
         self.session.set('action', 'update')
         res = self.start_update()
+        self.session.set('workflow_status', res)
         self.save_session()
         return res
 

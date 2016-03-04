@@ -440,6 +440,14 @@ class Bank(object):
             f_downloaded_files.close()
             self.session.set('download_files',[])
 
+        local_files = self.session.get('files')
+        if local_files is not None:
+            f_local_files = open(os.path.join(cache_dir, 'local_files_'+str(self.session.get('id'))), 'w')
+            f_local_files.write(json.dumps(download_files))
+            f_local_files.close()
+            self.session.set('files',[])
+
+
         self.banks.update({'name': self.name}, {
             '$set': {
                 action: self.session._session['id'],
@@ -781,6 +789,10 @@ class Bank(object):
         download_files = os.path.join(cache_dir, 'files_'+str(sid))
         if os.path.exists(download_files):
             os.remove(download_files)
+
+        local_files = os.path.join(cache_dir, 'local_files_'+str(sid))
+        if os.path.exists(local_files):
+            os.remove(local_files)
 
         if session_release is not None:
             self.banks.update({'name': self.name}, {'$pull': {

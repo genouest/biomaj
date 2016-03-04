@@ -781,6 +781,9 @@ class Bank(object):
         :type sid: long
         :return: bool
         '''
+        if self.config.get_bool('keep.old.sessions'):
+            logging.debug('keep old sessions, skipping...')
+            return True
         session_release = None
         _tmpbank = self.banks.find_one({'name': self.name})
         for s in _tmpbank['sessions']:

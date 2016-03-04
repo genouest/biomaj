@@ -528,6 +528,9 @@ class Bank(object):
         # No previous session
         if 'sessions' not in self.bank:
             return
+        if self.config.get_bool('keep.old.sessions'):
+            logging.debug('keep old sessions, skipping...')
+            return
         # 'last_update_session' in self.bank and self.bank['last_update_session']
         old_sessions = []
         prod_releases = []

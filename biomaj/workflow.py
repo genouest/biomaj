@@ -563,6 +563,7 @@ class UpdateWorkflow(Workflow):
         self.session._session['status'][Workflow.FLOW_OVER] = True
         self.session._session['update'] = False
         self.session.set('download_files', [])
+        self.session.set('files', [])
         last_session = self.get_last_prod_session_for_release(self.session.get('remoterelease'))
         self.session.set('release', last_session['release'])
         self.wf_over()
@@ -584,6 +585,22 @@ class UpdateWorkflow(Workflow):
                         break
         return last_session
 
+
+    def _load_local_files_from_session(self, session_id):
+        '''
+        Load lccal files for sessions from cache directory
+        '''
+
+        cache_dir = self.bank.config.get('cache.dir')
+        f_local_files = None
+        file_path = os.path.join(cache_dir, 'local_files_'+str(session_id))
+        if not os.path.exists(file_path):
+            return f_local_files
+
+        with open(file_path) as data_file:
+            f_local_files = json.load(data_file)
+
+        return f_local_files
 
     def _load_download_files_from_session(self, session_id):
         '''
@@ -932,7 +949,10 @@ class UpdateWorkflow(Workflow):
             last_production_session = self.banks.find_one({'name': self.name, 'sessions.id': last_production['session']}, {'sessions.$': 1})
             last_production_dir = os.path.join(last_production['data_dir'], cf.get('dir.version'), last_production['release'])
             # Checks if some files can be copied instead of downloaded
-            downloader.download_or_copy(last_production_session['sessions'][0]['files'], last_production_dir)
+            last_production_files = None
+            if len(last_production_session['sessions']) > 0:
+                last_production_files = self._load_local_files_from_session(last_production_session['sessions'][0]['id'])
+            downloader.download_or_copy(last_production_files, last_production_dir)
             if len(downloader.files_to_download) == 0:
                 return self.no_need_to_update()
 

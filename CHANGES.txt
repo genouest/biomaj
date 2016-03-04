@@ -1,6 +1,7 @@
 3.0.15:
   Fix #37: remote local files history from db and put it in cache.dir
-  Feature #38: add keep.old.sessions parameter to keep all sessions in database, even for removed releases
+  Feature #38: add optional keep.old.sessions parameter to keep all sessions in database, even for removed releases
+  Feature #28: add optional release.format parameter to specify the date format of a release
 3.0.14:
   Fix in method set_owner
   Force release to be a str

@@ -168,8 +168,14 @@ class Bank(object):
             # Bank production info header
             prod_info.append(["Session", "Remote release", "Release", "Directory", "Freeze"])
             for prod in _bank['production']:
-                release_dir = os.path.join(prod['data.dir'],
-                                           prod['dir.version'],
+                data_dir = self.config.get('data.dir')
+                dir_version = self.config.get('dir.version')
+                if 'data.dir' in prod:
+                    data_dir = prod['data.dir']
+                if 'dir.version' in prod:
+                    dir_version = prod['dir.version']
+                release_dir = os.path.join(data_dir,
+                                           dir_version,
                                            prod['prod_dir'])
                 date = datetime.fromtimestamp(prod['session']).strftime('%Y-%m-%d %H:%M:%S')
                 prod_info.append([date,

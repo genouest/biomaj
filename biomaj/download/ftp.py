@@ -112,7 +112,7 @@ class FTPDownload(DownloadInterface):
             except Exception as a:
                 curl.setopt(pycurl.URL, file_to_download.encode('ascii', 'ignore'))
             if self.proxy is not None:
-                self.crl.setopt(pycurl.PROXY, self.proxy)
+                curl.setopt(pycurl.PROXY, self.proxy)
                 if self.proxy_auth is not None:
                     curl.setopt(pycurl.PROXYUSERPWD, self.proxy_auth)
 

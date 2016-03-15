@@ -811,7 +811,7 @@ class Bank(object):
                 },
                     '$unset': {
                         'pending.' + session_release: ''
-                    },
+                    }
                 })
             else:
                 self.banks.update({'name': self.name}, {'$pull': {

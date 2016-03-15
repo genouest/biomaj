@@ -805,13 +805,15 @@ class Bank(object):
                 },
                     '$unset': {
                         'pending.' + session_release: ''
-                    }
+                    },
                 })
             else:
                 self.banks.update({'name': self.name}, {'$pull': {
                     'production': {'session': sid}
                 }
                 })
+            self.banks.update({'name': self.name, 'sessions.id': sid},
+                              {'$set': {'sessions.$.deleted': time.time()}})
         else:
             if session_release is not None:
                 self.banks.update({'name': self.name}, {'$pull': {

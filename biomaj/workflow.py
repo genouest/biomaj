@@ -868,7 +868,8 @@ class UpdateWorkflow(Workflow):
             if cf.get('release.format'):
                 release_date = datetime.datetime.now()
                 release_date = release_date.replace(year=int(release_dict['year']), month=int(release_dict['month']), day=int(release_dict['day']))
-                release = release_date.strftime(cf.get('release.format'))
+                # Fix configparser problem between py2 and py3
+                release = release_date.strftime(cf.get('release.format').replace('%%', '%'))
             self.session.set('release', release)
             self.session.set('remoterelease', release)
 

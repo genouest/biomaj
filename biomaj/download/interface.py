@@ -179,7 +179,7 @@ class DownloadInterface(object):
         self.files_to_copy = []
         # In such case, it forces the download again
         if not available_files:
-            return self.files_to_copy
+            return
         available_files.sort(key=lambda x: x['name'])
         self.files_to_download.sort(key=lambda x: x['name'])
 

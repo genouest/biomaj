@@ -173,7 +173,6 @@ class DownloadInterface(object):
         :type root_dir: str
         :param check_exists: checks if file exists locally
         :type check_exists: bool
-        :return: List
         '''
 
         self.files_to_copy = []

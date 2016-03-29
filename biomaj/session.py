@@ -167,7 +167,7 @@ class Session(object):
         '''
         Get release directroy name
         '''
-        return self.name+'-'+str(self._session['release'])
+        return self.name+self.config.get('release.separator', default='_')+str(self._session['release'])
 
     def get_full_release_directory(self):
         '''

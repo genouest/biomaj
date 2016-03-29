@@ -573,9 +573,9 @@ class Bank(object):
                     # if they are not related to a production directory or latest run
                     session_dir = os.path.join(self.config.get('data.dir'),
                                                self.config.get('dir.version'),
-                                               self.name + '-' + str(session['release']))
+                                               self.name + self.config.get('release.separator', default='_') + str(session['release']))
                     if os.path.exists(session_dir):
-                        logging.info('Bank:DeleteOldSessionDir:' + self.name + '-' + str(session['release']))
+                        logging.info('Bank:DeleteOldSessionDir:' + self.name + self.config.get('release.separator', default='_') + str(session['release']))
                         shutil.rmtree(session_dir)
             self.bank = self.banks.find_one({'name': self.name})
 

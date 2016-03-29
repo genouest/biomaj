@@ -1,5 +1,6 @@
 3.0.16:
   Do not use config values, trust database values #39
+  Fix #42: Add optional release.separator to name the bank directory bankname_release (underscore as default)
 3.0.15:
   Fix #37: remote local files history from db and put it in cache.dir
   Feature #38: add optional keep.old.sessions parameter to keep all sessions in database, even for removed releases

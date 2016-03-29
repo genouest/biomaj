@@ -166,10 +166,16 @@ class Bank(object):
                               str(datetime.fromtimestamp(_bank['last_update_session']).strftime("%Y-%m-%d %H:%M:%S")),
                               str(release)])
             # Bank production info header
-            prod_info.append(["Session", "Remote release", "Release", "Directory", "Freeze", "Pending"])
+            prod_info.append(["Session", "Remote release", "Release", "Directory", "Freeze"])
             for prod in _bank['production']:
-                release_dir = os.path.join(self.config.get('data.dir'),
-                                           self.config.get('dir.version'),
+                data_dir = self.config.get('data.dir')
+                dir_version = self.config.get('dir.version')
+                if 'data.dir' in prod:
+                    data_dir = prod['data.dir']
+                if 'dir.version' in prod:
+                    dir_version = prod['dir.version']
+                release_dir = os.path.join(data_dir,
+                                           dir_version,
                                            prod['prod_dir'])
                 date = datetime.fromtimestamp(prod['session']).strftime('%Y-%m-%d %H:%M:%S')
                 prod_info.append([date,
@@ -440,6 +446,14 @@ class Bank(object):
             f_downloaded_files.close()
             self.session.set('download_files',[])
 
+        local_files = self.session.get('files')
+        if local_files is not None:
+            f_local_files = open(os.path.join(cache_dir, 'local_files_'+str(self.session.get('id'))), 'w')
+            f_local_files.write(json.dumps(download_files))
+            f_local_files.close()
+            self.session.set('files',[])
+
+
         self.banks.update({'name': self.name}, {
             '$set': {
                 action: self.session._session['id'],
@@ -519,6 +533,9 @@ class Bank(object):
             return
         # No previous session
         if 'sessions' not in self.bank:
+            return
+        if self.config.get_bool('keep.old.sessions'):
+            logging.debug('keep old sessions, skipping...')
             return
         # 'last_update_session' in self.bank and self.bank['last_update_session']
         old_sessions = []
@@ -782,21 +799,43 @@ class Bank(object):
         if os.path.exists(download_files):
             os.remove(download_files)
 
-        if session_release is not None:
-            self.banks.update({'name': self.name}, {'$pull': {
-                'sessions': {'id': sid},
-                'production': {'session': sid}
-            },
-                '$unset': {
-                    'pending.' + session_release: ''
+        local_files = os.path.join(cache_dir, 'local_files_'+str(sid))
+        if os.path.exists(local_files):
+            os.remove(local_files)
+
+        if self.config.get_bool('keep.old.sessions'):
+            logging.debug('keep old sessions')
+            if session_release is not None:
+                self.banks.update({'name': self.name}, {'$pull': {
+                    'production': {'session': sid}
+                },
+                    '$unset': {
+                        'pending.' + session_release: ''
+                    }
+                })
+            else:
+                self.banks.update({'name': self.name}, {'$pull': {
+                    'production': {'session': sid}
                 }
-            })
+                })
+            self.banks.update({'name': self.name, 'sessions.id': sid},
+                              {'$set': {'sessions.$.deleted': time.time()}})
         else:
-            self.banks.update({'name': self.name}, {'$pull': {
-                'sessions': {'id': sid},
-                'production': {'session': sid}
-            }
-            })
+            if session_release is not None:
+                self.banks.update({'name': self.name}, {'$pull': {
+                    'sessions': {'id': sid},
+                    'production': {'session': sid}
+                },
+                    '$unset': {
+                        'pending.' + session_release: ''
+                    }
+                })
+            else:
+                self.banks.update({'name': self.name}, {'$pull': {
+                    'sessions': {'id': sid},
+                    'production': {'session': sid}
+                }
+                })
         # Update object
         self.bank = self.banks.find_one({'name': self.name})
         if session_release is not None:

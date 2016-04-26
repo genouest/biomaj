@@ -318,7 +318,7 @@ def main():
                     types = options.types.split(',')
                 print("Search by formats="+str(formats)+", types="+str(types))
                 res = Bank.search(formats, types, False)
-                results = [["Name", "Release", "Format(s)", "Type(s)", 'Current']]
+                results = [["Name", "Release", "Format(s)", "Type(s)", 'Published']]
                 for bank in sorted(res, key=lambda bank: (bank['name'])):
                     b = bank['name']
                     bank['production'].sort(key=lambda n: n['release'], reverse=True)
@@ -328,7 +328,6 @@ def main():
                             iscurrent = "yes"
                         results.append([b if b else '', prod['release'], ','.join(prod['formats']),
                                         ','.join(prod['types']), iscurrent])
-                        b = None
                 print(tabulate(results, headers="firstrow", tablefmt="grid"))
                 sys.exit(0)
 
@@ -481,8 +480,7 @@ def main():
                 print("Bank name is missing")
                 sys.exit(1)
             bmaj = Bank(options.bank, options, no_log=True)
-            print('Log file: '+bmaj.config.log_file)
-            res = bmaj.remove_pending(options.release)
+            res = bmaj.remove_pending()
             if not res:
                 sys.exit(1)
 
@@ -500,7 +498,6 @@ def main():
                 print("Bank name or release is missing")
                 sys.exit(1)
             bmaj = Bank(options.bank, options, no_log=True)
-            print('Log file: '+bmaj.config.log_file)
             bmaj.load_session()
             bank = bmaj.bank
             session = None

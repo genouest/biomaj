@@ -7,9 +7,9 @@ from biomaj.mongo_connector import MongoConnector
 from biomaj.config import BiomajConfig
 
 class BmajUser(object):
-    '''
+    """
     Biomaj User
-    '''
+    """
 
     def __init__(self, user):
 
@@ -70,31 +70,31 @@ class BmajUser(object):
 
     @staticmethod
     def user_remove(user_name):
-        '''
+        """
         Remove a user from db
 
         :param user_name: user name
         :type user_name: str
-        '''
+        """
         MongoConnector.users.remove({'id': user_name})
 
     @staticmethod
     def user_banks(user_name):
-        '''
+        """
         Get user banks name
 
         :param user_name: user identifier
         :type user_name: str
         :return: list of bank name
-        '''
+        """
         banks = MongoConnector.banks.find({'properties.owner': user_name}, {'name':1})
         return banks
 
     @staticmethod
     def list():
-        '''
+        """
         Get users
-        '''
+        """
         return MongoConnector.users.find()
 
     def check_password(self, password):
@@ -169,9 +169,9 @@ class BmajUser(object):
         return True
 
     def create(self, password, email=''):
-        '''
+        """
         Create a new user
-        '''
+        """
         hashed = bcrypt.hashpw(password, bcrypt.gensalt())
         if self.user is None:
             self.user = {

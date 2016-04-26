@@ -22,12 +22,12 @@ from biomaj.bmajindex import BmajIndex
 
 
 class Bank(object):
-    '''
+    """
     BioMAJ bank
-    '''
+    """
 
     def __init__(self, name, options=None, no_log=False):
-        '''
+        """
         Get a bank from db or creates a new one
 
         :param name: name of the bank, must match its config file
@@ -36,7 +36,7 @@ class Bank(object):
         :type options: argparse
         :param no_log: create a log file for the bank
         :type no_log: bool
-        '''
+        """
         logging.debug('Initialize ' + name)
         if BiomajConfig.global_config is None:
             raise Exception('Configuration must be loaded first')
@@ -89,15 +89,15 @@ class Bank(object):
         self.use_last_session = False
 
     def check(self):
-        '''
+        """
         Checks bank configuration
-        '''
+        """
         return self.config.check()
 
     def is_locked(self):
-        '''
+        """
         Checks if bank is locked ie action is in progress
-        '''
+        """
         data_dir = self.config.get('data.dir')
         lock_dir = self.config.get('lock.dir', default=data_dir)
         lock_file = os.path.join(lock_dir, self.name + '.lock')
@@ -107,18 +107,18 @@ class Bank(object):
             return False
 
     def get_bank(self):
-        '''
+        """
         Get bank stored in db
 
         :return: bank json object
-        '''
+        """
         return self.bank
 
     @staticmethod
     def get_banks_disk_usage():
-        '''
+        """
         Get disk usage per bank and release
-        '''
+        """
         if MongoConnector.db is None:
             MongoConnector(BiomajConfig.global_config.get('GENERAL', 'db.url'),
                            BiomajConfig.global_config.get('GENERAL', 'db.name'))
@@ -136,7 +136,7 @@ class Bank(object):
         return bank_list
 
     def get_bank_release_info(self, full=False):
-        '''
+        """
         Get release info for the bank. Used with --status option from biomaj-cly.py
         :param full: Display full for the bank
         :type full: Boolean
@@ -145,7 +145,7 @@ class Bank(object):
                            - info, prod, pend
                       else
                            - info
-        '''
+        """
 
         _bank = self.bank
         info = {}
@@ -188,7 +188,7 @@ class Bank(object):
                 pend_info.append(["Pending release", "Last run"])
                 for pending in _bank['pending'].keys():
                     run = datetime.fromtimestamp(_bank['pending'][pending]).strftime('%Y-%m-%d %H:%M:%S')
-                    pend_info.append([pending, run])
+                    pend_info.append([self.format_release(pending, reverse=True), run])
 
             info['info'] = bank_info
             info['prod'] = prod_info
@@ -206,11 +206,11 @@ class Bank(object):
             return info
 
     def update_dependencies(self):
-        '''
+        """
         Update bank dependencies
 
         :return: status of updates
-        '''
+        """
         self.depends = []
         if self.run_depends:
             depends = self.get_dependencies()
@@ -237,17 +237,17 @@ class Bank(object):
         return res
 
     def get_bank(self, bank, no_log=False):
-        '''
+        """
         Gets an other bank
-        '''
+        """
         return Bank(bank, no_log=no_log)
 
     def get_dependencies(self, bank=None):
-        '''
+        """
         Search all bank dependencies
 
         :return: list of bank names to update
-        '''
+        """
         if bank is None:
             deps = self.config.get('depends')
         else:
@@ -263,9 +263,9 @@ class Bank(object):
         return deps
 
     def is_owner(self):
-        '''
+        """
         Checks if current user is owner or admin
-        '''
+        """
         admin_config = self.config.get('admin')
         admin = []
         if admin_config is not None:
@@ -277,9 +277,9 @@ class Bank(object):
         return False
 
     def set_owner(self, owner):
-        '''
+        """
         Update bank owner, only if current owner
-        '''
+        """
         if not self.is_owner():
             logging.error('Not authorized, bank owned by ' + self.bank['properties']['owner'])
             raise Exception('Not authorized, bank owned by ' + self.bank['properties']['owner'])
@@ -287,9 +287,9 @@ class Bank(object):
         self.banks.update({'name': self.name}, {'$set': {'properties.owner': owner}})
 
     def set_visibility(self, visibility):
-        '''
+        """
         Update bank visibility, only if current owner
-        '''
+        """
         if not self.is_owner():
             logging.error('Not authorized, bank owned by ' + self.bank['properties']['owner'])
             raise Exception('Not authorized, bank owned by ' + self.bank['properties']['owner'])
@@ -297,11 +297,11 @@ class Bank(object):
         self.banks.update({'name': self.name}, {'$set': {'properties': {'visibility': visibility}}})
 
     def get_properties(self):
-        '''
+        """
         Read bank properties from config file
 
         :return: properties dict
-        '''
+        """
 
         owner = os.environ['LOGNAME']
         # If owner not set, use current user, else keep current
@@ -323,11 +323,11 @@ class Bank(object):
 
     @staticmethod
     def search(formats=None, types=None, with_sessions=True):
-        '''
+        """
         Search all bank releases matching some formats and types
 
         Matches production release with at least one of formats and one of types
-        '''
+        """
         if formats is None:
             formats = []
 
@@ -376,13 +376,13 @@ class Bank(object):
 
     @staticmethod
     def list(with_sessions=False):
-        '''
+        """
         Return a list of banks
 
         :param with_sessions: should sessions be returned or not (can be quite big)
         :type with_sessions: bool
         :return: list of :class:`biomaj.bank.Bank`
-        '''
+        """
         if MongoConnector.db is None:
             MongoConnector(BiomajConfig.global_config.get('GENERAL', 'db.url'),
                            BiomajConfig.global_config.get('GENERAL', 'db.name'))
@@ -397,9 +397,9 @@ class Bank(object):
         return bank_list
 
     def controls(self):
-        '''
+        """
         Initial controls (create directories etc...)
-        '''
+        """
         data_dir = self.config.get('data.dir')
         bank_dir = self.config.get('dir.version')
         bank_dir = os.path.join(data_dir, bank_dir)
@@ -417,15 +417,15 @@ class Bank(object):
             os.makedirs(log_dir)
 
     def _delete(self):
-        '''
+        """
         Delete bank from database, not files
-        '''
+        """
         self.banks.remove({'_id': self.bank['_id']})
 
     def save_session(self):
-        '''
+        """
         Save session in database
-        '''
+        """
         self.session._session['last_update_time'] = time.time()
         self.session._session['log_file'] = self.config.log_file
         if self.use_last_session:
@@ -462,10 +462,12 @@ class Bank(object):
             '$push': {'sessions': self.session._session}
         })
         BmajIndex.add(self.name, self.session._session)
-        if self.session.get('action') == 'update' and not self.session.get_status(
-                Workflow.FLOW_OVER) and self.session.get('release'):
+        if self.session.get('action') == 'update' and not self.session.get_status(Workflow.FLOW_OVER)\
+                and self.session.get('release'):
+            release = self.format_release(self.session.get('release'))
             self.banks.update({'name': self.name},
-                              {'$set': {'pending.' + self.session.get('release'): self.session._session['id']}})
+                              {'$set': {
+                                  'pending.' + release: self.session._session['id']}})
         if self.session.get('action') == 'update' and self.session.get_status(Workflow.FLOW_OVER) and self.session.get(
                 'update'):
             # We expect that a production release has reached the FLOW_OVER status.
@@ -516,7 +518,7 @@ class Bank(object):
 
             self.banks.update({'name': self.name},
                               {'$push': {'production': production},
-                               '$unset': {'pending.' + self.session.get('release'): ''}
+                               '$unset': {'pending.' + self.format_release(self.session.get('release')): ''}
                                })
 
             # self.banks.update({'name': self.name},
@@ -525,10 +527,36 @@ class Bank(object):
 
         self.bank = self.banks.find_one({'name': self.name})
 
+    def format_release(self, release, reverse=False):
+        """
+        Check the release does not contains any dot '.' character that should make MongoDB complain
+
+        :param release: release number to check
+        :type release: str
+        :param reverse: Do the reverse replacement
+        :type reverse: bool
+        :return: Release string with dot '.' replaced with character set in config (release.replace)
+        :rtype: str
+        """
+        if not self.config.get('release.replacedot'):
+            logging.error('release.replacedot not set')
+            raise Exception('release.replacedot not set')
+
+        if reverse:
+            char_replace = '.'
+            char_search = self.config.get('release.replacedot')
+        else:
+            char_replace = self.config.get('release.replacedot')
+            char_search = '.'
+
+        if str(release).find(char_search):
+            return str(release).replace(char_search, char_replace)
+        return str(release)
+
     def clean_old_sessions(self):
-        '''
+        """
         Delete old sessions, not latest ones nor related to production sessions
-        '''
+        """
         if self.session is None:
             return
         # No previous session
@@ -564,10 +592,12 @@ class Bank(object):
                 session_id = session['id']
                 self.banks.update({'name': self.name}, {'$pull': {'sessions': {'id': session_id}}})
                 # Check if in pending sessions
-                for rel in list(self.bank['pending'].keys()):
-                    rel_session = self.bank['pending'][rel]
-                    if rel_session == session_id:
-                        self.banks.update({'name': self.name}, {'$unset': {'pending': {str(session['release']): ""}}})
+                if 'pending' in self.bank:
+                    for rel in list(self.bank['pending'].keys()):
+                        rel_session = self.bank['pending'][rel]
+                        if rel_session == session_id:
+                            self.banks.update({'name': self.name},
+                            {'$unset': {'pending': {self.format_release(session['release']): ""}}})
                 if session['release'] not in prod_releases and session['release'] != self.session.get('release'):
                     # There might be unfinished releases linked to session, delete them
                     # if they are not related to a production directory or latest run
@@ -580,9 +610,9 @@ class Bank(object):
             self.bank = self.banks.find_one({'name': self.name})
 
     def publish(self):
-        '''
+        """
         Set session release to *current*
-        '''
+        """
         if not self.is_owner():
             logging.error('Not authorized, bank owned by ' + self.bank['properties']['owner'])
             raise Exception('Not authorized, bank owned by ' + self.bank['properties']['owner'])
@@ -606,9 +636,9 @@ class Bank(object):
                           })
 
     def unpublish(self):
-        '''
+        """
         Unset *current*
-        '''
+        """
         if not self.is_owner():
             logging.error('Not authorized, bank owned by ' + self.bank['properties']['owner'])
             raise Exception('Not authorized, bank owned by ' + self.bank['properties']['owner'])
@@ -625,13 +655,13 @@ class Bank(object):
                           })
 
     def get_production(self, release):
-        '''
+        """
         Get production field for release
 
         :param release: release name or production dir name
         :type release: str
         :return: production field
-        '''
+        """
         release = str(release)
         production = None
         for prod in self.bank['production']:
@@ -640,7 +670,7 @@ class Bank(object):
         return production
 
     def freeze(self, release):
-        '''
+        """
         Freeze a production release
 
         When freezed, a production release cannot be removed (manually or automatically)
@@ -648,7 +678,7 @@ class Bank(object):
         :param release: release name or production dir name
         :type release: str
         :return: bool
-        '''
+        """
         release = str(release)
         if not self.is_owner():
             logging.error('Not authorized, bank owned by ' + self.bank['properties']['owner'])
@@ -666,13 +696,13 @@ class Bank(object):
         return True
 
     def unfreeze(self, release):
-        '''
+        """
         Unfreeze a production release to allow removal
 
         :param release: release name or production dir name
         :type release: str
         :return: bool
-        '''
+        """
         release = str(release)
         if not self.is_owner():
             logging.error('Not authorized, bank owned by ' + self.bank['properties']['owner'])
@@ -690,24 +720,24 @@ class Bank(object):
         return True
 
     def get_new_session(self, flow=None):
-        '''
+        """
         Returns an empty session
 
         :param flow: kind of workflow
         :type flow: :func:`biomaj.workflow.Workflow.FLOW`
-        '''
+        """
         if flow is None:
             flow = Workflow.FLOW
         return Session(self.name, self.config, flow)
 
     def get_session_from_release(self, release):
-        '''
+        """
         Loads the session matching a specific release
 
         :param release: release name oe production dir
         :type release: str
         :return: :class:`biomaj.session.Session`
-        '''
+        """
         release = str(release)
         oldsession = None
         # Search production release matching release
@@ -729,14 +759,14 @@ class Bank(object):
         return oldsession
 
     def load_session(self, flow=None, session=None):
-        '''
+        """
         Loads last session or, if over or forced, a new session
 
         Creates a new session or load last session if not over
 
         :param flow: kind of workflow
         :type flow: :func:`biomaj.workflow.Workflow.FLOW`
-        '''
+        """
         if flow is None:
             flow = Workflow.FLOW
 
@@ -780,19 +810,18 @@ class Bank(object):
                         self.use_last_session = True
 
     def remove_session(self, sid):
-        '''
+        """
         Delete a session from db
 
         :param sid: id of the session
         :type sid: long
         :return: bool
-        '''
+        """
         session_release = None
         _tmpbank = self.banks.find_one({'name': self.name})
         for s in _tmpbank['sessions']:
             if s['id'] == sid:
-                session_release = s['release']
-
+                session_release = self.format_release(s['release'], reverse=True)
 
         cache_dir = self.config.get('cache.dir')
         download_files = os.path.join(cache_dir, 'files_'+str(sid))
@@ -843,22 +872,22 @@ class Bank(object):
         return True
 
     def get_data_dir(self):
-        '''
+        """
         Returns bank data directory
 
         :return: str
-        '''
+        """
         return os.path.join(self.config.get('data.dir'),
                             self.config.get('dir.version'))
 
     def removeAll(self, force=False):
-        '''
+        """
         Remove all bank releases and database records
 
         :param force: force removal even if some production dirs are freezed
         :type force: bool
         :return: bool
-        '''
+        """
         if not force:
             has_freeze = False
             for prod in self.bank['production']:
@@ -884,31 +913,28 @@ class Bank(object):
         return True
 
     def get_status(self):
-        '''
+        """
         Get status of current workflow
 
         :return: dict of current workflow status
-        '''
+        """
         if self.bank['status'] is None:
             return {}
         return self.bank['status']
 
-    def remove_pending(self, release):
-        '''
+    def remove_pending(self):
+        """
         Remove pending releases
 
-        :param release: release or release directory
-        :type release: str
         :return: bool
-        '''
-        release = str(release)
+        """
         logging.warning('Bank:' + self.name + ':RemovePending')
 
         if not self.is_owner():
             logging.error('Not authorized, bank owned by ' + self.bank['properties']['owner'])
             raise Exception('Not authorized, bank owned by ' + self.bank['properties']['owner'])
 
-        if not self.bank['pending']:
+        if 'pending' not in self.bank:
             return True
         pendings = self.bank['pending']
         for release in list(pendings.keys()):
@@ -920,24 +946,24 @@ class Bank(object):
                     break
             session = Session(self.name, self.config, RemoveWorkflow.FLOW)
             if pending_session is None:
-                session._session['release'] = release
+                session._session['release'] = self.format_release(release, reverse=True)
             else:
                 session.load(pending_session)
             if os.path.exists(session.get_full_release_directory()):
                 logging.debug("Remove:Pending:Dir:" + session.get_full_release_directory())
                 shutil.rmtree(session.get_full_release_directory())
-            self.remove_session(pendings[release])
+            self.remove_session(pending_session_id)
         self.banks.update({'name': self.name}, {'$set': {'pending': {}}})
         return True
 
     def remove(self, release):
-        '''
+        """
         Remove a release (db and files)
 
         :param release: release or release directory
         :type release: str
         :return: bool
-        '''
+        """
         release = str(release)
         logging.warning('Bank:' + self.name + ':Remove')
 
@@ -981,13 +1007,13 @@ class Bank(object):
         return res
 
     def update(self, depends=False):
-        '''
+        """
         Launch a bank update
 
         :param depends: run update of bank dependencies first
         :type depends: bool
         :return: bool
-        '''
+        """
         logging.warning('Bank:' + self.name + ':Update')
 
         if not self.is_owner():
@@ -1041,19 +1067,19 @@ class Bank(object):
         return res
 
     def start_remove(self, session):
-        '''
+        """
         Start a removal workflow
 
         :param session: Session to remove
         :type session: :class:`biomaj.session.Session`
         :return: bool
-        '''
+        """
         workflow = RemoveWorkflow(self, session)
         return workflow.start()
 
     def start_update(self):
-        '''
+        """
         Start an update workflow
-        '''
+        """
         workflow = UpdateWorkflow(self)
         return workflow.start()

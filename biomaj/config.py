@@ -13,9 +13,9 @@ import sys
 from biomaj.bmajindex import BmajIndex
 
 class BiomajConfig(object):
-    '''
+    """
     Manage Biomaj configuration
-    '''
+    """
 
     DEFAULTS = {
     'http.parse.dir.line': r'<img[\s]+src="[\S]+"[\s]+alt="\[DIR\]"[\s]*/?>[\s]*<a[\s]+href="([\S]+)/"[\s]*>.*([\d]{2}-[\w\d]{2,5}-[\d]{4}\s[\d]{2}:[\d]{2})',
@@ -47,26 +47,26 @@ class BiomajConfig(object):
       'ERR': logging.ERROR
     }
 
-    '''
+    """
     Global configuration file
-    '''
+    """
     global_config = None
 
-    '''
+    """
     Per use global configuration file, overriding global_config
-    '''
+    """
     user_config = None
 
     @staticmethod
     def load_config(config_file=None, allow_user_config=True):
-        '''
+        """
         Loads general config
 
         :param config_file: global.properties file path
         :type config_file: str
         :param allow_user_config: use ~/.biomaj.cfg if present
         :type allow_user_config: bool
-        '''
+        """
         if config_file is None:
             env_file = os.environ.get('BIOMAJ_CONF')
             if env_file is not None and os.path.exists(env_file):
@@ -119,14 +119,14 @@ class BiomajConfig(object):
 
 
     def __init__(self, bank, options=None):
-        '''
+        """
         Loads bank configuration
 
         :param bank: bank name
         :type bank: str
         :param options: bank options
         :type options: argparse
-        '''
+        """
         self.name = bank
         if BiomajConfig.global_config is None:
             BiomajConfig.load_config()
@@ -220,9 +220,9 @@ class BiomajConfig(object):
         self.config_bank.set(section, prop, value)
 
     def get_bool(self, prop, section='GENERAL', escape=True, default=None):
-        '''
+        """
         Get a boolean property from bank or general configration. Optionally in section.
-        '''
+        """
         value = self.get(prop, section, escape, default)
         if value is None:
             return False
@@ -232,9 +232,9 @@ class BiomajConfig(object):
             return False
 
     def get(self, prop, section='GENERAL', escape=True, default=None):
-        '''
+        """
         Get a property from bank or general configration. Optionally in section.
-        '''
+        """
         # Compatibility fields
         if prop == 'depends':
             depend = self.get('db.source', section, escape, None)
@@ -264,17 +264,17 @@ class BiomajConfig(object):
 
 
     def get_time(self):
-        '''
+        """
         Return last modification time of config files
-        '''
+        """
         return self.last_modified
 
 
 
     def check(self):
-        '''
+        """
         Check configuration
-        '''
+        """
         self.set('localrelease', '')
         self.set('remoterelease', '')
 

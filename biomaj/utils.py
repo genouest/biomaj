@@ -16,20 +16,20 @@ from subprocess import CalledProcessError
 from mimetypes import MimeTypes
 
 class Utils(object):
-    '''
+    """
     Utility classes
-    '''
+    """
 
     mime = None
 
     @staticmethod
     def get_folder_size(folder):
-        '''
+        """
         Get directory path full size
 
         :param folder: directory path
         :type folder: str
-        '''
+        """
         if not os.path.exists(folder):
             return -1
         folder_size = 0
@@ -42,9 +42,9 @@ class Utils(object):
 
     @staticmethod
     def detect_format(filename):
-        '''
+        """
         try to detect file format by extension
-        '''
+        """
         if Utils.mime is None:
             Utils.mime = MimeTypes()
             mimesfile = os.path.join(os.path.dirname(__file__), 'mimes-bio.txt')
@@ -53,11 +53,11 @@ class Utils(object):
 
     @staticmethod
     def get_more_recent_file(files):
-        '''
+        """
         Return the date of the most recent file in list.
 
         Each file is a dict like with (at least) parameters: year, month, day
-        '''
+        """
         release = None
         for rfile in files:
             if release is None:
@@ -90,7 +90,7 @@ class Utils(object):
 
     @staticmethod
     def copy_files(files_to_copy, to_dir, move=False, lock=None):
-        '''
+        """
         Copy or move files to to_dir, keeping directory structure.
 
         Copy keeps the original file stats.
@@ -108,7 +108,7 @@ class Utils(object):
         :type move: bool
         :param lock: thread lock object for multi-threads
         :type lock: Lock
-        '''
+        """
         nb_files = len(files_to_copy)
         cur_files = 1
         for file_to_copy in files_to_copy:
@@ -140,7 +140,7 @@ class Utils(object):
 
     @staticmethod
     def copy_files_with_regexp(from_dir, to_dir, regexps, move=False, lock=None):
-        '''
+        """
         Copy or move files from from_dir to to_dir matching regexps.
         Copy keeps the original file stats.
 
@@ -155,7 +155,7 @@ class Utils(object):
         :param lock: thread lock object for multi-threads
         :type lock: Lock
         :return: list of copied files with their size
-        '''
+        """
         #os.chdir(from_dir)
         files_to_copy = []
         for root, dirs, files in os.walk(from_dir, topdown=True):
@@ -203,7 +203,7 @@ class Utils(object):
 
     @staticmethod
     def uncompress(archivefile, remove=True):
-        '''
+        """
         Test if file is an archive, and uncompress it
         Remove archive file if specified
 
@@ -212,7 +212,7 @@ class Utils(object):
         :param remove: remove archive if present
         :type remove: bool
         :return: True if ok, False if an error occured
-        '''
+        """
         is_archive = False
         #if tarfile.is_tarfile(file):
         #  logging.debug('Uncompress:Tar:'+file)

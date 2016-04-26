@@ -3,9 +3,9 @@ from pymongo import MongoClient
 
 
 class MongoConnector(object):
-    '''
+    """
     Connector to mongodb
-    '''
+    """
 
     client = None
     db = None

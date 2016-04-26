@@ -13,9 +13,9 @@ from biomaj.workflow import Workflow
 
 
 class Session(object):
-    '''
+    """
     BioMAJ bank session
-    '''
+    """
 
     @staticmethod
     def get_ordered_dict():
@@ -30,7 +30,7 @@ class Session(object):
     OVER = 0
 
     def __init__(self, name, config, flow=None, action='update'):
-        '''
+        """
         Creates a new session
 
         :param name: Name of the bank
@@ -41,7 +41,7 @@ class Session(object):
         :param action: type of flow update|remove
         :type action: str
         :type flow: dict
-        '''
+        """
         if flow is None:
             flow = Workflow.FLOW
         self.name = name
@@ -79,9 +79,9 @@ class Session(object):
         self._session['action'] = action
 
     def reload_postprocess_in_order(self, postprocess):
-        '''
+        """
         Reloads processes in config order
-        '''
+        """
         if self.config.get('BLOCKS') is None:
             return postprocess
         copy_postprocess = Session.get_ordered_dict()
@@ -97,9 +97,9 @@ class Session(object):
         return copy_postprocess
 
     def reload_in_order(self, cfg_type, otherprocess):
-        '''
+        """
         Reloads processes in config order
-        '''
+        """
         if self.config.get(cfg_type) is None or not self.config.get(cfg_type):
             return otherprocess
         copy_postprocess = Session.get_ordered_dict()
@@ -112,14 +112,14 @@ class Session(object):
         return copy_postprocess
 
     def reset_proc(self, type_proc, proc=None):
-        '''
+        """
         Reset status of processes for type in session
 
         :param type_proc: postprocess preprocess or removeprocess
         :type type_proc: Workflow.POSTPROCESS, Workflow.PREPROCESS, Workflow.REMOVEPROCESS
         :param proc: reset from block/meta/proc, all reset all
         :type proc: str
-        '''
+        """
         if type_proc == Workflow.FLOW_POSTPROCESS:
             if proc in self._session['process']['postprocess']:
                 self._session['process']['postprocess'] = self.reload_postprocess_in_order(self._session['process']['postprocess'])
@@ -135,9 +135,9 @@ class Session(object):
             self.reset_meta(self._session['process']['removeprocess'], proc)
 
     def reset_meta(self, metas, proc=None):
-        '''
+        """
         Reset status of meta processes
-        '''
+        """
         if proc in metas:
             for metaproc in list(metas[proc].keys()):
                 self.reset_process(metas[proc], metaproc)
@@ -146,9 +146,9 @@ class Session(object):
                 self.reset_process(metas[meta], proc)
 
     def reset_process(self, processes, proc=None):
-        '''
+        """
         Reset status of processes
-        '''
+        """
         set_to_false = False
         for process in list(processes.keys()):
             if process == proc or proc is None:
@@ -158,21 +158,21 @@ class Session(object):
 
 
     def load(self, session):
-        '''
+        """
         Load an existing session
-        '''
+        """
         self._session = session
 
     def get_release_directory(self):
-        '''
+        """
         Get release directroy name
-        '''
+        """
         return self.name+self.config.get('release.separator', default='_')+str(self._session['release'])
 
     def get_full_release_directory(self):
-        '''
+        """
         Get bank directroy for this release
-        '''
+        """
         #release_dir = os.path.join(self.config.get('data.dir'),
         #              self.config.get('dir.version'),
         #              self.get_release_directory())
@@ -182,16 +182,16 @@ class Session(object):
         return release_dir
 
     def get_offline_directory(self):
-        '''
+        """
         Get bank offline directory
-        '''
+        """
         return os.path.join(self.config.get('data.dir'), self.config.get('offline.dir.name'))
 
 
     def get(self, attr=None):
-        '''
+        """
         Return an attribute of session
-        '''
+        """
         if attr is None:
             return self._session
 
@@ -201,21 +201,21 @@ class Session(object):
             return None
 
     def set(self, attr, value):
-        '''
+        """
         Sets an attribute of session
-        '''
+        """
         self._session[attr] = value
 
     def get_status(self, status):
-        '''
+        """
         Return status for a flow event
-        '''
+        """
         if status not in  self._session['status']:
             return False
         return self._session['status'][status]
 
     def set_status(self, status, value):
-        '''
+        """
         Set status for a flow event
-        '''
+        """
         self._session['status'][status] = value

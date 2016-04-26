@@ -35,15 +35,15 @@ from ldap3.core.exceptions import LDAPBindError
 import unittest
 
 class UtilsForTest():
-  '''
+  """
   Copy properties files to a temp directory and update properties to
   use a temp directory
-  '''
+  """
 
   def __init__(self):
-    '''
+    """
     Setup the temp dirs and files.
-    '''
+    """
     self.global_properties = None
     self.bank_properties = None
 
@@ -76,9 +76,9 @@ class UtilsForTest():
       self.__copy_test_bank_properties()
 
   def clean(self):
-    '''
+    """
     Deletes temp directory
-    '''
+    """
     shutil.rmtree(self.test_dir)
 
   def __copy_test_bank_properties(self):
@@ -180,9 +180,9 @@ class TestBiomajUtils(unittest.TestCase):
     self.assertTrue(os.path.exists(to_dir+'/biomaj_tests.py'))
 
 class TestBiomajLocalDownload(unittest.TestCase):
-  '''
+  """
   Test Local downloader
-  '''
+  """
 
   def setUp(self):
     self.utils = UtilsForTest()
@@ -192,7 +192,7 @@ class TestBiomajLocalDownload(unittest.TestCase):
 
     BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
 
-    '''
+    """
     if not os.path.exists('/tmp/biomaj/config'):
       os.makedirs('/tmp/biomaj/config')
     if not os.path.exists(os.path.join('/tmp/biomaj/config','local.properties')):
@@ -201,7 +201,7 @@ class TestBiomajLocalDownload(unittest.TestCase):
       flocal = open(os.path.join('/tmp/biomaj/config','local.properties'),'a')
       flocal.write('\nremote.dir='+self.examples+"\n")
       flocal.close()
-    '''
+    """
 
   def tearDown(self):
     self.utils.clean()
@@ -255,9 +255,9 @@ class TestBiomajLocalDownload(unittest.TestCase):
 @attr('network')
 @attr('http')
 class TestBiomajHTTPDownload(unittest.TestCase):
-  '''
+  """
   Test HTTP downloader
-  '''
+  """
   def setUp(self):
     self.utils = UtilsForTest()
     BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
@@ -292,9 +292,9 @@ class TestBiomajHTTPDownload(unittest.TestCase):
 @attr('directftp')
 @attr('network')
 class TestBiomajDirectFTPDownload(unittest.TestCase):
-  '''
+  """
   Test DirectFTP downloader
-  '''
+  """
 
   def setUp(self):
     self.utils = UtilsForTest()
@@ -321,9 +321,9 @@ class TestBiomajDirectFTPDownload(unittest.TestCase):
 @attr('directhttp')
 @attr('network')
 class TestBiomajDirectHTTPDownload(unittest.TestCase):
-  '''
+  """
   Test DirectFTP downloader
-  '''
+  """
 
   def setUp(self):
     self.utils = UtilsForTest()
@@ -395,9 +395,9 @@ class TestBiomajDirectHTTPDownload(unittest.TestCase):
 @attr('ftp')
 @attr('network')
 class TestBiomajFTPDownload(unittest.TestCase):
-  '''
+  """
   Test FTP downloader
-  '''
+  """
 
   def setUp(self):
     self.utils = UtilsForTest()
@@ -486,26 +486,26 @@ class TestBiomajSetup(unittest.TestCase):
     self.utils.clean()
 
   def test_new_bank(self):
-    '''
+    """
     Checks bank init
-    '''
+    """
     b = Bank('alu')
 
   def test_new_session(self):
-    '''
+    """
     Checks an empty session is created
-    '''
+    """
     b = Bank('alu')
     b.load_session(UpdateWorkflow.FLOW)
     for key in b.session._session['status'].keys():
       self.assertFalse(b.session.get_status(key))
 
   def test_session_reload_notover(self):
-    '''
+    """
     Checks a session is used if present
-    '''
+    """
     b = Bank('alu')
-    for i in range(1,5):
+    for i in range(1, 5):
       s = Session('alu', self.config, UpdateWorkflow.FLOW)
       s._session['status'][Workflow.FLOW_INIT] = True
       b.session = s
@@ -516,9 +516,9 @@ class TestBiomajSetup(unittest.TestCase):
     self.assertTrue(b.session.get_status(Workflow.FLOW_INIT))
 
   def test_clean_old_sessions(self):
-    '''
+    """
     Checks a session is used if present
-    '''
+    """
     b = Bank('local')
     for i in range(1,5):
       s = Session('alu', self.config, UpdateWorkflow.FLOW)
@@ -530,11 +530,10 @@ class TestBiomajSetup(unittest.TestCase):
     b2.clean_old_sessions()
     self.assertTrue(len(b2.bank['sessions']) == 1)
 
-
   def test_session_reload_over(self):
-    '''
+    """
     Checks a session if is not over
-    '''
+    """
     b = Bank('alu')
     for i in range(1,5):
       s = Session('alu', self.config, UpdateWorkflow.FLOW)
@@ -555,9 +554,9 @@ class TestBiomajSetup(unittest.TestCase):
 
   @attr('network')
   def test_get_release(self):
-    '''
+    """
     Get release
-    '''
+    """
     b = Bank('alu')
     b.load_session(UpdateWorkflow.FLOW)
     res = b.update()
@@ -586,9 +585,9 @@ class TestBiomajSetup(unittest.TestCase):
 
   @attr('process')
   def test_postprocesses_exec_again(self):
-    '''
+    """
     Execute once, set a status to false, check that False processes are executed
-    '''
+    """
     b = Bank('localprocess')
     pfactory = PostProcessFactory(b)
     pfactory.run()
@@ -662,10 +661,23 @@ class TestBiomajFunctional(unittest.TestCase):
     w.wf_release()
     self.assertTrue(b.session.get('release') == '103')
 
+  @attr('testrelease')
+  def test_format_release(self):
+    """
+    Check release with dot is well formatted & vice versa
+    :return:
+    """
+    b1 = Bank('local', no_log=True)
+    c = b1.config.get('release.replacedot')
+    orelease = '5.6'
+    nrelease = '5' + c + '6'
+    self.assertEqual(nrelease, b1.format_release(orelease))
+    self.assertEqual(orelease, b1.format_release(nrelease, reverse=True))
+
   def test_publish(self):
-    '''
+    """
     Update a bank, then publish it
-    '''
+    """
     b = Bank('local')
     b.update()
     current_link = os.path.join(b.config.get('data.dir'),
@@ -680,9 +692,9 @@ class TestBiomajFunctional(unittest.TestCase):
   # Should test this on local downloader, changing 1 file to force update,
   # else we would get same bank and there would be no update
   def test_no_update(self):
-      '''
+      """
       Try updating twice, at second time, bank should not be updated
-      '''
+      """
       b = Bank('local')
       b.update()
       self.assertTrue(b.session.get('update'))
@@ -692,10 +704,10 @@ class TestBiomajFunctional(unittest.TestCase):
 
   @attr('release')
   def test_release_control(self):
-    '''
+    """
     Try updating twice, at second time, modify one file (same date),
      bank should update
-    '''
+    """
     b = Bank('local')
     b.update()
     b.session.config.set('keep.old.version', '3')
@@ -713,9 +725,9 @@ class TestBiomajFunctional(unittest.TestCase):
     self.assertTrue(b.session.get('update'))
 
   def test_fromscratch_update(self):
-      '''
+      """
       Try updating twice, at second time, bank should  be updated (force with fromscratc)
-      '''
+      """
       b = Bank('local')
       b.update()
       self.assertTrue(b.session.get('update'))
@@ -727,11 +739,11 @@ class TestBiomajFunctional(unittest.TestCase):
 
 
   def test_fromscratch_update_with_release(self):
-      '''
+      """
       Try updating twice, at second time, bank should  be updated (force with fromscratch)
 
       Use case with release defined in release file
-      '''
+      """
       b = Bank('local')
       b.load_session(UpdateWorkflow.FLOW)
       b.session.config.set('release.file', 'test_(\d+)\.txt')
@@ -749,9 +761,9 @@ class TestBiomajFunctional(unittest.TestCase):
 
 
   def test_mix_stop_from_task(self):
-      '''
+      """
       Get a first release, then fromscratch --stop-after, then restart from-task
-      '''
+      """
       b = Bank('local')
       b.update()
       rel = b.session.get('release')
@@ -766,9 +778,9 @@ class TestBiomajFunctional(unittest.TestCase):
       self.assertTrue(res)
 
   def test_mix_stop_from_task2(self):
-      '''
+      """
       Get a first release, then fromscratch --stop-after, then restart from-task
-      '''
+      """
       b = Bank('local')
       b.update()
       rel = b.session.get('release')
@@ -784,9 +796,9 @@ class TestBiomajFunctional(unittest.TestCase):
       self.assertTrue(res)
 
   def test_mix_stop_from_task3(self):
-      '''
+      """
       Get a first release, then fromscratch --stop-after, then restart from-task
-      '''
+      """
       b = Bank('local')
       b.update()
       rel = b.session.get('release')
@@ -803,9 +815,9 @@ class TestBiomajFunctional(unittest.TestCase):
 
 
   def test_mix_stop_from_task4(self):
-      '''
+      """
       Get a first release, then fromscratch --stop-after, then restart from-task
-      '''
+      """
       b = Bank('local')
       b.update()
       rel = b.session.get('release')
@@ -819,9 +831,9 @@ class TestBiomajFunctional(unittest.TestCase):
       self.assertFalse(res)
 
   def test_delete_old_dirs(self):
-      '''
+      """
       Try updating 3 times, oldest dir should be removed
-      '''
+      """
       b = Bank('local')
       b.removeAll(True)
       b = Bank('local')
@@ -837,9 +849,9 @@ class TestBiomajFunctional(unittest.TestCase):
       self.assertTrue(len(b.bank['production']) == 2)
 
   def test_delete_old_dirs_with_freeze(self):
-      '''
+      """
       Try updating 3 times, oldest dir should be removed but not freezed releases
-      '''
+      """
       b = Bank('local')
       b.removeAll(True)
       b = Bank('local')
@@ -866,9 +878,9 @@ class TestBiomajFunctional(unittest.TestCase):
     self.assertTrue(bdb is None)
 
   def test_remove(self):
-    '''
+    """
     test removal of a production dir
-    '''
+    """
     b = Bank('local')
     b.update()
     self.assertTrue(os.path.exists(b.session.get_full_release_directory()))
@@ -1075,9 +1087,9 @@ class TestBiomajFunctional(unittest.TestCase):
 
 
   def test_owner(self):
-    '''
+    """
     test ACL with owner
-    '''
+    """
     b = Bank('local')
     res = b.update()
     self.assertTrue(res)
@@ -1091,9 +1103,9 @@ class TestBiomajFunctional(unittest.TestCase):
 
 @attr('elastic')
 class TestElastic(unittest.TestCase):
-    '''
+    """
     test indexing and search
-    '''
+    """
 
     def setUp(self):
         BmajIndex.es = None
@@ -1230,9 +1242,9 @@ class MockLdapConn(object):
 
 @attr('user')
 class TestUser(unittest.TestCase):
-  '''
+  """
   Test user management
-  '''
+  """
 
   def setUp(self):
     self.utils = UtilsForTest()

@@ -2,17 +2,17 @@ from builtins import object
 
 
 class Options(object):
-    '''
+    """
     Available options
-    '''
+    """
 
     def __init__(self, options=None):
         self.options = options
 
     def get_option(self, option):
-        '''
+        """
         Gets an option if present, else return None
-        '''
+        """
         #if self.options is None:
         #  return None
 

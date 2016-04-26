@@ -480,8 +480,7 @@ def main():
                 print("Bank name is missing")
                 sys.exit(1)
             bmaj = Bank(options.bank, options, no_log=True)
-            print('Log file: '+bmaj.config.log_file)
-            res = bmaj.remove_pending(options.release)
+            res = bmaj.remove_pending()
             if not res:
                 sys.exit(1)
 
@@ -499,7 +498,6 @@ def main():
                 print("Bank name or release is missing")
                 sys.exit(1)
             bmaj = Bank(options.bank, options, no_log=True)
-            print('Log file: '+bmaj.config.log_file)
             bmaj.load_session()
             bank = bmaj.bank
             session = None

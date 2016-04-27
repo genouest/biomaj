@@ -463,10 +463,10 @@ class Bank(object):
         BmajIndex.add(self.name, self.session._session)
         if self.session.get('action') == 'update' and not self.session.get_status(Workflow.FLOW_OVER)\
                 and self.session.get('release'):
-            release = self.format_release(self.session.get('release'))
+            release = self.session.get('release')
             self.banks.update({'name': self.name},
-                              {'$push': {'pending' : { 'release': self.session.get('release'),
-                                                       'id': self.session._session['id']}}})
+                              {'$push': {'pending': {'release': self.session.get('release'),
+                                                     'id': self.session._session['id']}}})
 
         if self.session.get('action') == 'update' and self.session.get_status(Workflow.FLOW_OVER) and self.session.get(
                 'update'):
@@ -523,32 +523,6 @@ class Bank(object):
 
 
         self.bank = self.banks.find_one({'name': self.name})
-
-    def format_release(self, release, reverse=False):
-        """
-        Check the release does not contains any dot '.' character that should make MongoDB complain
-
-        :param release: release number to check
-        :type release: str
-        :param reverse: Do the reverse replacement
-        :type reverse: bool
-        :return: Release string with dot '.' replaced with character set in config (release.replace)
-        :rtype: str
-        """
-        if not self.config.get('release.replacedot'):
-            logging.error('release.replacedot not set')
-            raise Exception('release.replacedot not set')
-
-        if reverse:
-            char_replace = '.'
-            char_search = self.config.get('release.replacedot')
-        else:
-            char_replace = self.config.get('release.replacedot')
-            char_search = '.'
-
-        if str(release).find(char_search):
-            return str(release).replace(char_search, char_replace)
-        return str(release)
 
     def clean_old_sessions(self):
         """
@@ -818,7 +792,7 @@ class Bank(object):
         _tmpbank = self.banks.find_one({'name': self.name})
         for s in _tmpbank['sessions']:
             if s['id'] == sid:
-                session_release = self.format_release(s['release'], reverse=True)
+                session_release = s['release']
 
         cache_dir = self.config.get('cache.dir')
         download_files = os.path.join(cache_dir, 'files_'+str(sid))

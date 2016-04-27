@@ -661,19 +661,6 @@ class TestBiomajFunctional(unittest.TestCase):
     w.wf_release()
     self.assertTrue(b.session.get('release') == '103')
 
-  @attr('testrelease')
-  def test_format_release(self):
-    """
-    Check release with dot is well formatted & vice versa
-    :return:
-    """
-    b1 = Bank('local', no_log=True)
-    c = b1.config.get('release.replacedot')
-    orelease = '5.6'
-    nrelease = '5' + c + '6'
-    self.assertEqual(nrelease, b1.format_release(orelease))
-    self.assertEqual(orelease, b1.format_release(nrelease, reverse=True))
-
   def test_publish(self):
     """
     Update a bank, then publish it

@@ -818,6 +818,7 @@ class TestBiomajFunctional(unittest.TestCase):
       res = b3.update()
       self.assertFalse(res)
 
+
   def test_delete_old_dirs(self):
       '''
       Try updating 3 times, oldest dir should be removed

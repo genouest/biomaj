@@ -566,9 +566,8 @@ class Bank(object):
                 for rel in self.bank['pending']:
                     rel_session = rel['id']
                     if rel_session == session_id:
-                        self.banks.update({'name': self.name}, {'$pull': {'pending':
-                                                                              { 'release': str(session['release']),
-                                                                                'id': session_id}}})
+                        self.banks.update({'name': self.name},
+                                          {'$pull': {'pending': {'release': session['release'], 'id': session_id}}})
                 if session['release'] not in prod_releases and session['release'] != self.session.get('release'):
                     # There might be unfinished releases linked to session, delete them
                     # if they are not related to a production directory or latest run
@@ -893,12 +892,16 @@ class Bank(object):
             return {}
         return self.bank['status']
 
-    def remove_pending(self):
+    def remove_pending(self, release=None):
         """
-        Remove pending releases
+        Remove pending releases if 'release is None
 
+        :param release: release or release directory, default None
+        :type release: str
         :return: bool
         """
+        if release:
+            release = str(release)
         logging.warning('Bank:' + self.name + ':RemovePending')
 
         if not self.is_owner():
@@ -908,8 +911,12 @@ class Bank(object):
         if 'pending' not in self.bank:
             return True
         pendings = self.bank['pending']
-        for release in pendings:
-            pending_session_id = release['id']
+
+        for pending in pendings:
+            # Only work with pending for argument release
+            if release and release != pending['release']:
+                continue
+            pending_session_id = pending['id']
             pending_session = None
             for s in self.bank['sessions']:
                 if s['id'] == pending_session_id:
@@ -917,14 +924,20 @@ class Bank(object):
                     break
             session = Session(self.name, self.config, RemoveWorkflow.FLOW)
             if pending_session is None:
-                session._session['release'] = release['release']
+                session._session['release'] = pending['release']
             else:
                 session.load(pending_session)
             if os.path.exists(session.get_full_release_directory()):
                 logging.debug("Remove:Pending:Dir:" + session.get_full_release_directory())
                 shutil.rmtree(session.get_full_release_directory())
             self.remove_session(release['id'])
-        self.banks.update({'name': self.name}, {'$set': {'pending': []}})
+            # Only remove pending session for this release
+            if release:
+                self.banks.update({'name': self.name},
+                                  {'$pull': {'pending': {'release': pending['release'], 'id': pending['id']}}})
+        # If no release ask for deletion, remove all pending
+        if not release:
+            self.banks.update({'name': self.name}, {'$set': {'pending': []}})
         return True
 
     def remove(self, release):

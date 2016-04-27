@@ -480,7 +480,7 @@ def main():
                 print("Bank name is missing")
                 sys.exit(1)
             bmaj = Bank(options.bank, options, no_log=True)
-            res = bmaj.remove_pending()
+            res = bmaj.remove_pending(options.release)
             if not res:
                 sys.exit(1)
 

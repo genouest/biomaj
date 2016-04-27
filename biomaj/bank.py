@@ -4,7 +4,6 @@ import os
 import logging
 import time
 import shutil
-# import copy
 import json
 
 from datetime import datetime
@@ -184,11 +183,11 @@ class Bank(object):
                                   release_dir,
                                   'yes' if 'freeze' in prod and prod['freeze'] else 'no'])
             # Bank pending info header
-            if 'pending' in _bank and len(_bank['pending'].keys()) > 0:
+            if 'pending' in _bank and len(_bank['pending']) > 0:
                 pend_info.append(["Pending release", "Last run"])
-                for pending in _bank['pending'].keys():
-                    run = datetime.fromtimestamp(_bank['pending'][pending]).strftime('%Y-%m-%d %H:%M:%S')
-                    pend_info.append([self.format_release(pending, reverse=True), run])
+                for pending in _bank['pending']:
+                    run = datetime.fromtimestamp(pending['id']).strftime('%Y-%m-%d %H:%M:%S')
+                    pend_info.append([pending['release'], run])
 
             info['info'] = bank_info
             info['prod'] = prod_info
@@ -466,8 +465,9 @@ class Bank(object):
                 and self.session.get('release'):
             release = self.format_release(self.session.get('release'))
             self.banks.update({'name': self.name},
-                              {'$set': {
-                                  'pending.' + release: self.session._session['id']}})
+                              {'$push': {'pending' : { 'release': self.session.get('release'),
+                                                       'id': self.session._session['id']}}})
+
         if self.session.get('action') == 'update' and self.session.get_status(Workflow.FLOW_OVER) and self.session.get(
                 'update'):
             # We expect that a production release has reached the FLOW_OVER status.
@@ -515,15 +515,12 @@ class Bank(object):
                           'prod_dir': prod_dir,
                           'freeze': False}
             self.bank['production'].append(production)
-
             self.banks.update({'name': self.name},
                               {'$push': {'production': production},
-                               '$unset': {'pending.' + self.format_release(self.session.get('release')): ''}
+                               '$pull': {'pending': {'release': self.session.get('release'),
+                                                     'id': self.session._session['id']}}
                                })
 
-            # self.banks.update({'name': self.name},
-            #                  {'$unset': 'pending.'+self.session.get('release')
-            #                  })
 
         self.bank = self.banks.find_one({'name': self.name})
 
@@ -592,12 +589,12 @@ class Bank(object):
                 session_id = session['id']
                 self.banks.update({'name': self.name}, {'$pull': {'sessions': {'id': session_id}}})
                 # Check if in pending sessions
-                if 'pending' in self.bank:
-                    for rel in list(self.bank['pending'].keys()):
-                        rel_session = self.bank['pending'][rel]
-                        if rel_session == session_id:
-                            self.banks.update({'name': self.name},
-                            {'$unset': {'pending': {self.format_release(session['release']): ""}}})
+                for rel in self.bank['pending']:
+                    rel_session = rel['id']
+                    if rel_session == session_id:
+                        self.banks.update({'name': self.name}, {'$pull': {'pending':
+                                                                              { 'release': str(session['release']),
+                                                                                'id': session_id}}})
                 if session['release'] not in prod_releases and session['release'] != self.session.get('release'):
                     # There might be unfinished releases linked to session, delete them
                     # if they are not related to a production directory or latest run
@@ -838,8 +835,9 @@ class Bank(object):
                 self.banks.update({'name': self.name}, {'$pull': {
                     'production': {'session': sid}
                 },
-                    '$unset': {
-                        'pending.' + session_release: ''
+                    '$pull': {
+                        'pending': { 'release': session_release,
+                                     'id': sid}
                     }
                 })
             else:
@@ -851,13 +849,12 @@ class Bank(object):
                               {'$set': {'sessions.$.deleted': time.time()}})
         else:
             if session_release is not None:
-                self.banks.update({'name': self.name}, {'$pull': {
+                result = self.banks.update({'name': self.name}, {'$pull': {
                     'sessions': {'id': sid},
-                    'production': {'session': sid}
-                },
-                    '$unset': {
-                        'pending.' + session_release: ''
-                    }
+                    'production': {'session': sid},
+                    'pending': {'release': session_release,
+                                'id': sid}
+                }
                 })
             else:
                 self.banks.update({'name': self.name}, {'$pull': {
@@ -937,8 +934,8 @@ class Bank(object):
         if 'pending' not in self.bank:
             return True
         pendings = self.bank['pending']
-        for release in list(pendings.keys()):
-            pending_session_id = pendings[release]
+        for release in pendings:
+            pending_session_id = release['id']
             pending_session = None
             for s in self.bank['sessions']:
                 if s['id'] == pending_session_id:
@@ -946,14 +943,14 @@ class Bank(object):
                     break
             session = Session(self.name, self.config, RemoveWorkflow.FLOW)
             if pending_session is None:
-                session._session['release'] = self.format_release(release, reverse=True)
+                session._session['release'] = release['release']
             else:
                 session.load(pending_session)
             if os.path.exists(session.get_full_release_directory()):
                 logging.debug("Remove:Pending:Dir:" + session.get_full_release_directory())
                 shutil.rmtree(session.get_full_release_directory())
-            self.remove_session(pending_session_id)
-        self.banks.update({'name': self.name}, {'$set': {'pending': {}}})
+            self.remove_session(release['id'])
+        self.banks.update({'name': self.name}, {'$set': {'pending': []}})
         return True
 
     def remove(self, release):

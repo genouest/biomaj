@@ -809,7 +809,7 @@ class Bank(object):
                     'production': {'session': sid}
                 },
                     '$pull': {
-                        'pending': { 'release': session_release,
+                        'pending': {'release': session_release,
                                      'id': sid}
                     }
                 })
@@ -931,10 +931,6 @@ class Bank(object):
                 logging.debug("Remove:Pending:Dir:" + session.get_full_release_directory())
                 shutil.rmtree(session.get_full_release_directory())
             self.remove_session(release['id'])
-            # Only remove pending session for this release
-            if release:
-                self.banks.update({'name': self.name},
-                                  {'$pull': {'pending': {'release': pending['release'], 'id': pending['id']}}})
         # If no release ask for deletion, remove all pending
         if not release:
             self.banks.update({'name': self.name}, {'$set': {'pending': []}})

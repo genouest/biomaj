@@ -930,7 +930,7 @@ class Bank(object):
             if os.path.exists(session.get_full_release_directory()):
                 logging.debug("Remove:Pending:Dir:" + session.get_full_release_directory())
                 shutil.rmtree(session.get_full_release_directory())
-            self.remove_session(release['id'])
+            self.remove_session(pending['id'])
         # If no release ask for deletion, remove all pending
         if not release:
             self.banks.update({'name': self.name}, {'$set': {'pending': []}})

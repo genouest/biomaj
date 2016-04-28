@@ -12,9 +12,9 @@ from biomaj.workflow import Workflow
 import logging
 
 class Notify(object):
-    '''
+    """
     Send notifications
-    '''
+    """
 
     @staticmethod
     def notifyBankAction(bank):

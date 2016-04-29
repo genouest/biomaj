@@ -1,3 +1,5 @@
+3.0.17:
+
 3.0.16:
   Do not use config values, trust database values #39
   Fix #42: Add optional release.separator to name the bank directory bankname_release (underscore as default)

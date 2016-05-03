@@ -87,6 +87,7 @@ class DirectFTPDownload(FTPDownload):
         :type file_list: list
         '''
         FTPDownload.__init__(self, protocol, host, rootdir)
+        self.save_as = None
         if file_list is None:
             file_list = []
         today = datetime.date.today()
@@ -110,6 +111,10 @@ class DirectFTPDownload(FTPDownload):
         '''
         FTP protocol does not give us the possibility to get file date from remote url
         '''
+        for rfile in self.files_to_download:
+            if self.save_as is None:
+                self.save_as = rfile['name']
+            rfile['save_as'] = self.save_as
         return (self.files_to_download, [])
 
     def match(self, patterns, file_list, dir_list=None, prefix='', submatch=False):
@@ -161,6 +166,7 @@ class DirectHttpDownload(DirectFTPDownload):
 
             if self.save_as is None:
                 self.save_as = rfile['name']
+
             file_dir = local_dir
             if keep_dirs:
                 file_dir = local_dir + os.path.dirname(self.save_as)
@@ -257,7 +263,13 @@ class DirectHttpDownload(DirectFTPDownload):
         '''
         Try to get file headers to get last_modification and size
         '''
-        for file in self.files_to_download:
+        for rfile in self.files_to_download:
+
+            if self.save_as is None:
+                self.save_as = rfile['name']
+
+            rfile['save_as'] = self.save_as
+
             self.crl.setopt(pycurl.HEADER, True)
             if self.credentials is not None:
                 self.crl.setopt(pycurl.USERPWD, self.credentials)
@@ -269,9 +281,9 @@ class DirectHttpDownload(DirectFTPDownload):
 
             self.crl.setopt(pycurl.NOBODY, True)
             try:
-                self.crl.setopt(pycurl.URL, self.url+self.rootdir+file['name'])
+                self.crl.setopt(pycurl.URL, self.url+self.rootdir+rfile['name'])
             except Exception as a:
-                self.crl.setopt(pycurl.URL, (self.url+self.rootdir+file['name']).encode('ascii', 'ignore'))
+                self.crl.setopt(pycurl.URL, (self.url+self.rootdir+rfile['name']).encode('ascii', 'ignore'))
             #self.crl.setopt(pycurl.URL, self.url+self.rootdir+file['name'])
             output = BytesIO()
             # lets assign this buffer to pycurl object
@@ -300,30 +312,30 @@ class DirectHttpDownload(DirectFTPDownload):
             for line in lines:
                 parts = line.split(':')
                 if parts[0].strip() == 'Content-Length':
-                    file['size'] = parts[1].strip()
+                    rfile['size'] = parts[1].strip()
                 if parts[0].strip() == 'Last-Modified':
                     # Sun, 06 Nov 1994
                     res = re.match('(\w+),\s+(\d+)\s+(\w+)\s+(\d+)', parts[1].strip())
                     if res:
-                        file['hash'] = hashlib.md5(str(res.group(0)).encode('utf-8')).hexdigest()
-                        file['day'] = res.group(2)
-                        file['month'] = Utils.month_to_num(res.group(3))
-                        file['year'] = res.group(4)
+                        rfile['hash'] = hashlib.md5(str(res.group(0)).encode('utf-8')).hexdigest()
+                        rfile['day'] = res.group(2)
+                        rfile['month'] = Utils.month_to_num(res.group(3))
+                        rfile['year'] = res.group(4)
                         continue
                     #Sunday, 06-Nov-94
                     res = re.match('(\w+),\s+(\d+)-(\w+)-(\d+)', parts[1].strip())
                     if res:
-                        file['hash'] = hashlib.md5(str(res.group(0)).encode('utf-8')).hexdigest()
-                        file['day'] = res.group(2)
-                        file['month'] = Utils.month_to_num(res.group(3))
-                        file['year'] = str(2000 + int(res.group(4)))
+                        rfile['hash'] = hashlib.md5(str(res.group(0)).encode('utf-8')).hexdigest()
+                        rfile['day'] = res.group(2)
+                        rfile['month'] = Utils.month_to_num(res.group(3))
+                        rfile['year'] = str(2000 + int(res.group(4)))
                         continue
                     #Sun Nov  6 08:49:37 1994
                     res = re.match('(\w+)\s+(\w+)\s+(\d+)\s+\d{2}:\d{2}:\d{2}\s+(\d+)', parts[1].strip())
                     if res:
-                        file['hash'] = hashlib.md5(str(res.group(0)).encode('utf-8')).hexdigest()
-                        file['day'] = res.group(3)
-                        file['month'] = Utils.month_to_num(res.group(2))
-                        file['year'] = res.group(4)
+                        rfile['hash'] = hashlib.md5(str(res.group(0)).encode('utf-8')).hexdigest()
+                        rfile['day'] = res.group(3)
+                        rfile['month'] = Utils.month_to_num(res.group(2))
+                        rfile['year'] = res.group(4)
                         continue
         return (self.files_to_download, [])

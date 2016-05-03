@@ -783,6 +783,11 @@ class UpdateWorkflow(Workflow):
                     credentials = cf.get('server.credentials')
                 if credentials is not None:
                     subdownloader.set_credentials(credentials)
+                if protocol == 'directftp':
+                    if cf.get('remote.file.'+str(i)+'.name'):
+                        subdownloader.save_as = cf.get('remote.file.'+str(i)+'.name')
+                    else:
+                        subdownloader.save_as = cf.get('remote.file.'+str(i)+'.path')
                 if protocol == 'directhttp':
                     subdownloader.method = cf.get('remote.file.'+str(i)+'.method')
                     if subdownloader.method is None:
@@ -832,18 +837,18 @@ class UpdateWorkflow(Workflow):
         (file_list, dir_list) = downloader.list()
 
         downloader.match(cf.get('remote.files',default='.*').split(), file_list, dir_list)
-
         for f in downloader.files_to_download:
-            f['save_as'] = f['name']
-            for p in cf.get('remote.files', default='.*').split():
-                if p.startswith('^'):
-                    p = p.replace('^','^/')
-                else:
-                    p = '/' + p
-                res = re.match(p, f['name'])
-                if res is not None and res.groups() is not None and len(res.groups()) >= 1:
-                    f['save_as'] = '/'.join(res.groups())
-                    break
+            if 'save_as' not in f or not f['save_as']:
+                f['save_as'] = f['name']
+                for p in cf.get('remote.files', default='.*').split():
+                    if p.startswith('^'):
+                        p = p.replace('^','^/')
+                    else:
+                        p = '/' + p
+                    res = re.match(p, f['name'])
+                    if res is not None and res.groups() is not None and len(res.groups()) >= 1:
+                        f['save_as'] = '/'.join(res.groups())
+                        break
 
 
         self.session.set('download_files', downloader.files_to_download)

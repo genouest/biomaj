@@ -47,6 +47,8 @@ class DownloadInterface(object):
         self.proxy = None
         # 24h timeout
         self.timeout = 3600 * 24
+        # Optional save target for single file downloaders
+        self.save_as = None
 
 
     def set_proxy(self, proxy, proxy_auth=None):

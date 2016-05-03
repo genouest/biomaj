@@ -9,7 +9,6 @@ import tempfile
 import re
 import traceback
 import json
-import time
 
 from biomaj.utils import Utils
 from biomaj.download.ftp import FTPDownload
@@ -24,9 +23,9 @@ from biomaj.options import Options
 from biomaj.process.processfactory import RemoveProcessFactory, PreProcessFactory, PostProcessFactory
 
 class Workflow(object):
-    '''
+    """
     Bank update workflow
-    '''
+    """
 
     FLOW_INIT = 'init'
     FLOW_CHECK = 'check'
@@ -46,12 +45,12 @@ class Workflow(object):
     ]
 
     def __init__(self, bank, session=None):
-        '''
+        """
         Instantiate a new workflow
 
         :param bank: bank on which to apply the workflow
         :type bank: :class:`biomaj.bank.Bank`
-        '''
+        """
         self.bank = bank
         if session is None:
             self.session = bank.session
@@ -69,9 +68,9 @@ class Workflow(object):
         self.session.config.set('remoterelease', '')
 
     def get_handler(self, protocol, server, remote_dir, list_file=None):
-        '''
+        """
         Get a protocol download handler
-        '''
+        """
         if list_file is None:
             list_file = []
         downloader = None
@@ -106,9 +105,9 @@ class Workflow(object):
                 return flow
 
     def start(self):
-        '''
+        """
         Start the workflow
-        '''
+        """
         logging.info('Workflow:Start')
         #print str(self.session._session['status'])
         for flow in self.session.flow:
@@ -165,9 +164,9 @@ class Workflow(object):
         return True
 
     def wf_progress_init(self):
-        '''
+        """
         Set up new progress status
-        '''
+        """
         status = {}
         status['log_file'] = {'status': self.session.config.log_file, 'progress': 0}
         status['session'] = self.session._session['id']
@@ -183,22 +182,22 @@ class Workflow(object):
         MongoConnector.banks.update({'name': self.name}, {'$set': {'status': status}})
 
     def wf_progress_end(self):
-        '''
+        """
         Reset progress status when workflow is over
-        '''
+        """
         #MongoConnector.banks.update({'name': self.name},{'$set': {'status': None}})
 
     def wf_progress(self, task, status):
-        '''
+        """
         Update bank status
-        '''
+        """
         subtask = 'status.'+task+'.status'
         MongoConnector.banks.update({'name': self.name}, {'$set': {subtask: status}})
 
     def wf_init(self):
-        '''
+        """
         Initialize workflow
-        '''
+        """
         logging.info('Workflow:wf_init')
         data_dir = self.session.config.get('data.dir')
         lock_dir = self.session.config.get('lock.dir', default=data_dir)
@@ -220,9 +219,9 @@ class Workflow(object):
         return True
 
     def wf_over(self):
-        '''
+        """
         Workflow is over
-        '''
+        """
         logging.info('Workflow:wf_over')
         data_dir = self.session.config.get('data.dir')
         lock_dir = self.session.config.get('lock.dir', default=data_dir)
@@ -231,9 +230,9 @@ class Workflow(object):
         return True
 
 class RemoveWorkflow(Workflow):
-    '''
+    """
     Workflow to remove a bank instance
-    '''
+    """
 
     FLOW = [
       {'name': 'init', 'steps': []},
@@ -243,14 +242,14 @@ class RemoveWorkflow(Workflow):
     ]
 
     def __init__(self, bank, session):
-        '''
+        """
         Instantiate a new workflow
 
         :param bank: bank on which to apply the workflow
         :type bank: Bank
         :param session: session to remove
         :type session: :class:`biomaj.session.Session`
-        '''
+        """
         Workflow.__init__(self, bank, session)
         logging.debug('New workflow')
         self.session._session['remove'] = True
@@ -276,9 +275,9 @@ class RemoveWorkflow(Workflow):
 
 
 class UpdateWorkflow(Workflow):
-    '''
+    """
     Workflow for a bank update
-    '''
+    """
 
     FLOW = [
       {'name': 'init', 'steps': []},
@@ -293,12 +292,12 @@ class UpdateWorkflow(Workflow):
     ]
 
     def __init__(self, bank):
-        '''
+        """
         Instantiate a new workflow
 
         :param bank: bank on which to apply the workflow
         :type bank: Bank
-        '''
+        """
         Workflow.__init__(self, bank)
         logging.debug('New workflow')
         self.session._session['update'] = True
@@ -313,16 +312,16 @@ class UpdateWorkflow(Workflow):
         return True
 
     def wf_check(self):
-        '''
+        """
         Basic checks
-        '''
+        """
         logging.info('Workflow:wf_check')
         return True
 
     def wf_depends(self):
-        '''
+        """
         Checks bank dependencies with other banks. If bank has dependencies, execute update on other banks first
-        '''
+        """
         logging.info('Workflow:wf_depends')
         # Always rescan depends, there might be a new release
         self.session.set('depends', {})
@@ -341,9 +340,9 @@ class UpdateWorkflow(Workflow):
         return res
 
     def wf_copydepends(self):
-        '''
+        """
         Copy files from dependent banks if needed
-        '''
+        """
         logging.info('Workflow:wf_copydepends')
         deps = self.bank.get_dependencies()
         for dep in deps:
@@ -372,9 +371,9 @@ class UpdateWorkflow(Workflow):
         return True
 
     def wf_preprocess(self):
-        '''
+        """
         Execute pre-processes
-        '''
+        """
         logging.info('Workflow:wf_preprocess')
         metas = self.session._session['process']['preprocess']
         pfactory = PreProcessFactory(self.bank, metas)
@@ -383,9 +382,9 @@ class UpdateWorkflow(Workflow):
         return res
 
     def wf_release(self):
-        '''
+        """
         Find current release on remote
-        '''
+        """
         logging.info('Workflow:wf_release')
         cf = self.session.config
         if cf.get('ref.release') and self.bank.depends:
@@ -556,9 +555,9 @@ class UpdateWorkflow(Workflow):
 
 
     def no_need_to_update(self):
-        '''
+        """
         Set status to over and update = False because there is not a need to update bank
-        '''
+        """
         self.skip_all = True
         self.session._session['status'][Workflow.FLOW_OVER] = True
         self.session._session['update'] = False
@@ -572,9 +571,9 @@ class UpdateWorkflow(Workflow):
 
 
     def get_last_prod_session_for_release(self, release):
-        '''
+        """
         find last session matching a release in production
-        '''
+        """
         last_session = None
         for prod in self.bank.bank['production']:
             if prod['remoterelease'] == release:
@@ -587,9 +586,9 @@ class UpdateWorkflow(Workflow):
 
 
     def _load_local_files_from_session(self, session_id):
-        '''
+        """
         Load lccal files for sessions from cache directory
-        '''
+        """
 
         cache_dir = self.bank.config.get('cache.dir')
         f_local_files = None
@@ -603,9 +602,9 @@ class UpdateWorkflow(Workflow):
         return f_local_files
 
     def _load_download_files_from_session(self, session_id):
-        '''
+        """
         Load download files for sessions from cache directory
-        '''
+        """
 
         cache_dir = self.bank.config.get('cache.dir')
         f_downloaded_files = None
@@ -619,10 +618,10 @@ class UpdateWorkflow(Workflow):
         return f_downloaded_files
 
     def is_previous_release_content_identical(self):
-        '''
+        """
         Checks if releases (previous_release and remoterelease) are identical in release id and content.
         Expects release.control parameter to be set to true or 1, else skip control.
-        '''
+        """
         if not self.session.config.get_bool('release.control', default=False):
             return True
         # Different releases, so different
@@ -660,12 +659,12 @@ class UpdateWorkflow(Workflow):
         return True
 
     def check_and_incr_release(self):
-        '''
+        """
         Checks if local release already exists on disk. If it exists, create a new
          local release, appending __X to the release.
 
         :returns: str local release
-        '''
+        """
         index = 0
         release = self.session.get('release')
         # Release directory exits, set index to 1
@@ -686,9 +685,9 @@ class UpdateWorkflow(Workflow):
 
 
     def _create_dir_structure(self, downloader, offline_dir):
-        '''
+        """
         Create expected directory structure in offline directory before download
-        '''
+        """
         logging.debug('Workflow:wf_download:create_dir_structure:start')
         for rfile in downloader.files_to_download:
             save_as = None
@@ -707,9 +706,9 @@ class UpdateWorkflow(Workflow):
         logging.debug('Workflow:wf_download:create_dir_structure:done')
 
     def wf_download(self):
-        '''
+        """
         Download remote files or use an available local copy from last production directory if possible.
-        '''
+        """
         logging.info('Workflow:wf_download')
         flow = self.get_flow(Workflow.FLOW_DOWNLOAD)
         downloader = None
@@ -732,7 +731,7 @@ class UpdateWorkflow(Workflow):
                 return True
 
         if cf.get('protocol') == 'multi':
-            '''
+            """
             Search for:
             protocol = multi
             remote.file.0.protocol = directftp
@@ -761,7 +760,7 @@ class UpdateWorkflow(Workflow):
             remote.file.1.params.key2 = value2
 
             ......
-            '''
+            """
             downloader = MultiDownload()
             downloaders = []
             # Creates multiple downloaders
@@ -811,9 +810,9 @@ class UpdateWorkflow(Workflow):
             downloader.add_downloaders(downloaders)
 
         else:
-            '''
+            """
             Simple case, one downloader with regexp
-            '''
+            """
             protocol = cf.get('protocol')
             if protocol == 'directhttp' or protocol == 'directftp':
                 downloader = self.get_handler(cf.get('protocol'), cf.get('server'), '/', [cf.get('remote.dir')[:-1]])
@@ -987,7 +986,7 @@ class UpdateWorkflow(Workflow):
         for th in thlist:
             running_th.append(th)
             th.start()
-        '''
+        """
         while len(running_th) > 0:
             try:
                     # Join all threads using a timeout so it doesn't block
@@ -1000,7 +999,7 @@ class UpdateWorkflow(Workflow):
                 for t in running_th:
                     t.downloader.kill_received = True
         logging.info("Workflow:wf_download:Download:Threads:Over")
-        '''
+        """
         for th in thlist:
           th.join()
         logging.info("Workflow:wf_download:Download:Threads:Over")
@@ -1022,9 +1021,9 @@ class UpdateWorkflow(Workflow):
         return True
 
     def wf_uncompress(self):
-        '''
+        """
         Uncompress files if archives and no.extract = false
-        '''
+        """
         logging.info('Workflow:wf_uncompress')
         if len(self.downloaded_files) == 0:
             logging.info("Workflow:wf_uncompress:NoFileDownload:NoExtract")
@@ -1049,9 +1048,9 @@ class UpdateWorkflow(Workflow):
         return True
 
     def wf_copy(self):
-        '''
+        """
         Copy files from offline directory to release directory
-        '''
+        """
         logging.info('Workflow:wf_copy')
         if len(self.downloaded_files) == 0:
             logging.info("Workflow:wf_copy:NoFileDownload:NoCopy")
@@ -1071,9 +1070,9 @@ class UpdateWorkflow(Workflow):
         return True
 
     def wf_metadata(self):
-        '''
+        """
         Update metadata with info gathered from processes
-        '''
+        """
         logging.info('Workflow:wf_metadata')
         self.bank.session.set('formats', {})
         per_process_meta_data = self.session.get('per_process_metadata')
@@ -1089,9 +1088,9 @@ class UpdateWorkflow(Workflow):
         return True
 
     def wf_stats(self):
-        '''
+        """
         Get some stats from current release data dir
-        '''
+        """
         logging.info('Workflow:wf_stats')
         do_stats = self.bank.config.get('data.stats')
         if do_stats is None or do_stats == '0':
@@ -1103,9 +1102,9 @@ class UpdateWorkflow(Workflow):
         return True
 
     def wf_postprocess(self):
-        '''
+        """
         Execute post processes
-        '''
+        """
 
         # Creates a temporary symlink future_release to keep compatibility if process
         # tries to access dir with this name
@@ -1134,9 +1133,9 @@ class UpdateWorkflow(Workflow):
         return res
 
     def wf_publish(self):
-        '''
+        """
         Add *current* symlink to this release
-        '''
+        """
         if self.bank.config.get_bool('auto_publish', default=False):
             logging.info('Workflow:wf_publish')
             self.bank.publish()
@@ -1150,9 +1149,9 @@ class UpdateWorkflow(Workflow):
         return True
 
     def wf_old_biomaj_api(self):
-        '''
+        """
         Generates a listing.format file containing the list of files in directories declared in formats
-        '''
+        """
         release_dir = self.session.get_full_release_directory()
         for release_format in self.bank.session.get('formats'):
             format_file = os.path.join(release_dir, 'listingv1.'+release_format.replace('/','_'))
@@ -1164,7 +1163,7 @@ class UpdateWorkflow(Workflow):
         return True
 
     def list_section(self, base_dir, release_format, base_format):
-        '''
+        """
         Get section files and sub-section from base_dir for directory release_format
 
         :param base_dir: root directory
@@ -1174,7 +1173,7 @@ class UpdateWorkflow(Workflow):
         :param base_format: first directroy indicating format
         :type base_format: str
         :return: dict section details
-        '''
+        """
         section = {"name": release_format, "sections": [], "files": []}
         format_dir = os.path.join(base_dir, release_format)
         if not os.path.exists(format_dir):
@@ -1197,26 +1196,26 @@ class UpdateWorkflow(Workflow):
 
 
     def wf_clean_offline(self):
-        '''
+        """
         Clean offline directory
-        '''
+        """
         logging.info('Workflow:wf_clean_offline')
         if os.path.exists(self.session.get_offline_directory()):
             shutil.rmtree(self.session.get_offline_directory())
         return True
 
     def wf_clean_old_sessions(self):
-        '''
+        """
         Delete old sessions not related to a production directory or last run
-        '''
+        """
         logging.info('Workflow:wf_clean_old_sessions')
         self.bank.clean_old_sessions()
         return True
 
     def wf_delete_old(self):
-        '''
+        """
         Delete old production dirs
-        '''
+        """
         logging.info('Workflow:wf_delete_old')
         if self.options.get_option(Options.FROM_TASK) is not None:
             # This is a run on an already present release, skip delete

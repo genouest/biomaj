@@ -5,41 +5,41 @@ import copy
 from elasticsearch import Elasticsearch
 
 class BmajIndex(object):
-    '''
+    """
     ElasticSearch indexation and search
-    '''
+    """
 
 
-    '''
+    """
     ElasticSearch server
-    '''
+    """
     es = None
 
-    '''
+    """
     Index name
-    '''
+    """
     index = 'biomaj'
 
-    '''
+    """
     Do indexing
-    '''
+    """
     do_index = False
 
-    '''
+    """
     Skip if failure (tests)
-    '''
+    """
     skip_if_failure = False
 
     @staticmethod
     def load(hosts=None, index='biomaj', do_index=True):
-        '''
+        """
         Initialize index
 
         :param hosts: List of elastic search nodes to connect to
         :type hosts: list
         :param do_index: index data or not
         :type do_index: bool
-        '''
+        """
         if hosts is None:
             hosts = ['localhost']
         if not do_index:
@@ -101,13 +101,13 @@ class BmajIndex(object):
 
     @staticmethod
     def delete_all_bank(bank_name):
-        '''
+        """
         Delete complete index for a bank
-        '''
+        """
         if not BmajIndex.do_index:
             return
         BmajIndex._bulk_delete({"bank" : bank_name}, True)
-        '''
+        """
         query = {
           "query" : {
             "term" : {"bank" : bank_name}
@@ -120,22 +120,22 @@ class BmajIndex(object):
                 BmajIndex.do_index = False
             else:
                 raise e
-        '''
+        """
 
     @staticmethod
     def remove(bank_name, release):
-        '''
+        """
         Remove a production release
 
         :param bank_name: Name of the bank
         :type bank_name: str
         :param release: production release
         :type release: str
-        '''
+        """
         if not BmajIndex.do_index:
             return
         BmajIndex._bulk_delete({"release" : release, "bank": bank_name})
-        '''
+        """
         try:
             query = {
               "query" : {
@@ -147,7 +147,7 @@ class BmajIndex(object):
             logging.error('Index:Remove:'+bank_name+'_'+str(release)+':Exception:'+str(e))
             if BmajIndex.skip_if_failure:
                 BmajIndex.do_index = False
-        '''
+        """
 
     @staticmethod
     def search(query):
@@ -161,7 +161,7 @@ class BmajIndex(object):
 
     @staticmethod
     def searchq(query, size=1000):
-        '''
+        """
         Lucene syntax search
 
         :param query: Lucene search string
@@ -169,7 +169,7 @@ class BmajIndex(object):
         :param size: number of results
         :type size: int
         :return: list of matches
-        '''
+        """
         if not BmajIndex.do_index:
             return None
         res = BmajIndex.es.search(index=BmajIndex.index, doc_type='production', q=query, size=size)
@@ -177,9 +177,9 @@ class BmajIndex(object):
 
     @staticmethod
     def add_stat(stat_id, stat):
-        '''
+        """
         Add some statistics, must contain release and bank properties.
-        '''
+        """
         if not BmajIndex.do_index:
             return
         if stat['release'] is None or stat['bank'] is None:
@@ -197,7 +197,7 @@ class BmajIndex(object):
 
     @staticmethod
     def add(bank_name, prod, flush=False):
-        '''
+        """
         Index a production release
 
         :param bank_name: Name of the bank
@@ -206,7 +206,7 @@ class BmajIndex(object):
         :type prod: dict
         :param flush: Force flushing
         :type flush: bool
-        '''
+        """
         if not BmajIndex.do_index:
             return
         obj = copy.deepcopy(prod)

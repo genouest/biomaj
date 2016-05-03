@@ -264,7 +264,6 @@ class DirectHttpDownload(DirectFTPDownload):
         Try to get file headers to get last_modification and size
         '''
         for rfile in self.files_to_download:
-
             if self.save_as is None:
                 self.save_as = rfile['name']
 

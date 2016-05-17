@@ -127,8 +127,6 @@ class Bank(object):
                             # We remove old type for 'pending'
                             self.banks.update({'name': bank['name']},
                                                         {'$unset': {'pending': ""}})
-                        logging.warn("OSALLOU DEBUG IN MIGRATION %s" % bank['name'])
-
 
             logging.warn("Migration: %d bank(s) updated" % updated)
 

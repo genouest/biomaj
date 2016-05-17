@@ -3,13 +3,23 @@ try:
 except ImportError:
     from distutils.core import setup
 
+import os
+
+here = os.path.abspath(os.path.dirname(__file__))
+with open(os.path.join(here, 'README.md')) as f:
+    README = f.read()
+with open(os.path.join(here, 'CHANGES.txt')) as f:
+    CHANGES = f.read()
+
+
 config = {
     'description': 'BioMAJ',
+    'long_description': README + '\n\n' + CHANGES,
     'author': 'Olivier Sallou',
     'url': 'http://biomaj.genouest.org',
     'download_url': 'http://biomaj.genouest.org',
     'author_email': 'olivier.sallou@irisa.fr',
-    'version': '3.0.17',
+    'version': '3.0.18',
      'classifiers': [
         # How mature is this project? Common values are
         #   3 - Alpha

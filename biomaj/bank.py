@@ -246,7 +246,8 @@ class Bank(object):
                     if _bank['current'] == prod['session']:
                         release = prod['remoterelease']
             info['info'] = [_bank['name'], ','.join(_bank['properties']['type']),
-                            str(release), _bank['properties']['visibility']]
+                            str(release), _bank['properties']['visibility'],
+                            datetime.fromtimestamp(_bank['last_update_session']).strftime('%Y-%m-%d %H:%M:%S')]
             return info
 
     def update_dependencies(self):

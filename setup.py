@@ -3,7 +3,15 @@ try:
 except ImportError:
     from distutils.core import setup
 
+from distutils.command.install import install
 import os
+
+
+class post_install(install):
+    def run(self):
+        install.run(self)
+        from biomaj.schema_version import SchemaVersion
+        SchemaVersion.migrate_pendings()
 
 here = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(here, 'README.md')) as f:
@@ -42,20 +50,20 @@ config = {
         'Programming Language :: Python :: 3.4'
     ],
     'install_requires': ['nose',
-                            'pymongo==3.2',
-                            'pycurl',
-                            'ldap3',
-                            'mock',
-                            'py-bcrypt',
-                            'mock',
-                            'drmaa',
-                            'future',
-                            'tabulate',
-                            'elasticsearch'],
+                         'pymongo==3.2',
+                         'pycurl',
+                         'ldap3',
+                         'mock',
+                         'py-bcrypt',
+                         'drmaa',
+                         'future',
+                         'tabulate',
+                         'elasticsearch'],
     'packages': find_packages(),
     'include_package_data': True,
     'scripts': ['bin/biomaj-cli.py'],
-    'name': 'biomaj'
+    'name': 'biomaj',
+    'cmdclass': {'install': post_install},
 }
 
 setup(**config)

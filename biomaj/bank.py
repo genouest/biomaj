@@ -73,21 +73,6 @@ class Bank(object):
                            BiomajConfig.global_config.get('GENERAL', 'db.name'))
 
         self.banks = MongoConnector.banks
-
-
-        self.schema = MongoConnector.db_schema
-        self.schema_version = self.schema.find_one({'id': 1})
-        version = pkg_resources.get_distribution("biomaj").version
-        if self.schema_version is None:
-            self.schema_version = {'id': 1, 'version': '3.0.0'}
-            self.schema.insert({'id': 1, 'version': self.schema_version})
-        biomaj_version = self.schema_version['version'].split('.')
-        if self.schema_version != version:
-            self.migrate(biomaj_version)
-        else:
-            logging.debug("Schema: OK")
-
-
         self.bank = self.banks.find_one({'name': self.name})
 
         if self.bank is None:
@@ -102,37 +87,6 @@ class Bank(object):
 
         self.session = None
         self.use_last_session = False
-
-    def migrate(self, old_version):
-        """
-        Migrate database
-        """
-        if int(old_version[1]) == 0 and int(old_version[2]) <= 17:
-            logging.warn("Migrate from release: %s" %old_version)
-            # Update pending releases
-            banks = self.banks.find()
-            updated = 0
-            for bank in banks:
-                if 'pending' in bank:
-                    # Check we have an old pending type
-                    if type(bank['pending']) == dict:
-                        updated += 1
-                        pendings = []
-                        for release in sorted(bank['pending'], key=lambda r: bank['pending'][r]):
-                            pendings.append({'release': str(release), 'id': bank['pending'][str(release)]})
-                        if len(pendings) > 0:
-                            self.banks.update({'name': bank['name']},
-                                                        {'$set': {'pending': pendings}})
-                        else:
-                            # We remove old type for 'pending'
-                            self.banks.update({'name': bank['name']},
-                                                        {'$unset': {'pending': ""}})
-                        logging.warn("OSALLOU DEBUG IN MIGRATION %s" % bank['name'])
-
-
-            logging.warn("Migration: %d bank(s) updated" % updated)
-
-        self.schema_version = self.schema.update_one({'id': 1},{'$set': {'version': pkg_resources.get_distribution("biomaj").version}})
 
     def check(self):
         """
@@ -248,7 +202,8 @@ class Bank(object):
                     if _bank['current'] == prod['session']:
                         release = prod['remoterelease']
             info['info'] = [_bank['name'], ','.join(_bank['properties']['type']),
-                            str(release), _bank['properties']['visibility']]
+                            str(release), _bank['properties']['visibility'],
+                            datetime.fromtimestamp(_bank['last_update_session']).strftime('%Y-%m-%d %H:%M:%S')]
             return info
 
     def update_dependencies(self):

@@ -396,7 +396,7 @@ def main():
 
         if options.statusko:
             banks = Bank.list()
-            banks_list = [["Name", "Type(s)", "Release", "Visibility"]]
+            banks_list = [["Name", "Type(s)", "Release", "Visibility", "Last run"]]
             for bank in sorted(banks, key=lambda k: k['name']):
                 try:
                     bank = Bank(bank['name'], no_log=True)

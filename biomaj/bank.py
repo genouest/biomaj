@@ -466,8 +466,7 @@ class Bank(object):
         if self.session.get('action') == 'update' and not self.session.get_status(Workflow.FLOW_OVER)\
                 and self.session.get('release'):
             release = self.session.get('release')
-            found = self.banks.find_one({'name': self.name, 'pending.release': release,
-                                         'pending.id': self.session._session['id']})
+            found = self.banks.find_one({'name': self.name, 'pending.release': release})
             if found is None:
                 self.banks.update({'name': self.name},
                                   {'$push': {'pending': {'release': self.session.get('release'),

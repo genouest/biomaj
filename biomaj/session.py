@@ -93,7 +93,10 @@ class Session(object):
                 copy_postprocess[block][meta] = Session.get_ordered_dict()
                 processes = self.config.get(meta.strip()).split(',')
                 for process in processes:
-                    copy_postprocess[block][meta][process] = postprocess[block][meta][process]
+                    if block not in postprocess or meta not in postprocess[block] or process not in postprocess[block][meta]:
+                        copy_postprocess[block][meta][process] = False
+                    else:
+                        copy_postprocess[block][meta][process] = postprocess[block][meta][process]
         return copy_postprocess
 
     def reload_in_order(self, cfg_type, otherprocess):

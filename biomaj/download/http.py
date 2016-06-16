@@ -117,8 +117,8 @@ class HTTPDownload(FTPDownload):
                 rfile['user'] = ''
                 rfile['size'] = foundfile[int(self.config.get('http.group.file.size'))-1]
                 date = foundfile[int(self.config.get('http.group.file.date'))-1]
-                if self.config.get('http.group.file.date.format'):
-                    date_object = datetime.datetime.strptime(date, self.config.get('http.group.file.date.format').replace('%%', '%'))
+                if self.config.get('http.parse.file.date.format'):
+                    date_object = datetime.datetime.strptime(date, self.config.get('http.parse.file.date.format').replace('%%', '%'))
                     rfile['month'] = date_object.month
                     rfile['day'] = date_object.day
                     rfile['year'] = date_object.year
@@ -133,5 +133,6 @@ class HTTPDownload(FTPDownload):
                 filehash = (rfile['name']+str(date)+str(rfile['size'])).encode('utf-8')
                 rfile['hash'] = hashlib.md5(filehash).hexdigest()
                 rfiles.append(rfile)
+                print("###OSALLOU "+str(rfile))
 
         return (rfiles, rdirs)

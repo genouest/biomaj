@@ -1,5 +1,6 @@
 3.0.18:
   Add migration method to update schema when needed
+  Manage HTTP month format to support text format (Jan, Feb, ...) and int format (01, 02, ...)
 3.0.17:
   Fix #47: save_as error with directhttp protocol
   Fix #45: error with pending releases when release has dots in value

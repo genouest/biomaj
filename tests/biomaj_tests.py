@@ -273,7 +273,7 @@ class TestBiomajHTTPDownload(unittest.TestCase):
     self.assertTrue(len(file_list) == 1)
 
   def test_http_list_dateregexp(self):
-    self.config.set('http.group.file.date.format',"%%d-%%b-%%Y %%H:%%M")
+    self.config.set('http.parse.file.date.format',"%%d-%%b-%%Y %%H:%%M")
     httpd = HTTPDownload('http', 'ftp2.fr.debian.org', '/debian/dists/', self.config)
     (file_list, dir_list) = httpd.list()
     httpd.close()

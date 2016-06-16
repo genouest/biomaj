@@ -1,7 +1,7 @@
 3.0.18:
   Add migration method to update schema when needed
   Manage HTTP month format to support text format (Jan, Feb, ...) and int format (01, 02, ...)
-  New optional bank property http.group.file.date.format to extract date in HTTP protocol following python date regexp format (http://www.tutorialspoint.com/python/time_strptime.htm)
+  New optional bank property http.parse.file.date.format to extract date in HTTP protocol following python date regexp format (http://www.tutorialspoint.com/python/time_strptime.htm)
       Example: %d-%b-%Y %H:%M
 3.0.17:
   Fix #47: save_as error with directhttp protocol

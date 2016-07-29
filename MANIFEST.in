@@ -1,1 +1,1 @@
-recursive-include biomaj *.txt
+recursive-include biomaj *.txt *.md

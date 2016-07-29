@@ -1,3 +1,6 @@
+3.0.19:
+  Fix missing README.md in package
+  Fix #53 avoid duplicates in pending databases  
 3.0.18:
   Add migration method to update schema when needed
   Manage HTTP month format to support text format (Jan, Feb, ...) and int format (01, 02, ...)

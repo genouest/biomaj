@@ -1,3 +1,5 @@
+3.0.20:
+  Fix #55: Added support for https and directhttps
 3.0.19:
   Fix missing README.md in package
   Fix #53 avoid duplicates in pending databases  

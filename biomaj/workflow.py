@@ -77,7 +77,6 @@ class Workflow(object):
         if protocol == 'ftp' or protocol == 'sftp':
             downloader = FTPDownload(protocol, server, remote_dir)
         if protocol == 'http' or protocol == 'https':
-        #if protocol == 'http':
             downloader = HTTPDownload(protocol, server, remote_dir, self.bank.config)
         if protocol == 'local':
             downloader = LocalDownload(remote_dir)
@@ -454,7 +453,6 @@ class UpdateWorkflow(Workflow):
 
             #protocol = cf.get('protocol')
             release_downloader = None
-            #if protocol == 'directhttp' or protocol == 'directftp':
             if protocol == 'directhttp' or protocol == 'directhttps' or protocol == 'directftp':
                 release_downloader = self.get_handler(protocol, server, '/', [remote_dir])
                 release_downloader.method = cf.get('release.url.method')
@@ -791,7 +789,6 @@ class UpdateWorkflow(Workflow):
                         subdownloader.save_as = cf.get('remote.file.'+str(i)+'.name')
                     else:
                         subdownloader.save_as = cf.get('remote.file.'+str(i)+'.path')
-                #if protocol == 'directhttp':
                 if protocol == 'directhttp' or protocol == 'directhttps':
                     subdownloader.method = cf.get('remote.file.'+str(i)+'.method')
                     if subdownloader.method is None:
@@ -819,7 +816,6 @@ class UpdateWorkflow(Workflow):
             Simple case, one downloader with regexp
             """
             protocol = cf.get('protocol')
-            #if protocol == 'directhttp' or protocol == 'directftp':
             if protocol == 'directhttp' or protocol == 'directhttps' or protocol == 'directftp':
                 downloader = self.get_handler(cf.get('protocol'), cf.get('server'), '/', [cf.get('remote.dir')[:-1]])
                 downloader.method = cf.get('url.method')

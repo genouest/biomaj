@@ -12,6 +12,7 @@ Getting Started Documentation:
    :maxdepth: 2
 
    examples
+   admin
 
 API Documentation:
 

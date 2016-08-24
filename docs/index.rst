@@ -6,7 +6,14 @@
 Welcome to BioMAJ's documentation!
 ==================================
 
-Contents:
+Getting Started Documentation:
+
+.. toctree::
+   :maxdepth: 2
+
+   examples
+
+API Documentation:
 
 .. toctree::
    :maxdepth: 2

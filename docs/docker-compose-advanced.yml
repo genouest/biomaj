@@ -1,0 +1,16 @@
+version: '2'
+services:
+    biomaj:
+        image: osallou/biomaj-docker
+        links:
+            - mongodb:biomaj-mongodb
+            - elasticsearch
+        volumes:
+            - ./data:/var/lib/biomaj
+            - ./global.advanced.properties:/etc/biomaj/global.properties
+
+    mongodb:
+        image: mongo
+
+    elasticsearch:
+        image: elasticsearch:1.7

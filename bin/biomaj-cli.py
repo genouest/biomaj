@@ -387,7 +387,7 @@ def main():
             else:
                 banks = Bank.list()
                 # Headers of output table
-                banks_list = [["Name", "Type(s)", "Release", "Visibility"]]
+                banks_list = [["Name", "Type(s)", "Release", "Visibility", "Last update"]]
                 for bank in sorted(banks, key=lambda k: k['name']):
                     bank = Bank(bank['name'], no_log=True)
                     banks_list.append(bank.get_bank_release_info()['info'])

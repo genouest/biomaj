@@ -113,13 +113,16 @@ You can use BioMAJ with Docker (genouest/biomaj)
     # Wait ~10 seconds for mongo to initialize
     # Create a local directory where databases will be permanently stored
     # *local_path*
-    docker run --rm -v local_path:/var/lib/biomaj --link biomaj-mongodb:biomaj-mongodb --help
+    docker run --rm -v local_path:/var/lib/biomaj --link biomaj-mongodb:biomaj-mongodb osallou/biomaj-docker --help
 
 
-Copy your bank properties in directory *local_path*/data and post-processes (if any) in *local_path*/process
+Copy your bank properties in directory *local_path*/conf and post-processes (if any) in *local_path*/process
 
 You can override global.properties in /etc/biomaj/global.properties (-v xx/global.properties:/etc/biomaj/global.properties)
 
+No default bank property file or process are available in the container.
+
+Examples are available at https://github.com/genouest/biomaj-data
 
 API documentation
 =================

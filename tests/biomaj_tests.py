@@ -28,6 +28,8 @@ from biomaj.config import BiomajConfig
 from biomaj.process.processfactory import PostProcessFactory,PreProcessFactory,RemoveProcessFactory
 from biomaj.user import BmajUser
 from biomaj.bmajindex import BmajIndex
+from biomaj.download.rsync import RSYNCDownload
+
 
 from ldap3.core.exceptions import LDAPBindError
 
@@ -467,6 +469,53 @@ class TestBiomajFTPDownload(unittest.TestCase):
     self.assertTrue(release['month']=='11')
     self.assertTrue(release['day']=='12')
 
+@attr('rsync')
+@attr('local')
+class TestBiomajRSYNCDownload(unittest.TestCase):
+    '''
+    Test RSYNC downloader
+    '''
+    def setUp(self):
+        self.utils = UtilsForTest()
+        self.curdir = os.path.dirname(os.path.realpath(__file__))
+        self.examples = os.path.join(self.curdir,'bank') + '/'
+        
+    def tearDown(self):
+        self.utils.clean()
+    
+    def test_rsync_list(self):
+        rsyncd =  RSYNCDownload(self.examples,"","",self.curdir)
+        (files_list, dir_list) = rsyncd.list()
+        self.assertTrue(len(files_list)!= 0)
+    
+    def test_rsync_match(self):
+        rsyncd =  RSYNCDownload(self.examples,"","",self.curdir)
+        (files_list, dir_list) = rsyncd.list()
+        rsyncd.match([r'test'],files_list,dir_list,prefix='',submatch=False)
+        self.assertTrue(len(rsyncd.files_to_download)!= 0)
+    
+    def test_rsync_download(self):
+        rsyncd =  RSYNCDownload(self.examples,"","",self.curdir)
+        error=rsyncd.rsync_download(self.curdir,"test2.fasta")
+        self.assertTrue(error==0)
+    
+    
+    def test_rsync_match(self):
+        rsyncd =  RSYNCDownload(self.examples,"","",self.curdir)
+        (files_list, dir_list) = rsyncd.list()
+        rsyncd.match([r'test'],files_list,dir_list)
+        error,download_files=rsyncd.download(self.curdir)
+        self.assertTrue(error==0)
+    
+    def test_rsync_download_or_copy(self):
+        rsyncd =  RSYNCDownload(self.examples,"","",self.curdir)
+        (file_list, dir_list) = rsyncd.list()
+        rsyncd.match([r'test'], file_list, dir_list)
+        files_to_download_prev=rsyncd.files_to_download
+        rsyncd.download_or_copy(rsyncd.files_to_download, self.curdir, check_exists=True)
+        self.assertTrue(files_to_download_prev!=rsyncd.files_to_download)
+        
+        
 class TestBiomajSetup(unittest.TestCase):
 
 

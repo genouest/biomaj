@@ -9,61 +9,61 @@ from biomaj.utils import Utils
 from biomaj.download.interface import DownloadInterface
 
 
-class  RSYNCDownload(DownloadInterface):
+class RSYNCDownload(DownloadInterface):
     '''
     Base class to download files from rsyncc
-    protocol=rsync
-    server=
-    remote.dir=
+    protocol = rsync
+    server = 
+    remote.dir = 
         
-    remote.files=
+    remote.files = 
     '''
         
-    def __init__(self, protocol, server, remote_dir, rootdir, credentials ):
+    def __init__(self, protocol, server, remote_dir ):
         DownloadInterface.__init__(self)
         logging.debug('Download')
-        self.rootdir=rootdir#download directory
-        self.protocol=protocol
-        if server and credentials and remote_dir:
-            self.server=server#name of the remote server
-            self.credentials=credentials
-            self.remote_dir=remote_dir# directory on the remote server
+        self.rootdir = remote_dir
+        self.protocol = protocol
+        if server and remote_dir:
+            self.server = server#name of the remote server
+            self.remote_dir = remote_dir# directory on the remote server
         else:
             if server:
-                self.server=server
-                self.credentials=""
-                self.remote_dir=""   
+                self.server = server
+                self.remote_dir = ""   
+
 #---------------------------------------------------------------
-    def list(self,directory=''):
+    def list(self):
         '''
         List server directory
         
         :return: dict of file and dirs in current directory with details
         '''
-        err_code=''
+        err_code = None
+        rfiles = []
+        rdirs = []
         if self.remote_dir and self.credentials:
-            cmd=str(self.protocol)+" --list-only "+str(self.credentials)+"@"+str(self.server)+":"+str(self.remote_dir)+str(directory)
+            cmd = str(self.protocol) + " --list-only " + str(self.credentials) + "@"+str(self.server) + ":" + str(self.remote_dir) + str(directory)
         else : #Local rsync for unitest 
-            cmd=str(self.protocol)+" --list-only "+str(self.server)
+            cmd = str(self.protocol) + " --list-only " + str(self.server)
         try:
-            p = subprocess.Popen(cmd, stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
+            p = subprocess.Popen(cmd, stdin = subprocess.PIPE,stdout = subprocess.PIPE,stderr = subprocess.PIPE,shell = True)
             list_rsync, err = p.communicate()
             self.test_stderr_rsync_message(err)
             self.test_stderr_rsync_error(err)   
-            err_code=p.returncode
+            err_code = p.returncode
         except ExceptionRsync, e:
-            logging.error("RsyncError:"+str(e))
-        if err_code != 0:
-            logging.error('Error while downloading '+file_to_download+' - '+str(errcode))
-            error=True
-        rfiles = []
-        rdirs=[]
+            logging.error("RsyncError:" + str(e))
+        if err_code !=  0:
+            logging.error('Error while downloading ' + file_to_download + ' - ' + str(errcode))
+            return(rfiles, rdirs)
+        
         for i in range(0,(len(list_rsync.rstrip().split("\n"))-1)):
-            rfile={}
+            rfile = {}
             #rsync LIST output is separated by \n                        
-            parts=list_rsync.rstrip().split("\n")[i].split()
+            parts = list_rsync.rstrip().split("\n")[i].split()
             if not parts: continue
-            date= parts[2].split("/")
+            date =  parts[2].split("/")
             rfile['permissions'] = parts[0]
             rfile['size'] = parts[1]
             rfile['month'] = date[1]
@@ -81,7 +81,7 @@ class  RSYNCDownload(DownloadInterface):
         
         return (rfiles, rdirs)
 #---------------------------------------------------------------        
-    def download(self, local_dir, keep_dirs=True):
+    def download(self, local_dir, keep_dirs = True):
         '''
         Download remote files to local_dir
 
@@ -104,21 +104,21 @@ class  RSYNCDownload(DownloadInterface):
                 rfile['save_as'] = rfile['name']
             if keep_dirs:
                 file_dir = local_dir + '/' + os.path.dirname(rfile['save_as'])
-            if re.match('/$',file_dir):
-                file_path = file_dir + '/' +os.path.basename(rfile['save_as'])
+            if re.match('\S*\/$',file_dir):
+                file_path = file_dir + '/' + os.path.basename(rfile['save_as'])
             else:
-                file_path = file_dir +os.path.basename(rfile['save_as'])
+                file_path = file_dir + os.path.basename(rfile['save_as'])
             # For unit tests only, workflow will take in charge directory creation before to avoid thread multi access
             if not os.path.exists(file_dir):
                 os.makedirs(file_dir)        
         
-            logging.debug('RSYNC:Download:Progress:'+str(cur_files)+'/'+str(nb_files)+' downloading file '+rfile['name'])
-            logging.debug('RSYNC:Download:Progress:'+str(cur_files)+'/'+str(nb_files)+' save as '+rfile['save_as'])
-            cur_files+=1
+            logging.debug('RSYNC:Download:Progress:' + str(cur_files) + '/' + str(nb_files) + ' downloading file ' + rfile['name'])
+            logging.debug('RSYNC:Download:Progress:' + str(cur_files) + '/' + str(nb_files) + ' save as ' + rfile['save_as'])
+            cur_files += 1
             
-            error=self.rsync_download(file_path,rfile['name'])
+            error = self.rsync_download(file_path,rfile['name'])
             if error:
-                raise Exception("RSYNC:Download:Error:"+rfile['root']+'/'+rfile['name'])
+                raise Exception("RSYNC:Download:Error:" + rfile['root'] + '/' + rfile['name'])
             self.set_permissions(file_path, rfile)
             #Add progress only per 10 files to limit db requests
             if nb_files < 10:
@@ -138,39 +138,39 @@ class  RSYNCDownload(DownloadInterface):
         return(error,self.files_to_download)
         
 #---------------------------------------------------------------
-    def rsync_download(self,file_path,file_to_download):
-        error=False
-        err_code=''
+    def rsync_download(self,file_path, file_to_download):
+        error = False
+        err_code = ''
         try :
             if self.credentials: #download on server
-                cmd=str(self.protocol)+" "+str(self.credentials)+"@"+str(self.server)+":"+str(self.remote_dir)+str(file_to_download)+" "+str(file_path)
+                cmd = str(self.protocol) + " " + str(self.credentials) + "@" + str(self.server) + ":" + str(self.remote_dir) + str(file_to_download) + " " + str(file_path)
             else: ##Local rsync for unitest 
-                cmd=str(self.protocol)+" "+str(self.server)+str(file_to_download)+" "+str(file_path)
-            p = subprocess.Popen(cmd, stdin=subprocess.PIPE,stderr=subprocess.PIPE,stdout=subprocess.PIPE,shell=True)
+                cmd = str(self.protocol) + " " + str(self.server) + str(file_to_download) + " " + str(file_path)
+            p = subprocess.Popen(cmd, stdin = subprocess.PIPE,stderr = subprocess.PIPE,stdout = subprocess.PIPE,shell = True)
             stdout, stderr = p.communicate()
-            err_code=p.returncode
+            err_code = p.returncode
             self.test_stderr_rsync_message(stderr)
             self.test_stderr_rsync_error(stderr)                      
         except ExceptionRsync, e:
-            logging.error("RsyncError:"+str(e))
-        if err_code != 0:
-            logging.error('Error while downloading '+file_to_download+' - '+str(err_code))
-            error=True
+            logging.error("RsyncError:" + str(e))
+        if err_code !=  0:
+            logging.error('Error while downloading ' + file_to_download + ' - ' + str(err_code))
+            error = True
         return(error)
 #---------------------------------------------------------------
-    def test_stderr_rsync_error(self,stderr):
-        if str(self.protocol)+" error" in stderr:
-            reason=stderr.split(str(self.protocol)+" error:")[1].split("\n")[0]
+    def test_stderr_rsync_error(self, stderr):
+        if str(self.protocol) + " error" in stderr:
+            reason = stderr.split(str(self.protocol) + " error:")[1].split("\n")[0]
             raise ExceptionRsync(reason)
 #---------------------------------------------------------------
-    def test_stderr_rsync_message(self,stderr):
-        if str(self.protocol)+"" in stderr:
-            reason=stderr.split(str(self.protocol)+":")[1].split("\n")[0]
+    def test_stderr_rsync_message(self, stderr):
+        if str(self.protocol) + "" in stderr:
+            reason = stderr.split(str(self.protocol) + ":")[1].split("\n")[0]
             raise ExceptionRsync(reason)
 
 #____________________________________________________________________
 class ExceptionRsync(Exception):
-    def __init__(self,exception_reason):
+    def __init__(self, exception_reason):
         self.exception_reason = exception_reason
     def __str__(self):
         return self.exception_reason

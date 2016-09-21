@@ -696,6 +696,24 @@ class TestBiomajFunctional(unittest.TestCase):
       self.assertFalse(b.session.get('update'))
       self.assertFalse(b.session.get_status(Workflow.FLOW_POSTPROCESS))
 
+  @attr('remotelist')
+  def test_download_from_list(self):
+      """
+      Use remote.list to define a list of files to download
+      """
+      b = Bank('local')
+      fd, file_path = tempfile.mkstemp()
+      try:
+          b.config.set('remote.list', file_path)
+          with os.fdopen(fd, 'w') as tmp:
+              tmp.write('[{"name": "test_100.txt", "root": "' + b.config.get('remote.dir') + '"}]')
+          b.update()
+          self.assertTrue(b.session.get('update'))
+      finally:
+          #os.remove(file_path)
+          print(file_path)
+
+
   @attr('release')
   def test_release_control(self):
     """

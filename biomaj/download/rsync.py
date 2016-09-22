@@ -39,7 +39,7 @@ class RSYNCDownload(DownloadInterface):
                 self.remote_dir = ""   
 
 #---------------------------------------------------------------
-    def list(self):
+    def list(self,directory=''):
         '''
         List server directory
         

@@ -1,9 +1,15 @@
-import sys
-import os
-import subprocess
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
 import logging
+import pycurl
+import io
 import re
-
+import os
+from datetime import datetime
+import hashlib
+import sys
+import subprocess
 
 from biomaj.utils import Utils
 from biomaj.download.interface import DownloadInterface

@@ -49,7 +49,9 @@ class RSYNCDownload(DownloadInterface):
         rfiles = []
         rdirs = []
         if self.remote_dir and self.credentials:
-            cmd = str(self.protocol) + " --list-only " + str(self.credentials) + "@"+str(self.server) + ":" + str(self.remote_dir) + str(directory)
+            cmd = str(self.protocol) + " --list-only " + str(self.credentials) + "@" + str(self.server) + ":" + str(self.remote_dir) + str(directory)
+        elif (self.remote_dir and not self.credentials):
+           cmd = str(self.protocol) + " --list-only " + str(self.server) + ":" + str(self.remote_dir) + str(directory) 
         else : #Local rsync for unitest 
             cmd = str(self.protocol) + " --list-only " + str(self.server)
         try:
@@ -148,8 +150,10 @@ class RSYNCDownload(DownloadInterface):
         error = False
         err_code = ''
         try :
-            if self.credentials: #download on server
+            if self.remote_dir and self.credentials: #download on server
                 cmd = str(self.protocol) + " " + str(self.credentials) + "@" + str(self.server) + ":" + str(self.remote_dir) + str(file_to_download) + " " + str(file_path)
+            elif self.remote_dir and not self.credentials:
+                cmd = str(self.protocol) + " " + str(self.server) + ":" + str(self.remote_dir) + str(file_to_download) + " " + str(file_path)
             else: ##Local rsync for unitest 
                 cmd = str(self.protocol) + " " + str(self.server) + str(file_to_download) + " " + str(file_path)
             p = subprocess.Popen(cmd, stdin = subprocess.PIPE,stderr = subprocess.PIPE,stdout = subprocess.PIPE,shell = True)

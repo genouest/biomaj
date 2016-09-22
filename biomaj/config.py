@@ -339,7 +339,7 @@ class BiomajConfig(object):
             status = False
         else:
             protocol = self.get('protocol')
-            allowed_protocols = ['none', 'multi', 'local', 'ftp', 'sftp', 'http', 'https', 'directftp', 'directhttp', 'directhttps']
+            allowed_protocols = ['none', 'multi', 'local', 'ftp', 'sftp', 'http', 'https', 'directftp', 'directhttp', 'directhttps', 'rsync']
             if protocol not in allowed_protocols:
                 logging.error('Protocol not supported: '+protocol)
                 status = False

@@ -16,6 +16,7 @@ from biomaj.download.http import HTTPDownload
 from biomaj.download.direct import MultiDownload, DirectFTPDownload, DirectHttpDownload
 from biomaj.download.localcopy import LocalDownload
 from biomaj.download.downloadthreads import DownloadThread
+from biomaj.download.rsync import RSYNCDownload
 
 from biomaj.mongo_connector import MongoConnector
 from biomaj.options import Options
@@ -86,6 +87,8 @@ class Workflow(object):
             downloader = DirectHttpDownload('http', server, remote_dir, list_file)
         if protocol == 'directhttps':
             downloader = DirectHttpDownload('https', server, remote_dir, list_file)
+        if protocol == 'rsync' :
+            downloader = RSYNCDownload('rsync', server, remote_dir)
         if downloader is not None:
             downloader.bank = self.bank.name
 

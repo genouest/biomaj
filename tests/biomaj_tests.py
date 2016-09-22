@@ -499,7 +499,7 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
     def test_rsync_download(self):
         rsyncd = RSYNCDownload('rsync', self.examples, "")
         rsyncd.set_credentials(None)
-        error = rsyncd.rsync_download(self.curdir, "test2.fasta")
+        error = rsyncd.rsync_download(self.utils.data_dir, "test2.fasta")
         self.assertTrue(error == 0)
     
     

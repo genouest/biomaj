@@ -52,9 +52,9 @@ class SchemaVersion(object):
                         pendings = []
                         for release in sorted(bank['pending'], key=lambda r: bank['pending'][r]):
                             pendings.append({'release': str(release), 'id': bank['pending'][str(release)]})
-                            if len(pendings) > 0:
-                                banks.update({'name': bank['name']},
-                                             {'$set': {'pending': pendings}})
+                        if len(pendings) > 0:
+                            banks.update({'name': bank['name']},
+                                         {'$set': {'pending': pendings}})
                     else:
                         # We remove old type for 'pending'
                         banks.update({'name': bank['name']},

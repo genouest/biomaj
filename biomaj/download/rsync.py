@@ -56,7 +56,8 @@ class RSYNCDownload(DownloadInterface):
            cmd = str(self.protocol) + " --list-only " + str(self.server) + ":" + str(self.remote_dir) + str(directory) 
         else : #Local rsync for unitest 
             logging.info("else")
-            cmd = str(self.protocol) + " --list-only " + str(self.server)
+            #cmd = str(self.protocol) + " --list-only " + str(self.server)
+            cmd = str(self.protocol) + " -av --list-only " + str(self.server)
             logging.info("CMD"+str(cmd))
         try:
             p = subprocess.Popen(cmd, stdin = subprocess.PIPE,stdout = subprocess.PIPE,stderr = subprocess.PIPE,shell = True)
@@ -67,6 +68,7 @@ class RSYNCDownload(DownloadInterface):
             logging.info("In rsync list "+str(err_code))
         except ExceptionRsync as e:
             logging.error("RsyncError:" + str(e))
+            logging.info("In rsync list except :"+str(err))
         if err_code !=  0:
             logging.error('Error while listing ' + str(err_code))
             return(rfiles, rdirs)

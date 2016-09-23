@@ -48,6 +48,9 @@ class RSYNCDownload(DownloadInterface):
         err_code = None
         rfiles = []
         rdirs = []
+        p = subprocess.Popen("pwd", stdin = subprocess.PIPE,stdout = subprocess.PIPE,stderr = subprocess.PIPE,shell = True)
+        list_rsync, err = p.communicate()
+        logging.info(p.communicate())
         if self.remote_dir and self.credentials:
             logging.info("if self.remote_dir and self.credentials:")
             cmd = str(self.protocol) + " --list-only " + str(self.credentials) + "@" + str(self.server) + ":" + str(self.remote_dir) + str(directory)

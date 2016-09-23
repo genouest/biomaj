@@ -48,8 +48,6 @@ class RSYNCDownload(DownloadInterface):
         err_code = None
         rfiles = []
         rdirs = []
-        output=os.getcwd()
-        logging.info("In rsync list : test getwcd()"+str(output))
         if self.remote_dir and self.credentials:
             logging.info("if self.remote_dir and self.credentials:")
             cmd = str(self.protocol) + " --list-only " + str(self.credentials) + "@" + str(self.server) + ":" + str(self.remote_dir) + str(directory)

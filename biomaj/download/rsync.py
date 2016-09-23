@@ -63,7 +63,7 @@ class RSYNCDownload(DownloadInterface):
         except ExceptionRsync, e:
             logging.error("RsyncError:" + str(e))
         if err_code !=  0:
-            logging.error('Error while downloading ' + file_to_download + ' - ' + str(errcode))
+            logging.error('Error while listing ' + str(errcode))
             return(rfiles, rdirs)
         
         for i in range(0,(len(list_rsync.rstrip().split("\n"))-1)):

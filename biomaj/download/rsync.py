@@ -57,6 +57,7 @@ class RSYNCDownload(DownloadInterface):
         else : #Local rsync for unitest 
             logging.info("else")
             cmd = str(self.protocol) + " --list-only " + str(self.server)
+            logging.info("CMD"+str(cmd))
         try:
             p = subprocess.Popen(cmd, stdin = subprocess.PIPE,stdout = subprocess.PIPE,stderr = subprocess.PIPE,shell = True)
             list_rsync, err = p.communicate()

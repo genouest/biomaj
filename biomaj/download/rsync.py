@@ -60,12 +60,13 @@ class RSYNCDownload(DownloadInterface):
             self.test_stderr_rsync_message(err)
             self.test_stderr_rsync_error(err)   
             err_code = p.returncode
+            logging.info("In rsync list "+str(err_code))
         except ExceptionRsync, e:
             logging.error("RsyncError:" + str(e))
         if err_code !=  0:
             logging.error('Error while listing ' + str(err_code))
             return(rfiles, rdirs)
-        
+        logging.info("In rsync list "+str(rfiles))
         for i in range(0,(len(list_rsync.rstrip().split("\n"))-1)):
             rfile = {}
             #rsync LIST output is separated by \n                        

@@ -479,6 +479,8 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         self.utils = UtilsForTest()
         self.curdir = os.path.dirname(os.path.realpath(__file__))
         self.examples = os.path.join(self.curdir, 'bank') + '/'
+        BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
+        
         
     def tearDown(self):
         self.utils.clean()
@@ -487,7 +489,7 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         rsyncd =  RSYNCDownload('rsync', self.examples, "")
         rsyncd.set_credentials(None)
         (files_list, dir_list) = rsyncd.list()
-        self.assertTrue(len(files_list)!= 0)
+        self.assertTrue(len(files_list) != 0)
     
     def test_rsync_match(self):
         rsyncd =  RSYNCDownload('rsync', self.examples, "")

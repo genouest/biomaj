@@ -50,7 +50,10 @@ config = {
         'Programming Language :: Python :: 3.4'
     ],
     'install_requires': ['nose',
-                         'pymongo==3.2',
+                         'biomaj_core',
+                         'biomaj_user',
+                         'biomaj_download',
+                         'pymongo>=3.2',
                          'pycurl',
                          'ldap3',
                          'mock',

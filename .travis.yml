@@ -26,7 +26,9 @@ before_script:
   - sleep 10
 #script: nosetests --with-coverage --cover-package=biomaj -a '!network'
 #script: nosetests --with-coverage --cover-package=biomaj
-script: nosetests
+script:
+  - nosetests
+  - flake8 --ignore E501,E123 biomaj
 #after_success:
 #  - coveralls
 

@@ -14,7 +14,7 @@ import configparser
 import shutil
 
 from biomaj.bank import Bank
-from biomaj.config import BiomajConfig
+from biomaj_core.config import BiomajConfig
 from biomaj.notify import Notify
 from biomaj.options import Options
 from biomaj.workflow import Workflow

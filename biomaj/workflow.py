@@ -10,17 +10,17 @@ import re
 import traceback
 import json
 
-from biomaj.utils import Utils
-from biomaj.download.ftp import FTPDownload
-from biomaj.download.http import HTTPDownload
-from biomaj.download.direct import MultiDownload, DirectFTPDownload, DirectHttpDownload
-from biomaj.download.localcopy import LocalDownload
-from biomaj.download.downloadthreads import DownloadThread
+from biomaj_core.utils import Utils
+from biomaj_download.downloadclient import DownloadClient
+from biomaj_download.message import message_pb2
+from biomaj_download.download.http import HTTPParse
+from biomaj_download.download.localcopy import LocalDownload
 
 from biomaj.mongo_connector import MongoConnector
 from biomaj.options import Options
 
 from biomaj.process.processfactory import RemoveProcessFactory, PreProcessFactory, PostProcessFactory
+
 
 class Workflow(object):
     """
@@ -39,9 +39,9 @@ class Workflow(object):
     FLOW_OVER = 'over'
 
     FLOW = [
-      {'name': 'init', 'steps': []},
-      {'name': 'check', 'steps': []},
-      {'name': 'over', 'steps': []}
+        {'name': 'init', 'steps': []},
+        {'name': 'check', 'steps': []},
+        {'name': 'over', 'steps': []}
     ]
 
     def __init__(self, bank, session=None):
@@ -67,40 +67,6 @@ class Workflow(object):
         self.session.config.set('localrelease', '')
         self.session.config.set('remoterelease', '')
 
-    def get_handler(self, protocol, server, remote_dir, list_file=None):
-        """
-        Get a protocol download handler
-        """
-        if list_file is None:
-            list_file = []
-        downloader = None
-        if protocol == 'ftp' or protocol == 'sftp':
-            downloader = FTPDownload(protocol, server, remote_dir)
-        if protocol == 'http' or protocol == 'https':
-            downloader = HTTPDownload(protocol, server, remote_dir, self.bank.config)
-        if protocol == 'local':
-            downloader = LocalDownload(remote_dir)
-        if protocol == 'directftp':
-            downloader = DirectFTPDownload('ftp', server, remote_dir, list_file)
-        if protocol == 'directhttp':
-            downloader = DirectHttpDownload('http', server, remote_dir, list_file)
-        if protocol == 'directhttps':
-            downloader = DirectHttpDownload('https', server, remote_dir, list_file)
-        if downloader is not None:
-            downloader.bank = self.bank.name
-
-        proxy = self.bank.config.get('proxy')
-        proxy_auth = self.bank.config.get('proxy_auth')
-        if proxy is not None and proxy:
-            downloader.set_proxy(proxy, proxy_auth)
-
-        timeout_download = self.bank.config.get('timeout.download')
-        if timeout_download is not None and timeout_download:
-            downloader.timeout = int(timeout_download)
-
-        return downloader
-
-
     def get_flow(self, task):
         for flow in Workflow.FLOW:
             if flow['name'] == task:
@@ -111,10 +77,9 @@ class Workflow(object):
         Start the workflow
         """
         logging.info('Workflow:Start')
-        #print str(self.session._session['status'])
         for flow in self.session.flow:
             if self.skip_all:
-                logging.info('Workflow:Skip:'+flow['name'])
+                logging.info('Workflow:Skip:' + flow['name'])
                 self.session._session['status'][flow['name']] = None
                 self.session._session['status'][Workflow.FLOW_OVER] = True
                 continue
@@ -124,20 +89,19 @@ class Workflow(object):
                 break
             # Always run INIT
             if flow['name'] != Workflow.FLOW_INIT and self.session.get_status(flow['name']):
-                logging.info('Workflow:Skip:'+flow['name'])
+                logging.info('Workflow:Skip:' + flow['name'])
             if flow['name'] == Workflow.FLOW_INIT or not self.session.get_status(flow['name']):
-                logging.info('Workflow:Start:'+flow['name'])
+                logging.info('Workflow:Start:' + flow['name'])
                 try:
-                    self.session._session['status'][flow['name']] = getattr(self, 'wf_'+flow['name'])()
+                    self.session._session['status'][flow['name']] = getattr(self, 'wf_' + flow['name'])()
                 except Exception as e:
                     self.session._session['status'][flow['name']] = False
-                    logging.error('Workflow:'+flow['name']+'Exception:'+str(e))
+                    logging.error('Workflow:' + flow['name'] + 'Exception:' + str(e))
                     logging.debug(traceback.format_exc())
-                    #print str(traceback.format_exc())
                 finally:
                     self.wf_progress(flow['name'], self.session._session['status'][flow['name']])
                 if flow['name'] != Workflow.FLOW_OVER and not self.session.get_status(flow['name']):
-                    logging.error('Error during task '+flow['name'])
+                    logging.error('Error during task ' + flow['name'])
                     if flow['name'] != Workflow.FLOW_INIT:
                         self.wf_over()
                     return False
@@ -145,22 +109,21 @@ class Workflow(object):
                 if not self.skip_all:
                     for step in flow['steps']:
                         try:
-                            res = getattr(self, 'wf_'+step)()
+                            res = getattr(self, 'wf_' + step)()
                             if not res:
-                                logging.error('Error during '+flow['name']+' subtask: wf_' + step)
-                                logging.error('Revert main task status '+flow['name']+' to error status')
+                                logging.error('Error during ' + flow['name'] + ' subtask: wf_' + step)
+                                logging.error('Revert main task status ' + flow['name'] + ' to error status')
                                 self.session._session['status'][flow['name']] = False
                                 self.wf_over()
                                 return False
                         except Exception as e:
-                            logging.error('Workflow:'+flow['name']+' subtask: wf_' + step+ ':Exception:'+str(e))
+                            logging.error('Workflow:' + flow['name'] + ' subtask: wf_' + step + ':Exception:' + str(e))
                             self.session._session['status'][flow['name']] = False
                             logging.debug(traceback.format_exc())
                             self.wf_over()
                             return False
             if self.options.get_option(Options.STOP_AFTER) == flow['name']:
                 self.wf_over()
-            #if self.options and 'stop_after' in self.options and self.options['stop_after'] == flow['name']:
                 break
         self.wf_progress_end()
         return True
@@ -187,13 +150,12 @@ class Workflow(object):
         """
         Reset progress status when workflow is over
         """
-        #MongoConnector.banks.update({'name': self.name},{'$set': {'status': None}})
 
     def wf_progress(self, task, status):
         """
         Update bank status
         """
-        subtask = 'status.'+task+'.status'
+        subtask = 'status.' + task + '.status'
         MongoConnector.banks.update({'name': self.name}, {'$set': {subtask: status}})
 
     def wf_init(self):
@@ -205,14 +167,13 @@ class Workflow(object):
         lock_dir = self.session.config.get('lock.dir', default=data_dir)
         if not os.path.exists(lock_dir):
             os.mkdir(lock_dir)
-        lock_file = os.path.join(lock_dir, self.name+'.lock')
+        lock_file = os.path.join(lock_dir, self.name + '.lock')
         maintenance_lock_file = os.path.join(lock_dir, 'biomaj.lock')
         if os.path.exists(maintenance_lock_file):
             logging.error('Biomaj is in maintenance')
             return False
         if os.path.exists(lock_file):
-            logging.error('Bank '+self.name+' is locked, a process may be in progress, else remove the lock file '+lock_file)
-            #print 'Bank '+self.name+' is locked, a process may be in progress, else remove the lock file'
+            logging.error('Bank ' + self.name + ' is locked, a process may be in progress, else remove the lock file ' + lock_file)
             return False
         f = open(lock_file, 'w')
         f.write('1')
@@ -227,9 +188,10 @@ class Workflow(object):
         logging.info('Workflow:wf_over')
         data_dir = self.session.config.get('data.dir')
         lock_dir = self.session.config.get('lock.dir', default=data_dir)
-        lock_file = os.path.join(lock_dir, self.name+'.lock')
+        lock_file = os.path.join(lock_dir, self.name + '.lock')
         os.remove(lock_file)
         return True
+
 
 class RemoveWorkflow(Workflow):
     """
@@ -237,10 +199,10 @@ class RemoveWorkflow(Workflow):
     """
 
     FLOW = [
-      {'name': 'init', 'steps': []},
-      {'name': 'removeprocess', 'steps': []},
-      {'name': 'remove_release', 'steps': []},
-      {'name': 'over', 'steps': []}
+        {'name': 'init', 'steps': []},
+        {'name': 'removeprocess', 'steps': []},
+        {'name': 'remove_release', 'steps': []},
+        {'name': 'over', 'steps': []}
     ]
 
     def __init__(self, bank, session):
@@ -255,7 +217,6 @@ class RemoveWorkflow(Workflow):
         Workflow.__init__(self, bank, session)
         logging.debug('New workflow')
         self.session._session['remove'] = True
-
 
     def wf_remove_release(self):
         logging.info('Workflow:wf_remove_release')
@@ -282,15 +243,15 @@ class UpdateWorkflow(Workflow):
     """
 
     FLOW = [
-      {'name': 'init', 'steps': []},
-      {'name': 'check', 'steps': []},
-      {'name': 'depends', 'steps': []},
-      {'name': 'preprocess', 'steps': []},
-      {'name': 'release', 'steps': []},
-      {'name': 'download', 'steps': ['uncompress','copy', 'copydepends']},
-      {'name': 'postprocess', 'steps': ['metadata', 'stats']},
-      {'name': 'publish', 'steps': ['old_biomaj_api', 'clean_offline', 'delete_old', 'clean_old_sessions']},
-      {'name': 'over', 'steps': []}
+        {'name': 'init', 'steps': []},
+        {'name': 'check', 'steps': []},
+        {'name': 'depends', 'steps': []},
+        {'name': 'preprocess', 'steps': []},
+        {'name': 'release', 'steps': []},
+        {'name': 'download', 'steps': ['uncompress', 'copy', 'copydepends']},
+        {'name': 'postprocess', 'steps': ['metadata', 'stats']},
+        {'name': 'publish', 'steps': ['old_biomaj_api', 'clean_offline', 'delete_old', 'clean_old_sessions']},
+        {'name': 'over', 'steps': []}
     ]
 
     def __init__(self, bank):
@@ -328,17 +289,16 @@ class UpdateWorkflow(Workflow):
         # Always rescan depends, there might be a new release
         self.session.set('depends', {})
         res = self.bank.update_dependencies()
-        logging.info('Workflow:wf_depends:'+str(res))
-        if res and len(self.bank.depends)>0:
+        logging.info('Workflow:wf_depends:' + str(res))
+        if res and len(self.bank.depends) > 0:
             depend_updated = False
             for bdep in self.bank.depends:
-                logging.info('Workflow:wf_depends:'+bdep.name+':'+str(bdep.session.get('update')))
+                logging.info('Workflow:wf_depends:' + bdep.name + ':' + str(bdep.session.get('update')))
                 if bdep.session.get('update'):
                     depend_updated = True
                     break
-            #if not depend_updated:
-            #    return self.no_need_to_update()
-
+            if not depend_updated:
+                logging.info('Workflow:wf_depends:no bank updated')
         return res
 
     def wf_copydepends(self):
@@ -348,21 +308,21 @@ class UpdateWorkflow(Workflow):
         logging.info('Workflow:wf_copydepends')
         deps = self.bank.get_dependencies()
         for dep in deps:
-            if self.bank.config.get(dep+'.files.move'):
-                logging.info('Worflow:wf_depends:Files:Move:'+self.bank.config.get(dep+'.files.move'))
+            if self.bank.config.get(dep + '.files.move'):
+                logging.info('Worflow:wf_depends:Files:Move:' + self.bank.config.get(dep + '.files.move'))
                 bdir = None
                 for bdep in self.bank.depends:
                     if bdep.name == dep:
                         bdir = bdep.session.get_full_release_directory()
                         break
                 if bdir is None:
-                    logging.error('Could not find a session update for bank '+dep)
+                    logging.error('Could not find a session update for bank ' + dep)
                     return False
-                b = self.bank.get_bank(dep, no_log=True)
+                # b = self.bank.get_bank(dep, no_log=True)
                 locald = LocalDownload(bdir)
                 (file_list, dir_list) = locald.list()
-                locald.match(self.bank.config.get(dep+'.files.move').split(), file_list, dir_list)
-                bankdepdir = self.bank.session.get_full_release_directory()+"/"+dep
+                locald.match(self.bank.config.get(dep + '.files.move').split(), file_list, dir_list)
+                bankdepdir = self.bank.session.get_full_release_directory() + "/" + dep
                 if not os.path.exists(bankdepdir):
                     os.mkdir(bankdepdir)
                 downloadedfiles = locald.download(bankdepdir)
@@ -382,6 +342,14 @@ class UpdateWorkflow(Workflow):
         res = pfactory.run()
         self.session._session['process']['preprocess'] = pfactory.meta_status
         return res
+
+    def _close_download_service(self, dserv):
+        '''
+        Cleanup of downloader
+        '''
+        if dserv:
+            dserv.clean()
+            dserv.close()
 
     def wf_release(self):
         """
@@ -404,32 +372,32 @@ class UpdateWorkflow(Workflow):
                     got_match = True
 
             if not got_match:
-                logging.error('Workflow:wf_release: no release found for bank '+depbank.name)
+                logging.error('Workflow:wf_release: no release found for bank ' + depbank.name)
                 return False
 
             release = self.session.get('release')
             MongoConnector.banks.update({'name': self.bank.name},
                                         {'$set': {'status.release.progress': str(release)}})
 
-            logging.info('Workflow:wf_release:FromDepends:'+depbank.name+':'+self.session.get('release'))
+            logging.info('Workflow:wf_release:FromDepends:' + depbank.name + ':' + self.session.get('release'))
             if got_update:
                 index = 0
                 # Release directory exits, set index to 1
                 if os.path.exists(self.session.get_full_release_directory()):
                     index = 1
                 for x in range(1, 100):
-                    if os.path.exists(self.session.get_full_release_directory()+'__'+str(x)):
+                    if os.path.exists(self.session.get_full_release_directory() + '__' + str(x)):
                         index = x + 1
                 if index > 0:
-                    self.session.set('release', release+'__'+str(index))
-                    release = release+'__'+str(index)
+                    self.session.set('release', release + '__' + str(index))
+                    release = release + '__' + str(index)
 
         self.session.previous_release = self.session.get('previous_release')
 
-        logging.info('Workflow:wf_release:previous_session:'+str(self.session.previous_release))
+        logging.info('Workflow:wf_release:previous_session:' + str(self.session.previous_release))
         if self.session.get('release'):
             # Release already set from a previous run or an other bank
-            logging.info('Workflow:wf_release:session:'+str(self.session.get('release')))
+            logging.info('Workflow:wf_release:session:' + str(self.session.get('release')))
             if self.session.previous_release == self.session.get('release') and not self.session.config.get_bool('release.control', default=False):
                 logging.info('Workflow:wf_release:same_as_previous_session')
                 return self.no_need_to_update()
@@ -440,39 +408,86 @@ class UpdateWorkflow(Workflow):
             self.session.set('release', None)
             return True
         else:
+            # """""""""""""""""""""""
+            dserv = DownloadClient(self.bank.config.get('rabbitmq_host'))
+            proxy = self.bank.config.get('biomaj_proxy')
+            dserv.create_session(self.name, proxy)
+
+            http_parse = HTTPParse(
+                cf.get('http.parse.dir.line'),
+                cf.get('http.parse.file.line'),
+                int(cf.get('http.group.dir.name')),
+                int(cf.get('http.group.dir.date')),
+                int(cf.get('http.group.file.name')),
+                int(cf.get('http.group.file.date')),
+                cf.get('http.group.file.date_format', None),
+                int(cf.get('http.group.file.size'))
+            )
+
+            proxy = cf.get('proxy')
+            if cf.get('release.proxy') is not None:
+                proxy = cf.get('release.proxy')
+
+            proxy_auth = cf.get('proxy_auth')
+            if cf.get('release.proxy_auth') is not None:
+                proxy = cf.get('release.proxy_auth')
+
             protocol = cf.get('protocol')
             if cf.get('release.protocol') is not None:
                 protocol = cf.get('release.protocol')
+
             server = cf.get('server')
             if cf.get('release.server') is not None:
                 server = cf.get('release.server')
+
             remote_dir = cf.get('remote.dir')
             if cf.get('release.remote.dir') is not None:
                 remote_dir = cf.get('release.remote.dir')
 
+            params = None
+            keys = cf.get('url.params')
+            if keys is not None:
+                params = {}
+                keys = keys.split(',')
+                for key in keys:
+                    param = cf.get(key.strip() + '.value')
+                    params[key.strip()] = param.strip()
 
-            #protocol = cf.get('protocol')
-            release_downloader = None
+            credentials = cf.get('server.credentials')
+            if cf.get('release.credentials') is not None:
+                credentials = cf.get('release.credentials')
+
+            save_as = None
+            method = 'GET'
             if protocol == 'directhttp' or protocol == 'directhttps' or protocol == 'directftp':
-                release_downloader = self.get_handler(protocol, server, '/', [remote_dir])
-                release_downloader.method = cf.get('release.url.method')
-                if release_downloader.method is None:
-                    release_downloader.method = 'GET'
-                release_downloader.save_as = cf.get('release.file')
-                keys = cf.get('release.url.params')
-                if keys is not None:
-                    keys = keys.split(',')
-                    for key in keys:
-                        param = cf.get(key.strip()+'.value')
-                        release_downloader.param[key.strip()] = param.strip()
-            else:
-                release_downloader = self.get_handler(protocol, server, remote_dir)
+                save_as = cf.get('release.file')
+                remotes = [remote_dir]
+                remote_dir = '/'
+                method = cf.get('url.method')
+                if cf.get('release.url.method') is not None:
+                    method = cf.get('release.url.method')
 
-            if cf.get('server.credentials') is not None:
-                release_downloader.set_credentials(cf.get('server.credentials'))
+            release_downloader = dserv.get_handler(
+                protocol,
+                server,
+                remote_dir,
+                credentials=credentials,
+                http_parse=http_parse,
+                http_method=method,
+                param=params,
+                proxy=proxy,
+                proxy_auth=proxy_auth,
+                save_as=save_as,
+                timeout_download=cf.get('timeout.download')
+            )
+
+            if protocol == 'directhttp' or protocol == 'directhttps' or protocol == 'directftp':
+                release_downloader.set_files_to_download(remotes)
+            # """"""""""""""""""""""""
 
             if release_downloader is None:
-                logging.error('Protocol '+protocol+' not supported')
+                logging.error('Protocol ' + protocol + ' not supported')
+                self._close_download_service(dserv)
                 return False
 
             (file_list, dir_list) = release_downloader.list()
@@ -480,21 +495,23 @@ class UpdateWorkflow(Workflow):
             release_downloader.match([cf.get('release.file')], file_list, dir_list)
             if len(release_downloader.files_to_download) == 0:
                 logging.error('release.file defined but does not match any file')
+                self._close_download_service(dserv)
                 return False
             if len(release_downloader.files_to_download) > 1:
                 logging.error('release.file defined but matches multiple files')
+                self._close_download_service(dserv)
                 return False
             if cf.get('release.regexp') is None or not cf.get('release.regexp'):
                 # Try to get from regexp in file name
                 rel = re.search(cf.get('release.file'), release_downloader.files_to_download[0]['name'])
                 if rel is None:
                     logging.error('release.file defined but does not match any file')
+                    self._close_download_service(dserv)
                     return False
                 release = rel.group(1)
             else:
                 # Download and extract
                 tmp_dir = tempfile.mkdtemp('biomaj')
-                release_downloader.mkdir_lock = DownloadThread.MKDIR_LOCK
                 rel_files = release_downloader.download(tmp_dir)
                 rel_file = open(tmp_dir + '/' + rel_files[0]['name'])
                 rel_content = rel_file.read()
@@ -503,6 +520,7 @@ class UpdateWorkflow(Workflow):
                 rel = re.search(cf.get('release.regexp'), rel_content)
                 if rel is None:
                     logging.error('release.regexp defined but does not match any file content')
+                    self._close_download_service(dserv)
                     return False
                 # If regexp contains matching group, else take whole match
                 if len(rel.groups()) > 0:
@@ -511,6 +529,8 @@ class UpdateWorkflow(Workflow):
                     release = rel.group(0)
 
             release_downloader.close()
+            self._close_download_service(dserv)
+
             if release_downloader.error:
                 logging.error('An error occured during download')
                 return False
@@ -518,8 +538,10 @@ class UpdateWorkflow(Workflow):
         self.session.set('release', release)
         self.session.set('remoterelease', release)
 
-        MongoConnector.banks.update({'name': self.bank.name},
-                        {'$set': {'status.release.progress': str(release)}})
+        MongoConnector.banks.update(
+            {'name': self.bank.name},
+            {'$set': {'status.release.progress': str(release)}}
+        )
 
         # We restart from scratch, a directory with this release already exists
         # Check directory existence if from scratch to change local release
@@ -529,11 +551,11 @@ class UpdateWorkflow(Workflow):
             if os.path.exists(self.session.get_full_release_directory()):
                 index = 1
             for x in range(1, 100):
-                if os.path.exists(self.session.get_full_release_directory()+'__'+str(x)):
+                if os.path.exists(self.session.get_full_release_directory() + '__' + str(x)):
                     index = x + 1
             if index > 0:
-                self.session.set('release', release+'__'+str(index))
-                release = release+'__'+str(index)
+                self.session.set('release', release + '__' + str(index))
+                release = release + '__' + str(index)
 
         self.download_go_ahead = False
         if self.options.get_option(Options.FROM_TASK) == 'download':
@@ -544,10 +566,9 @@ class UpdateWorkflow(Workflow):
                 logging.info('Workflow:wf_release:same_as_previous_session')
                 return self.no_need_to_update()
 
-        logging.info('Session:RemoteRelease:'+self.session.get('remoterelease'))
-        logging.info('Session:Release:'+self.session.get('release'))
+        logging.info('Session:RemoteRelease:' + self.session.get('remoterelease'))
+        logging.info('Session:Release:' + self.session.get('release'))
         return True
-
 
     def no_need_to_update(self):
         """
@@ -563,8 +584,6 @@ class UpdateWorkflow(Workflow):
         self.wf_over()
         return True
 
-
-
     def get_last_prod_session_for_release(self, release):
         """
         find last session matching a release in production
@@ -579,15 +598,13 @@ class UpdateWorkflow(Workflow):
                         break
         return last_session
 
-
     def _load_local_files_from_session(self, session_id):
         """
         Load lccal files for sessions from cache directory
         """
-
         cache_dir = self.bank.config.get('cache.dir')
         f_local_files = None
-        file_path = os.path.join(cache_dir, 'local_files_'+str(session_id))
+        file_path = os.path.join(cache_dir, 'local_files_' + str(session_id))
         if not os.path.exists(file_path):
             return f_local_files
 
@@ -600,10 +617,9 @@ class UpdateWorkflow(Workflow):
         """
         Load download files for sessions from cache directory
         """
-
         cache_dir = self.bank.config.get('cache.dir')
         f_downloaded_files = None
-        file_path = os.path.join(cache_dir, 'files_'+str(session_id))
+        file_path = os.path.join(cache_dir, 'files_' + str(session_id))
         if not os.path.exists(file_path):
             return f_downloaded_files
 
@@ -631,8 +647,6 @@ class UpdateWorkflow(Workflow):
 
         previous_downloaded_files = self._load_download_files_from_session(previous_release_session.get('id'))
         previous_release_session['download_files'] = previous_downloaded_files
-
-        #previous_downloaded_files = previous_release_session.get('download_files', None)
 
         if previous_downloaded_files is None:
             # No info on previous download, consider that base release is enough
@@ -666,18 +680,15 @@ class UpdateWorkflow(Workflow):
         if os.path.exists(self.session.get_full_release_directory()):
             index = 1
         for x in range(1, 100):
-            if os.path.exists(self.session.get_full_release_directory()+'__'+str(x)):
+            if os.path.exists(self.session.get_full_release_directory() + '__' + str(x)):
                 index = x + 1
 
-        #while os.path.exists(self.session.get_full_release_directory()+'__'+str(index)):
-        #  index += 1
         # If we found a directory for this release:   XX or XX__Y
         if index > 0:
-            self.session.set('release', release+'__'+str(index))
-            release = release+'__'+str(index)
-            logging.info('Workflow:wf_download:release:incr_release:'+release)
+            self.session.set('release', release + '__' + str(index))
+            release = release + '__' + str(index)
+            logging.info('Workflow:wf_download:release:incr_release:' + release)
         return release
-
 
     def _create_dir_structure(self, downloader, offline_dir):
         """
@@ -735,7 +746,7 @@ class UpdateWorkflow(Workflow):
         Download remote files or use an available local copy from last production directory if possible.
         """
         logging.info('Workflow:wf_download')
-        flow = self.get_flow(Workflow.FLOW_DOWNLOAD)
+        # flow = self.get_flow(Workflow.FLOW_DOWNLOAD)
         downloader = None
         cf = self.session.config
         self.session.previous_release = self.session.get('previous_release')
@@ -754,6 +765,34 @@ class UpdateWorkflow(Workflow):
                 if not os.path.exists(self.session.get_full_release_directory()):
                     os.makedirs(self.session.get_full_release_directory())
                 return True
+
+        downloaders = []
+
+        pool_size = self.session.config.get('files.num.threads', None)
+        dserv = None
+
+        if pool_size:
+            dserv = DownloadClient(self.bank.config.get('rabbitmq_host'), pool_size=pool_size)
+        else:
+            dserv = DownloadClient(self.bank.config.get('rabbitmq_host'))
+
+        proxy = self.bank.config.get('biomaj_proxy')
+        session = dserv.create_session(self.name, proxy)
+
+        use_remote_list = False
+
+        http_parse = HTTPParse(
+            cf.get('http.parse.dir.line'),
+            cf.get('http.parse.file.line'),
+            int(cf.get('http.group.dir.name')),
+            int(cf.get('http.group.dir.date')),
+            int(cf.get('http.group.file.name')),
+            int(cf.get('http.group.file.date')),
+            cf.get('http.group.file.date_format', None),
+            int(cf.get('http.group.file.size'))
+        )
+        proxy = cf.get('proxy')
+        proxy_auth = cf.get('proxy_auth')
 
         if cf.get('protocol') == 'multi':
             """
@@ -786,103 +825,151 @@ class UpdateWorkflow(Workflow):
 
             ......
             """
-            downloader = MultiDownload()
-            downloaders = []
             # Creates multiple downloaders
             i = 0
-            rfile = cf.get('remote.file.'+str(i)+'.path')
+            rfile = cf.get('remote.file.' + str(i) + '.path')
+            server = None
             while rfile is not None:
-                if cf.get('remote.file.'+str(i)+'.protocol') is not None:
-                    protocol = cf.get('remote.file.'+str(i)+'.protocol')
-                else:
-                    protocol = cf.get('protocol')
-                if cf.get('remote.file.'+str(i)+'.server') is not None:
-                    server = cf.get('remote.file.'+str(i)+'.server')
-                else:
-                    server = cf.get('server')
-                subdownloader = self.get_handler(protocol, server, '', [cf.get('remote.file.'+str(i)+'.path')])
-                if cf.get('remote.file.'+str(i)+'.credentials') is not None:
-                    credentials = cf.get('remote.file.'+str(i)+'.credentials')
-                else:
-                    credentials = cf.get('server.credentials')
-                if credentials is not None:
-                    subdownloader.set_credentials(credentials)
-                if protocol == 'directftp':
-                    if cf.get('remote.file.'+str(i)+'.name'):
-                        subdownloader.save_as = cf.get('remote.file.'+str(i)+'.name')
-                    else:
-                        subdownloader.save_as = cf.get('remote.file.'+str(i)+'.path')
-                if protocol == 'directhttp' or protocol == 'directhttps':
-                    subdownloader.method = cf.get('remote.file.'+str(i)+'.method')
-                    if subdownloader.method is None:
-                        subdownloader.method = 'GET'
-                    if cf.get('remote.file.'+str(i)+'.name'):
-                        subdownloader.save_as = cf.get('remote.file.'+str(i)+'.name')
-                    else:
-                        subdownloader.save_as = cf.get('remote.file.'+str(i)+'.path')
-                    if cf.get('remote.file.'+str(i)+'.method'):
-                        subdownloader.method = cf.get('remote.file.'+str(i)+'.method').strip().upper()
-                    subdownloader.params = {}
-                    keys = cf.get('remote.file.'+str(i)+'.params.keys')
-                    if keys is not None:
-                        keys = keys.split(',')
-                        for key in keys:
-                            param = cf.get('remote.file.'+str(i)+'.params.'+key.strip())
-                            subdownloader.param[key.strip()] = param.strip()
-                downloaders.append(subdownloader)
-                i += 1
-                rfile = cf.get('remote.file.'+str(i)+'.path')
-            downloader.add_downloaders(downloaders)
+                protocol = cf.get('protocol')
+                if cf.get('remote.file.' + str(i) + '.protocol') is not None:
+                    protocol = cf.get('remote.file.' + str(i) + '.protocol')
 
+                server = cf.get('server')
+                if cf.get('remote.file.' + str(i) + '.server') is not None:
+                    server = cf.get('remote.file.' + str(i) + '.server')
+
+                params = None
+                keys = cf.get('remote.file.' + str(i) + '.params.keys')
+                if keys is not None:
+                    params = {}
+                    keys = keys.split(',')
+                    for key in keys:
+                        param = cf.get('remote.file.' + str(i) + '.params.' + key.strip())
+                        params[key.strip()] = param.strip()
+
+                method = cf.get('remote.file.' + str(i) + '.method')
+                if method is None:
+                    if cf.get('url.method') is not None:
+                        method = cf.get('url.method')
+                    else:
+                        method = 'GET'
+
+                credentials = cf.get('remote.file.' + str(i) + '.credentials')
+                if not method:
+                    credentials = cf.get('server.credentials')
+
+                remotes = [cf.get('remote.file.' + str(i) + '.path')]
+
+                save_as = cf.get('remote.file.' + str(i) + '.path')
+                if cf.get('remote.file.' + str(i) + '.name'):
+                    save_as = cf.get('remote.file.' + str(i) + '.name')
+
+                subdownloader = dserv.get_handler(
+                    protocol,
+                    server,
+                    '',
+                    credentials=credentials,
+                    http_parse=http_parse,
+                    http_method=method,
+                    param=params,
+                    proxy=proxy,
+                    proxy_auth=proxy_auth,
+                    save_as=save_as,
+                    timeout_download=cf.get('timeout.download')
+                )
+                subdownloader.set_files_to_download(remotes)
+
+                downloaders.append(subdownloader)
+
+                i += 1
+                rfile = cf.get('remote.file.' + str(i) + '.path')
         else:
             """
             Simple case, one downloader with regexp
             """
             protocol = cf.get('protocol')
+            server = cf.get('server')
+
+            params = None
+            keys = cf.get('url.params')
+            if keys is not None:
+                params = {}
+                keys = keys.split(',')
+                for key in keys:
+                    param = cf.get(key.strip() + '.value')
+                    params[key.strip()] = param.strip()
+
+            method = cf.get('url.method')
+            if method is None:
+                method = 'GET'
+
+            credentials = cf.get('server.credentials')
+
+            remote_dir = cf.get('remote.dir')
             if protocol == 'directhttp' or protocol == 'directhttps' or protocol == 'directftp':
-                downloader = self.get_handler(cf.get('protocol'), cf.get('server'), '/', [cf.get('remote.dir')[:-1]])
-                downloader.method = cf.get('url.method')
-                if downloader.method is None:
-                    downloader.method = 'GET'
-                downloader.save_as = cf.get('target.name')
-                keys = cf.get('url.params')
-                if keys is not None:
-                    keys = keys.split(',')
-                    for key in keys:
-                        param = cf.get(key.strip()+'.value')
-                        downloader.param[key.strip()] = param.strip()
+                remotes = [cf.get('remote.dir')[:-1]]
+                remote_dir = '/'
+
+            save_as = cf.get('target.name')
+
+            downloader = dserv.get_handler(
+                protocol,
+                server,
+                remote_dir,
+                credentials=credentials,
+                http_parse=http_parse,
+                http_method=method,
+                param=params,
+                proxy=proxy,
+                proxy_auth=proxy_auth,
+                save_as=save_as,
+                timeout_download=cf.get('timeout.download')
+            )
+
+            if protocol == 'directhttp' or protocol == 'directhttps' or protocol == 'directftp':
+                downloader.set_files_to_download(remotes)
+
+            remote_list = cf.get('remote.list', default=None)
+            if remote_list is not None:
+                logging.info("Use list from " + remote_list)
+                downloader.files_to_download = self._get_list_from_file(remote_list)
+                use_remote_list = True
+
+            downloaders.append(downloader)
+
+        self._close_download_service(dserv)
+
+        for downloader in downloaders:
+            if downloader is None:
+                logging.error('Protocol ' + downloader.protocol + ' not supported')
+                return False
+
+        files_to_download = []
+
+        for downloader in downloaders:
+            if use_remote_list:
+                if not downloader.files_to_download:
+                    self.session.set('remoterelease', self.session.previous_release)
+                    return self.no_need_to_update()
             else:
-                downloader = self.get_handler(cf.get('protocol'), cf.get('server'), cf.get('remote.dir'))
+                (file_list, dir_list) = downloader.list()
+                downloader.match(cf.get('remote.files', default='.*').split(), file_list, dir_list)
 
-        if downloader is None:
-            logging.error('Protocol '+cf.get('protocol')+' not supported')
-            return False
+            # Check if save_as defined, else check if regexp contains some save information with groups
+            for f in downloader.files_to_download:
+                if 'save_as' not in f or not f['save_as']:
+                    f['save_as'] = f['name']
+                    for p in cf.get('remote.files', default='.*').split():
+                        if p.startswith('^'):
+                            p = p.replace('^', '^/')
+                        else:
+                            p = '/' + p
+                        res = re.match(p, f['name'])
+                        if res is not None and res.groups() is not None and len(res.groups()) >= 1:
+                            f['save_as'] = '/'.join(res.groups())
+                            break
 
-        remote_list = cf.get('remote.list',default=None)
-        if remote_list is not None:
-            logging.info("Use list from " + remote_list)
-            downloader.files_to_download = self._get_list_from_file(remote_list)
-            if downloader.files_to_download is None:
-                self.session.set('remoterelease', self.session.previous_release )
-                return self.no_need_to_update()
-        else:
-            (file_list, dir_list) = downloader.list()
-
-            downloader.match(cf.get('remote.files',default='.*').split(), file_list, dir_list)
-
-        for f in downloader.files_to_download:
-            if 'save_as' not in f or not f['save_as']:
-                f['save_as'] = f['name']
-                for p in cf.get('remote.files', default='.*').split():
-                    if p.startswith('^'):
-                        p = p.replace('^','^/')
-                    else:
-                        p = '/' + p
-                    res = re.match(p, f['name'])
-                    if res is not None and res.groups() is not None and len(res.groups()) >= 1:
-                        f['save_as'] = '/'.join(res.groups())
-                        break
-
+            files_to_download += downloader.files_to_download
 
         self.session.set('download_files', downloader.files_to_download)
 
@@ -911,10 +998,12 @@ class UpdateWorkflow(Workflow):
             self.session.set('release', release)
             self.session.set('remoterelease', release)
 
-            logging.info('Workflow:wf_download:release:remoterelease:'+self.session.get('remoterelease'))
-            logging.info('Workflow:wf_download:release:release:'+release)
-            MongoConnector.banks.update({'name': self.bank.name},
-                            {'$set': {'status.release.progress': str(release)}})
+            logging.info('Workflow:wf_download:release:remoterelease:' + self.session.get('remoterelease'))
+            logging.info('Workflow:wf_download:release:release:' + release)
+            MongoConnector.banks.update(
+                {'name': self.bank.name},
+                {'$set': {'status.release.progress': str(release)}}
+            )
             self.download_go_ahead = False
             if self.options.get_option(Options.FROM_TASK) == 'download':
                 # We want to download again in same release, that's fine, we do not care it is the same release
@@ -926,7 +1015,6 @@ class UpdateWorkflow(Workflow):
             # We restart from scratch, check if directory with this release already exists
             if self.options.get_option(Options.FROMSCRATCH) or self.options.get_option('release') is None:
                 release = self.check_and_incr_release()
-
 
         self.session.config.set('localrelease', self.session.get('release'))
         self.session.config.set('remoterelease', self.session.get('remoterelease'))
@@ -940,54 +1028,57 @@ class UpdateWorkflow(Workflow):
         copied_files = []
 
         # Check if already in offlinedir
-        keep_files = []
-        if os.path.exists(offline_dir):
-            for file_to_download in downloader.files_to_download:
-                # If file is in offline dir and has same date and size, do not download again
-                if os.path.exists(offline_dir + '/' + file_to_download['name']):
-                    try:
-                        file_stat = os.stat(offline_dir + '/' + file_to_download['name'])
-                        f_stat = datetime.datetime.fromtimestamp(os.path.getmtime(offline_dir + '/' + file_to_download['name']))
-                        year = str(f_stat.year)
-                        month = str(f_stat.month)
-                        day = str(f_stat.day)
-                        if str(file_stat.st_size) != str(file_to_download['size']) or \
-                           str(year) != str(file_to_download['year']) or \
-                           str(month) != str(file_to_download['month']) or \
-                           str(day) != str(file_to_download['day']):
-                            logging.debug('Workflow:wf_download:different_from_offline:'+file_to_download['name'])
+        for downloader in downloaders:
+            keep_files = []
+            if os.path.exists(offline_dir):
+                for file_to_download in downloader.files_to_download:
+                    # If file is in offline dir and has same date and size, do not download again
+                    if os.path.exists(offline_dir + '/' + file_to_download['name']):
+                        try:
+                            file_stat = os.stat(offline_dir + '/' + file_to_download['name'])
+                            f_stat = datetime.datetime.fromtimestamp(os.path.getmtime(offline_dir + '/' + file_to_download['name']))
+                            year = str(f_stat.year)
+                            month = str(f_stat.month)
+                            day = str(f_stat.day)
+                            if str(file_stat.st_size) != str(file_to_download['size']) or \
+                               str(year) != str(file_to_download['year']) or \
+                               str(month) != str(file_to_download['month']) or \
+                               str(day) != str(file_to_download['day']):
+                                logging.debug('Workflow:wf_download:different_from_offline:' + file_to_download['name'])
+                                keep_files.append(file_to_download)
+                            else:
+                                logging.debug('Workflow:wf_download:offline:' + file_to_download['name'])
+                        except Exception as e:
+                            # Could not get stats on file
+                            logging.debu('Workflow:wf_download:offline:failed to stat file: ' + str(e))
+                            os.remove(offline_dir + '/' + file_to_download['name'])
                             keep_files.append(file_to_download)
-                        else:
-                            logging.debug('Workflow:wf_download:offline:'+file_to_download['name'])
-                    except Exception as e:
-                        # Could not get stats on file
-                        os.remove(offline_dir + '/' + file_to_download['name'])
+                    else:
                         keep_files.append(file_to_download)
-                else:
-                    keep_files.append(file_to_download)
-            downloader.files_to_download = keep_files
-            # If everything was already in offline dir
-            if len(downloader.files_to_download) == 0:
-                self.downloaded_files = []
-                return True
+                downloader.files_to_download = keep_files
 
-        self._create_dir_structure(downloader, offline_dir)
+        # If everything was already in offline dir
+        everything_present = True
+        for downloader in downloaders:
+            if len(downloader.files_to_download) > 0:
+                everything_present = False
+                break
+        if everything_present:
+            self.downloaded_files = []
+            logging.info("Workflow:wf_download:all_files_in_offline:skip download")
+            return True
+
+        for downloader in downloaders:
+            self._create_dir_structure(downloader, offline_dir)
 
         self.download_go_ahead = False
         if self.options.get_option(Options.FROM_TASK) == 'download':
             # We want to download again in same release, that's fine, we do not care it is the same release
             self.download_go_ahead = True
 
-
         if not self.options.get_option(Options.FROMSCRATCH) and not self.download_go_ahead and nb_prod_dir > 0:
-            #for prod in self.bank.bank['production']:
-            #  if self.session.get('release') == prod['release']:
-            #    logging.info('Workflow:wf_release:same_as_previous_production_dir')
-            #    return self.no_need_to_update()
-
-
             # Get last production
-            last_production = self.bank.bank['production'][nb_prod_dir-1]
+            last_production = self.bank.bank['production'][nb_prod_dir - 1]
             # Get session corresponding to production directory
             last_production_session = self.banks.find_one({'name': self.name, 'sessions.id': last_production['session']}, {'sessions.$': 1})
             last_production_dir = os.path.join(last_production['data_dir'], cf.get('dir.version'), last_production['release'])
@@ -995,60 +1086,97 @@ class UpdateWorkflow(Workflow):
             last_production_files = None
             if len(last_production_session['sessions']) > 0:
                 last_production_files = self._load_local_files_from_session(last_production_session['sessions'][0]['id'])
-            downloader.download_or_copy(last_production_files, last_production_dir)
-            if len(downloader.files_to_download) == 0:
+
+            for downloader in downloaders:
+                downloader.download_or_copy(last_production_files, last_production_dir)
+            everything_copied = True
+            for downloader in downloaders:
+                if len(downloader.files_to_download) > 0:
+                    everything_copied = False
+                    break
+            if everything_copied:
+                logging.info('Workflow:wf_download:all files copied from %s' % (str(last_production_dir)))
                 return self.no_need_to_update()
 
-            #release_dir = os.path.join(self.session.config.get('data.dir'),
-            #              self.session.config.get('dir.version'),
-            #              self.session.get_release_directory())
-            logging.debug('Workflow:wf_download:Copy files from '+last_production_dir)
-            copied_files = downloader.files_to_copy
-            Utils.copy_files(downloader.files_to_copy, offline_dir)
-
+            logging.debug('Workflow:wf_download:Copy files from ' + last_production_dir)
+            for downloader in downloaders:
+                copied_files += downloader.files_to_copy
+                Utils.copy_files(downloader.files_to_copy, offline_dir)
 
         downloader.close()
 
-        DownloadThread.NB_THREAD = int(self.session.config.get('files.num.threads'))
-
-        if cf.get('protocol') == 'multi':
-            thlist = DownloadThread.get_threads_multi(downloader.downloaders, offline_dir)
+        pool_size = self.session.config.get('files.num.threads', None)
+        dserv = None
+        if pool_size:
+            dserv = DownloadClient(self.bank.config.get('rabbitmq_host'), pool_size=pool_size)
         else:
-            thlist = DownloadThread.get_threads(downloader, offline_dir)
+            dserv = DownloadClient(self.bank.config.get('rabbitmq_host'))
 
-        running_th = []
-        for th in thlist:
-            running_th.append(th)
-            th.start()
-        """
-        while len(running_th) > 0:
-            try:
-                    # Join all threads using a timeout so it doesn't block
-                    # Filter out threads which have been joined or are None
-                running_th = [t.join(1000) for t in running_th if t is not None and t.isAlive()]
-                logging.debug("Workflow:wf_download:Download:Threads:"+str(running_th))
-            except KeyboardInterrupt:
-                logging.warn("Ctrl-c received! Sending kill to threads...")
-                logging.warn("Running tasks will continue and process will stop.")
-                for t in running_th:
-                    t.downloader.kill_received = True
-        logging.info("Workflow:wf_download:Download:Threads:Over")
-        """
-        for th in thlist:
-          th.join()
-        logging.info("Workflow:wf_download:Download:Threads:Over")
-        is_error = False
-        for th in thlist:
-            if th.error:
-                is_error = True
-                downloader.error = True
-                break
-        self.downloaded_files = downloader.files_to_download + copied_files
-        #self.downloaded_files = downloader.download(offline_dir) + copied_files
+        proxy = self.bank.config.get('biomaj_proxy')
+        session = dserv.create_session(self.name, proxy)
 
-        #downloader.close()
+        for downloader in downloaders:
+            for file_to_download in downloader.files_to_download:
+                operation = message_pb2.Operation()
+                operation.type = 1
+                message = message_pb2.DownloadFile()
+                message.bank = self.name
+                message.session = session
+                message.local_dir = offline_dir
+                remote_file = message_pb2.DownloadFile.RemoteFile()
+                protocol = downloader.protocol
+                remote_file.protocol = message_pb2.DownloadFile.Protocol.Value(protocol.upper())
 
-        if downloader.error:
+                remote_file.server = downloader.server
+                remote_file.remote_dir = cf.get('remote.dir')
+
+                biomaj_file = remote_file.files.add()
+                biomaj_file.name = file_to_download['name']
+                if 'root' in file_to_download and file_to_download['root']:
+                    biomaj_file.root = file_to_download['root']
+                if downloader.param:
+                    for key in list(downloader.param.keys()):
+                        param = remote_file.param.add()
+                        param.name = key
+                        param.value = downloader.param[key]
+                if 'save_as' in file_to_download and file_to_download['save_as']:
+                    biomaj_file.save_as = file_to_download['save_as']
+                if 'url' in file_to_download and file_to_download['url']:
+                    biomaj_file.url = file_to_download['url']
+                if 'permissions' in file_to_download and file_to_download['permissions']:
+                    biomaj_file.metadata.permissions = file_to_download['permissions']
+                if 'size' in file_to_download and file_to_download['size']:
+                    biomaj_file.metadata.size = file_to_download['size']
+                if 'year' in file_to_download and file_to_download['year']:
+                    biomaj_file.metadata.year = file_to_download['year']
+                if 'month' in file_to_download and file_to_download['month']:
+                    biomaj_file.metadata.month = file_to_download['month']
+                if 'day' in file_to_download and file_to_download['day']:
+                    biomaj_file.metadata.day = file_to_download['day']
+                if 'hash' in file_to_download and file_to_download['hash']:
+                    biomaj_file.metadata.hash = file_to_download['hash']
+                if 'md5' in file_to_download and file_to_download['md5']:
+                    biomaj_file.metadata.md5 = file_to_download['md5']
+
+                message.http_method = message_pb2.DownloadFile.HTTP_METHOD.Value(downloader.method.upper())
+
+                timeout_download = cf.get('timeout.download', None)
+                if timeout_download:
+                    message.timeout_download = timeout_download
+
+                message.remote_file.MergeFrom(remote_file)
+                operation.download.MergeFrom(message)
+                dserv.download_remote_file(operation)
+
+        logging.info("Workflow:wf_download:Download:Waiting")
+        download_error = dserv.wait_for_download()
+        self._close_download_service(dserv)
+
+        self.downloaded_files = copied_files
+        for downloader in downloaders:
+            self.downloaded_files += downloader.files_to_download
+
+        if download_error:
             logging.error('An error occured during download')
             return False
 
@@ -1074,10 +1202,10 @@ class UpdateWorkflow(Workflow):
                     if status:
                         not_ok = False
                     else:
-                        logging.warn('Workflow:wf_uncompress:Failure:'+file['name']+':'+str(nb_try))
+                        logging.warn('Workflow:wf_uncompress:Failure:' + file['name'] + ':' + str(nb_try))
                         nb_try += 1
                 if not_ok:
-                    logging.error('Workflow:wf_uncompress:Failure:'+file['name'])
+                    logging.error('Workflow:wf_uncompress:Failure:' + file['name'])
                     return False
         return True
 
@@ -1090,11 +1218,14 @@ class UpdateWorkflow(Workflow):
             logging.info("Workflow:wf_copy:NoFileDownload:NoCopy")
             return True
         from_dir = os.path.join(self.session.config.get('data.dir'),
-                      self.session.config.get('offline.dir.name'))
+                                self.session.config.get('offline.dir.name'))
         regexp = self.session.config.get('local.files', default='**/*').split()
-        to_dir = os.path.join(self.session.config.get('data.dir'),
-                      self.session.config.get('dir.version'),
-                      self.session.get_release_directory(), 'flat')
+        to_dir = os.path.join(
+            self.session.config.get('data.dir'),
+            self.session.config.get('dir.version'),
+            self.session.get_release_directory(),
+            'flat'
+        )
 
         local_files = Utils.copy_files_with_regexp(from_dir, to_dir, regexp, True)
         self.session._session['files'] = local_files
@@ -1114,10 +1245,8 @@ class UpdateWorkflow(Workflow):
             for meta_data in list(per_process_meta_data[proc].keys()):
                 session_formats = self.bank.session.get('formats')
                 if meta_data not in session_formats:
-                    #session_formats[meta_data] = [meta_thread.meta_data[meta_data]]
                     session_formats[meta_data] = per_process_meta_data[proc][meta_data]
                 else:
-                    #session_formats[meta_data].append(meta_thread.meta_data[meta_data])
                     session_formats[meta_data] += per_process_meta_data[proc][meta_data]
         return True
 
@@ -1139,15 +1268,18 @@ class UpdateWorkflow(Workflow):
         """
         Execute post processes
         """
-
         # Creates a temporary symlink future_release to keep compatibility if process
         # tries to access dir with this name
-        future_link = os.path.join(self.bank.config.get('data.dir'),
-                                    self.bank.config.get('dir.version'),
-                                    'future_release')
-        prod_dir = self.session.get_full_release_directory()
-        to_dir = os.path.join(self.bank.config.get('data.dir'),
-                      self.bank.config.get('dir.version'))
+        future_link = os.path.join(
+            self.bank.config.get('data.dir'),
+            self.bank.config.get('dir.version'),
+            'future_release'
+        )
+        # prod_dir = self.session.get_full_release_directory()
+        to_dir = os.path.join(
+            self.bank.config.get('data.dir'),
+            self.bank.config.get('dir.version')
+        )
 
         if os.path.lexists(future_link):
             os.remove(future_link)
@@ -1188,10 +1320,10 @@ class UpdateWorkflow(Workflow):
         """
         release_dir = self.session.get_full_release_directory()
         for release_format in self.bank.session.get('formats'):
-            format_file = os.path.join(release_dir, 'listingv1.'+release_format.replace('/','_'))
+            format_file = os.path.join(release_dir, 'listingv1.' + release_format.replace('/', '_'))
             section = self.list_section(release_dir, release_format, release_format)
-            logging.debug("Worfklow:OldAPI:WriteListing: "+format_file)
-            fd = os.open(format_file, os.O_RDWR|os.O_CREAT)
+            logging.debug("Worfklow:OldAPI:WriteListing: " + format_file)
+            fd = os.open(format_file, os.O_RDWR | os.O_CREAT)
             os.write(fd, json.dumps(section).encode('utf-8'))
             os.close(fd)
         return True
@@ -1211,7 +1343,7 @@ class UpdateWorkflow(Workflow):
         section = {"name": release_format, "sections": [], "files": []}
         format_dir = os.path.join(base_dir, release_format)
         if not os.path.exists(format_dir):
-            logging.info("Worfklow:OldAPI:Format directory "+release_format+" does not exists, skipping")
+            logging.info("Worfklow:OldAPI:Format directory " + release_format + " does not exists, skipping")
             return section
         format_dir_list = os.listdir(format_dir)
         for format_dir_file in format_dir_list:
@@ -1227,7 +1359,6 @@ class UpdateWorkflow(Workflow):
                 new_section = self.list_section(format_dir, format_dir_file, base_format)
                 section['sections'].append(new_section)
         return section
-
 
     def wf_clean_offline(self):
         """
@@ -1293,10 +1424,10 @@ class UpdateWorkflow(Workflow):
                     session.set('release', prod['release'])
                     session.set('remoterelease', prod['remoterelease'])
                     session.set('update_session_id', prod['session'])
-                    logging.info('Workflow:wf_delete_old:Delete:'+prod['release'])
+                    logging.info('Workflow:wf_delete_old:Delete:' + prod['release'])
                     res = self.bank.start_remove(session)
                     if not res:
-                        logging.error('Workflow:wf_delete_old:ErrorDelete:'+prod['release'])
+                        logging.error('Workflow:wf_delete_old:ErrorDelete:' + prod['release'])
                 else:
                     break
         # Set session back

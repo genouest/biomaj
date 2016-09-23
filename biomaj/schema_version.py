@@ -1,6 +1,6 @@
 import pkg_resources
 from biomaj.mongo_connector import MongoConnector
-from biomaj.config import BiomajConfig
+from biomaj_core.config import BiomajConfig
 
 
 class SchemaVersion(object):
@@ -21,7 +21,7 @@ class SchemaVersion(object):
             try:
                 BiomajConfig.load_config()
             except Exception as err:
-                print("* SchemaVersion: Can't find config file")
+                print("* SchemaVersion: Can't find config file: " + str(err))
                 return None
         if MongoConnector.db is None:
             MongoConnector(BiomajConfig.global_config.get('GENERAL', 'db.url'),

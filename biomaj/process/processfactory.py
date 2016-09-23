@@ -5,6 +5,7 @@ import logging
 import os
 from biomaj.process.metaprocess import MetaProcess
 
+
 class ProcessFactory(object):
     '''
     Manage process execution
@@ -134,6 +135,7 @@ class PreProcessFactory(ProcessFactory):
         (status, self.meta_status) = self.run_threads(simulate)
         return status
 
+
 class RemoveProcessFactory(ProcessFactory):
     '''
     Manage remove processes
@@ -154,7 +156,6 @@ class RemoveProcessFactory(ProcessFactory):
             self.meta_status = metas
         self.workflow = 'removeprocess'
 
-
     def run(self, simulate=False):
         '''
         Run processes
@@ -171,6 +172,7 @@ class RemoveProcessFactory(ProcessFactory):
         self.fill_tasks_in_threads(metas)
         (status, self.meta_status) = self.run_threads(simulate)
         return status
+
 
 class PostProcessFactory(ProcessFactory):
     '''
@@ -215,11 +217,11 @@ class PostProcessFactory(ProcessFactory):
         for process_block in process_blocks:
             if not global_status:
                 continue
-            logging.info('PROC:POST:BLOCK:'+process_block)
+            logging.info('PROC:POST:BLOCK:' + process_block)
             if process_block in self.blocks:
                 self.meta_status = self.blocks[process_block]
             # run each block
-            metas = self.bank.config.get(process_block.strip()+'.db.post.process').split(',')
+            metas = self.bank.config.get(process_block.strip() + '.db.post.process').split(',')
             self.fill_tasks_in_threads(metas)
             (status, self.blocks[process_block]) = self.run_threads(simulate)
             if not status:

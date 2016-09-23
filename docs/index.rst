@@ -20,21 +20,14 @@ API Documentation:
    :maxdepth: 2
 
    bank
-   config
    options
    session
-   utils
    workflow
-   interface
-   ftp
-   http
-   localcopy
    notify
    metaprocess
    process
    processfactory
-   user
-   bmajindex
+
 
 Indices and tables
 ==================

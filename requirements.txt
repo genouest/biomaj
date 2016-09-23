@@ -1,6 +1,9 @@
+biomaj_core
+biomaj_user
+biomaj_download
 mock
 nose
-pymongo==3.2
+pymongo>=3.2
 pycurl
 tabulate
 ldap3

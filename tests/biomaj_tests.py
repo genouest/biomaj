@@ -486,6 +486,7 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         self.utils.clean()
     
     def test_rsync_list(self):
+        logging.info("Variable : "+str(self.examples))
         rsyncd =  RSYNCDownload('rsync', self.examples, "")
         rsyncd.set_credentials(None)
         (files_list, dir_list) = rsyncd.list()

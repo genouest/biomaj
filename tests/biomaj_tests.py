@@ -493,7 +493,7 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         rsyncd =  RSYNCDownload('rsync', self.examples, "")
         rsyncd.set_credentials(None)
         (files_list, dir_list) = rsyncd.list()
-        rsyncd.match([r'test'], files_list, dir_list,prefix='', submatch=False)
+        rsyncd.match([r'^test.*\.gz$'], files_list, dir_list,prefix='', submatch=False)
         self.assertTrue(len(rsyncd.files_to_download) != 0)
     
     def test_rsync_download(self):
@@ -507,14 +507,14 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         rsyncd =  RSYNCDownload('rsync',self.examples,"")
         rsyncd.set_credentials(None)
         (files_list, dir_list) = rsyncd.list()
-        rsyncd.match([r'test'],files_list,dir_list)
+        rsyncd.match([r'^test.*\.gz$'],files_list,dir_list)
         error, download_files=rsyncd.download(self.curdir)
         self.assertTrue(error==0)
     
     def test_rsync_download_or_copy(self):
         rsyncd =  RSYNCDownload('rsync', self.examples, "")
         (file_list, dir_list) = rsyncd.list()
-        rsyncd.match([r'test'], file_list, dir_list)
+        rsyncd.match([r'^test.*\.gz$'], file_list, dir_list)
         files_to_download_prev = rsyncd.files_to_download
         rsyncd.download_or_copy(rsyncd.files_to_download, self.curdir, check_exists=True)
         self.assertTrue(files_to_download_prev != rsyncd.files_to_download)

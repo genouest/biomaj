@@ -64,7 +64,7 @@ class RSYNCDownload(DownloadInterface):
             self.test_stderr_rsync_error(err)   
             err_code = p.returncode
             logging.info("In rsync list "+str(err_code))
-        except ExceptionRsync, e:
+        except ExceptionRsync as e:
             logging.error("RsyncError:" + str(e))
         if err_code !=  0:
             logging.error('Error while listing ' + str(err_code))
@@ -165,7 +165,7 @@ class RSYNCDownload(DownloadInterface):
             err_code = p.returncode
             self.test_stderr_rsync_message(stderr)
             self.test_stderr_rsync_error(stderr)                      
-        except ExceptionRsync, e:
+        except ExceptionRsync as e:
             logging.error("RsyncError:" + str(e))
         if err_code !=  0:
             logging.error('Error while downloading ' + file_to_download + ' - ' + str(err_code))

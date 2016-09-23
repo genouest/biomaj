@@ -347,6 +347,7 @@ class UpdateWorkflow(Workflow):
         '''
         Cleanup of downloader
         '''
+        logging.info("Workflow:DownloadService:CleanSession")
         if dserv:
             dserv.clean()
             dserv.close()
@@ -411,7 +412,8 @@ class UpdateWorkflow(Workflow):
             # """""""""""""""""""""""
             dserv = DownloadClient(self.bank.config.get('rabbitmq_host'))
             proxy = self.bank.config.get('biomaj_proxy')
-            dserv.create_session(self.name, proxy)
+            session = dserv.create_session(self.name, proxy)
+            logging.info("Workflow:wf_release:DownloadSession:"+str(session))
 
             http_parse = HTTPParse(
                 cf.get('http.parse.dir.line'),
@@ -778,6 +780,7 @@ class UpdateWorkflow(Workflow):
 
         proxy = self.bank.config.get('biomaj_proxy')
         session = dserv.create_session(self.name, proxy)
+        logging.info("Workflow:wf_download:DownloadSession:"+str(session))
 
         use_remote_list = False
 
@@ -1114,6 +1117,7 @@ class UpdateWorkflow(Workflow):
 
         proxy = self.bank.config.get('biomaj_proxy')
         session = dserv.create_session(self.name, proxy)
+        logging.info("Workflow:wf_download:DownloadSession:"+str(session))
 
         for downloader in downloaders:
             for file_to_download in downloader.files_to_download:

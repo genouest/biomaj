@@ -174,12 +174,12 @@ class RSYNCDownload(DownloadInterface):
         return(error)
 #---------------------------------------------------------------
     def test_stderr_rsync_error(self, stderr):
-        if (str(self.protocol) + " error") in stderr:
+        if "rsync error" in stderr:
             reason = stderr.split(str(self.protocol) + " error:")[1].split("\n")[0]
             raise ExceptionRsync(reason)
 #---------------------------------------------------------------
     def test_stderr_rsync_message(self, stderr):
-        if (str(self.protocol) + ":") in stderr:
+        if "rsync:" in stderr:
             reason = stderr.split(str(self.protocol) + ":")[1].split("\n")[0]
             raise ExceptionRsync(reason)
 

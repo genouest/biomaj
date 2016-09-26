@@ -410,7 +410,7 @@ class UpdateWorkflow(Workflow):
             return True
         else:
             # """""""""""""""""""""""
-            dserv = DownloadClient(self.bank.config.get('rabbitmq_host'))
+            dserv = DownloadClient(self.bank.config.get('rabbitmq_download_host'))
             proxy = self.bank.config.get('biomaj_proxy')
             session = dserv.create_session(self.name, proxy)
             logging.info("Workflow:wf_release:DownloadSession:"+str(session))
@@ -774,9 +774,9 @@ class UpdateWorkflow(Workflow):
         dserv = None
 
         if pool_size:
-            dserv = DownloadClient(self.bank.config.get('rabbitmq_host'), pool_size=pool_size)
+            dserv = DownloadClient(self.bank.config.get('rabbitmq_download_host'), pool_size=pool_size)
         else:
-            dserv = DownloadClient(self.bank.config.get('rabbitmq_host'))
+            dserv = DownloadClient(self.bank.config.get('rabbitmq_download_host'))
 
         proxy = self.bank.config.get('biomaj_proxy')
         session = dserv.create_session(self.name, proxy)
@@ -1111,9 +1111,9 @@ class UpdateWorkflow(Workflow):
         pool_size = self.session.config.get('files.num.threads', None)
         dserv = None
         if pool_size:
-            dserv = DownloadClient(self.bank.config.get('rabbitmq_host'), pool_size=pool_size)
+            dserv = DownloadClient(self.bank.config.get('rabbitmq_download_host'), pool_size=pool_size)
         else:
-            dserv = DownloadClient(self.bank.config.get('rabbitmq_host'))
+            dserv = DownloadClient(self.bank.config.get('rabbitmq_download_host'))
 
         proxy = self.bank.config.get('biomaj_proxy')
         session = dserv.create_session(self.name, proxy)

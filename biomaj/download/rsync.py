@@ -71,7 +71,7 @@ class RSYNCDownload(DownloadInterface):
             logging.error('Error while listing ' + str(err_code))
             return(rfiles, rdirs)
         list_rsync=str(list_rsync, encoding = 'utf-8')
-        for i in range(0,(len(str(list_rsync.rstrip().split("\n"))-1 ))):
+        for i in range(0,(len(str(list_rsync.rstrip().split("\n"))))-1 ):
             rfile = {}
             #rsync LIST output is separated by \n                        
             parts = str(list_rsync.rstrip().split("\n")[i].split())

@@ -13,7 +13,7 @@ import subprocess
 
 from biomaj.utils import Utils
 from biomaj.download.interface import DownloadInterface
-
+from biomaj.config import BiomajConfig
 
 class RSYNCDownload(DownloadInterface):
     '''
@@ -25,11 +25,13 @@ class RSYNCDownload(DownloadInterface):
     remote.files = 
     '''
         
-    def __init__(self, protocol, server, remote_dir ):
+    def __init__(self, protocol, server, remote_dir, config):
         DownloadInterface.__init__(self)
         logging.debug('Download')
         self.rootdir = remote_dir
         self.protocol = protocol
+        self.config = config
+        self.offline_dir = self.config.get('offline.dir.name')
         if server and remote_dir:
             self.server = server#name of the remote server
             self.remote_dir = remote_dir# directory on the remote server
@@ -48,7 +50,7 @@ class RSYNCDownload(DownloadInterface):
         err_code = None
         rfiles = []
         rdirs = []
-        p = subprocess.Popen("pwd", stdin = subprocess.PIPE,stdout = subprocess.PIPE,stderr = subprocess.PIPE,shell = True)
+        os.chdir(self.offline_dir)
         if self.remote_dir and self.credentials:
             logging.info("if self.remote_dir and self.credentials:")
             cmd = str(self.protocol) + " --list-only " + str(self.credentials) + "@" + str(self.server) + ":" + str(self.remote_dir) + str(directory)
@@ -74,7 +76,6 @@ class RSYNCDownload(DownloadInterface):
             parts = list_rsync.rstrip().split("\n")[i].split()
             if not parts: continue
             date =  parts[2].split("/")
-            logging.info("date : "+str(date))
             rfile['permissions'] = parts[0]
             rfile['size'] = parts[1]
             rfile['month'] = date[1]
@@ -106,7 +107,7 @@ class RSYNCDownload(DownloadInterface):
         logging.debug('RSYNC:Download')
         nb_files = len(self.files_to_download)
         cur_files = 1
-        
+        os.chdir(self.offline_dir)
         for rfile in self.files_to_download:
             if self.kill_received:
                 raise Exception('Kill request received, exiting')
@@ -152,6 +153,7 @@ class RSYNCDownload(DownloadInterface):
     def rsync_download(self,file_path, file_to_download):
         error = False
         err_code = ''
+        os.chdir(self.offline_dir)
         try :
             if self.remote_dir and self.credentials: #download on server
                 cmd = str(self.protocol) + " " + str(self.credentials) + "@" + str(self.server) + ":" + str(self.remote_dir) + str(file_to_download) + " " + str(file_path)

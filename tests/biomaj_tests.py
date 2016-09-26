@@ -526,7 +526,7 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         files_to_download_prev = rsyncd.files_to_download
         rsyncd.download_or_copy(rsyncd.files_to_download, self.examples, check_exists=True)
         logging.info("Files to download before download_or_copy"+str(files_to_download_prev))
-        logging.info("Files to download after download_or_copy"+str(rsync.files_to_download))
+        logging.info("Files to download after download_or_copy"+str(rsyncd.files_to_download))
         self.assertTrue(files_to_download_prev != rsyncd.files_to_download)
         
         

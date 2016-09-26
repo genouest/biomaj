@@ -486,7 +486,6 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         self.utils.clean()
     
     def test_rsync_list(self):
-        logging.info("Variable : "+str(self.examples))
         rsyncd =  RSYNCDownload('rsync', self.examples, "", self.config)
         rsyncd.set_credentials(None)
         os.chdir(self.utils.data_dir)
@@ -525,8 +524,6 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         rsyncd.match([r'^test.*\.gz$'], file_list, dir_list)
         files_to_download_prev = rsyncd.files_to_download
         rsyncd.download_or_copy(rsyncd.files_to_download, self.examples, check_exists=True)
-        logging.info("Files to download before download_or_copy"+str(files_to_download_prev))
-        logging.info("Files to download after download_or_copy"+str(rsyncd.files_to_download))
         self.assertTrue(files_to_download_prev != rsyncd.files_to_download)
         
         

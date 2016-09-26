@@ -480,7 +480,7 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         self.curdir = os.path.dirname(os.path.realpath(__file__))
         self.examples = os.path.join(self.curdir, 'bank') + '/'
         BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
-        
+        self.config = BiomajConfig('local')
         
     def tearDown(self):
         self.utils.clean()

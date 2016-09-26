@@ -269,6 +269,10 @@ class UpdateWorkflow(Workflow):
         err = super(UpdateWorkflow, self).wf_init()
         if not err:
             return False
+        offline_dir = self.session.get_offline_directory()
+        if not os.path.exists(offline_dir):
+            logging.debug('Create offline directory: %s' % (str(offline_dir)))
+            os.makedirs(offline_dir)
         if self.options.get_option(Options.FROMSCRATCH):
             return self.wf_clean_offline()
 
@@ -480,7 +484,8 @@ class UpdateWorkflow(Workflow):
                 proxy=proxy,
                 proxy_auth=proxy_auth,
                 save_as=save_as,
-                timeout_download=cf.get('timeout.download')
+                timeout_download=cf.get('timeout.download'),
+                offline_dir=self.session.get_offline_directory()
             )
 
             if protocol == 'directhttp' or protocol == 'directhttps' or protocol == 'directftp':
@@ -878,7 +883,8 @@ class UpdateWorkflow(Workflow):
                     proxy=proxy,
                     proxy_auth=proxy_auth,
                     save_as=save_as,
-                    timeout_download=cf.get('timeout.download')
+                    timeout_download=cf.get('timeout.download'),
+                    offline_dir=self.session.get_offline_directory()
                 )
                 subdownloader.set_files_to_download(remotes)
 
@@ -926,7 +932,8 @@ class UpdateWorkflow(Workflow):
                 proxy=proxy,
                 proxy_auth=proxy_auth,
                 save_as=save_as,
-                timeout_download=cf.get('timeout.download')
+                timeout_download=cf.get('timeout.download'),
+                offline_dir=self.session.get_offline_directory()
             )
 
             if protocol == 'directhttp' or protocol == 'directhttps' or protocol == 'directftp':

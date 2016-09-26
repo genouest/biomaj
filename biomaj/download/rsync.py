@@ -49,38 +49,32 @@ class RSYNCDownload(DownloadInterface):
         rfiles = []
         rdirs = []
         p = subprocess.Popen("pwd", stdin = subprocess.PIPE,stdout = subprocess.PIPE,stderr = subprocess.PIPE,shell = True)
-        logging.info("PWD communicate"+str(p.communicate()))
         if self.remote_dir and self.credentials:
             logging.info("if self.remote_dir and self.credentials:")
             cmd = str(self.protocol) + " --list-only " + str(self.credentials) + "@" + str(self.server) + ":" + str(self.remote_dir) + str(directory)
         elif (self.remote_dir and not self.credentials):
-           logging.info("self.remote_dir and not self.credentials")
            cmd = str(self.protocol) + " --list-only " + str(self.server) + ":" + str(self.remote_dir) + str(directory) 
         else : #Local rsync for unitest 
-            logging.info("else")
             #cmd = str(self.protocol) + " --list-only " + str(self.server)
-            cmd = str(self.protocol) + " -av --list-only " + str(self.server)
-            logging.info("CMD"+str(cmd))
+            cmd = str(self.protocol) + " --list-only " + str(self.server)
         try:
             p = subprocess.Popen(cmd, stdin = subprocess.PIPE,stdout = subprocess.PIPE,stderr = subprocess.PIPE,shell = True)
             list_rsync, err = p.communicate()
             self.test_stderr_rsync_message(err)
             self.test_stderr_rsync_error(err)   
             err_code = p.returncode
-            logging.info("In rsync list "+str(err_code))
         except ExceptionRsync as e:
             logging.error("RsyncError:" + str(e))
-            logging.info("In rsync list except :"+str(err))
         if err_code !=  0:
             logging.error('Error while listing ' + str(err_code))
             return(rfiles, rdirs)
-        logging.info("In rsync list "+str(rfiles))
         for i in range(0,(len(list_rsync.rstrip().split("\n"))-1)):
             rfile = {}
             #rsync LIST output is separated by \n                        
             parts = list_rsync.rstrip().split("\n")[i].split()
             if not parts: continue
             date =  parts[2].split("/")
+            logging.info("date : "+str(date))
             rfile['permissions'] = parts[0]
             rfile['size'] = parts[1]
             rfile['month'] = date[1]

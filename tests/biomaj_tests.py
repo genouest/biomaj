@@ -525,6 +525,8 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         rsyncd.match([r'^test.*\.gz$'], file_list, dir_list)
         files_to_download_prev = rsyncd.files_to_download
         rsyncd.download_or_copy(rsyncd.files_to_download, self.curdir, check_exists=True)
+        logging.info("Files to download before download_or_copy"+str(files_to_download_prev))
+        logging.info("Files to download after download_or_copy"+str(files_to_download))
         self.assertTrue(files_to_download_prev != rsyncd.files_to_download)
         
         

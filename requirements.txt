@@ -1,6 +1,7 @@
 biomaj_core
 biomaj_user
 biomaj_download
+biomaj_process
 mock
 nose
 pymongo>=3.2

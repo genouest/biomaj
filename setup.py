@@ -53,6 +53,7 @@ config = {
                          'biomaj_core',
                          'biomaj_user',
                          'biomaj_download',
+                         'biomaj_process',
                          'pymongo>=3.2',
                          'pycurl',
                          'ldap3',

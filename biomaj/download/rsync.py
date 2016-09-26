@@ -50,7 +50,7 @@ class RSYNCDownload(DownloadInterface):
         err_code = None
         rfiles = []
         rdirs = []
-        os.chdir(self.offline_dir)
+        #os.chdir(self.offline_dir)
         if self.remote_dir and self.credentials:
             logging.info("if self.remote_dir and self.credentials:")
             cmd = str(self.protocol) + " --list-only " + str(self.credentials) + "@" + str(self.server) + ":" + str(self.remote_dir) + str(directory)
@@ -107,7 +107,7 @@ class RSYNCDownload(DownloadInterface):
         logging.debug('RSYNC:Download')
         nb_files = len(self.files_to_download)
         cur_files = 1
-        os.chdir(self.offline_dir)
+        #os.chdir(self.offline_dir)
         for rfile in self.files_to_download:
             if self.kill_received:
                 raise Exception('Kill request received, exiting')
@@ -153,7 +153,7 @@ class RSYNCDownload(DownloadInterface):
     def rsync_download(self,file_path, file_to_download):
         error = False
         err_code = ''
-        os.chdir(self.offline_dir)
+        #os.chdir(self.offline_dir)
         try :
             if self.remote_dir and self.credentials: #download on server
                 cmd = str(self.protocol) + " " + str(self.credentials) + "@" + str(self.server) + ":" + str(self.remote_dir) + str(file_to_download) + " " + str(file_path)

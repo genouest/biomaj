@@ -4,6 +4,7 @@ import logging
 import os
 
 from biomaj.process.process import Process, DrmaaProcess, DockerProcess
+from biomaj_process.process import RemoteProcess
 from biomaj.mongo_connector import MongoConnector
 
 
@@ -192,10 +193,20 @@ class MetaProcess(threading.Thread):
                             os.path.dirname(self.bank.config.log_file), use_sudo
                         )
                     else:
-                        bmaj_process = Process(
-                            meta + '_' + name, exe, args, desc, proc_type,
-                            expand, self.bmaj_env, os.path.dirname(self.bank.config.log_file)
-                        )
+                        if self.bank.config.get('rabbitmq_process_host'):
+                            logging.info("PROC:META:RUN:REMOTEPROCESS: " + bprocess)
+                            bmaj_process = RemoteProcess(
+                                meta + '_' + name, exe, args, desc, proc_type,
+                                expand, self.bmaj_env, os.path.dirname(self.bank.config.log_file),
+                                self.bank.config.get('rabbitmq_process_host'),
+                                self.bank.config.get('biomaj_proxy'),
+                                self.bank.name
+                            )
+                        else:
+                            bmaj_process = Process(
+                                meta + '_' + name, exe, args, desc, proc_type,
+                                expand, self.bmaj_env, os.path.dirname(self.bank.config.log_file)
+                            )
                     self.set_progress(bmaj_process.name, None)
                     if self.bank.config.get(bprocess + '.format'):
                         bmaj_process.format = self.bank.config.get(bprocess + '.format')

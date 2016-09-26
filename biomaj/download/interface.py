@@ -209,7 +209,7 @@ class DownloadInterface(object):
             for dfile in self.files_to_download:
                 if not check_exists or os.path.exists(os.path.join(root_dir, dfile['name'])):
                     dfile['root'] = root_dir
-                    self.files_to_copy.apppend(dfile)
+                    self.files_to_copy.append(dfile)
                 else:
                     new_files_to_download.append(dfile)
 

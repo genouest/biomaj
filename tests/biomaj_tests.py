@@ -486,6 +486,7 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         self.utils.clean()
     
     def test_rsync_list(self):
+        logging.debug("test_rsync_list")
         rsyncd =  RSYNCDownload('rsync', self.examples, "", self.config)
         rsyncd.set_credentials(None)
         os.chdir(self.utils.data_dir)
@@ -493,6 +494,7 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         self.assertTrue(len(files_list) != 0)
     
     def test_rsync_match(self):
+        logging.debug("test_rsync_match")
         rsyncd =  RSYNCDownload('rsync', self.examples, "", self.config)
         rsyncd.set_credentials(None)
         os.chdir(self.utils.data_dir)
@@ -501,6 +503,7 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         self.assertTrue(len(rsyncd.files_to_download) != 0)
     
     def test_rsync_download(self):
+        logging.debug("test_rsync_download")
         rsyncd = RSYNCDownload('rsync', self.examples, "", self.config)
         rsyncd.set_credentials(None)
         os.chdir(self.utils.data_dir)
@@ -508,7 +511,8 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         self.assertTrue(error == 0)
     
     
-    def test_rsync_match(self):
+    def test_rsync_general_download(self):
+        logging.debug("test_rsync_general_download")
         rsyncd =  RSYNCDownload('rsync', self.examples, "", self.config)
         rsyncd.set_credentials(None)
         os.chdir(self.utils.data_dir)
@@ -518,6 +522,7 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         self.assertTrue(error==0)
     
     def test_rsync_download_or_copy(self):
+        logging.debug("test_rsync_download_or_copy")
         rsyncd =  RSYNCDownload('rsync', self.examples, "", self.config)
         os.chdir(self.utils.data_dir)
         (file_list, dir_list) = rsyncd.list()

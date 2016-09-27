@@ -592,6 +592,15 @@ class Bank(object):
             {'$set': {'current': self.session._session['id']}}
         )
 
+        release_file = os.path.join(self.config.get('data.dir'),
+                                    self.config.get('dir.version'),
+                                    'RELEASE.txt')
+
+        with open(release_file, 'w') as outfile:
+            outfile.write('Bank: %s\nRelease: %s\nRemote release:%s\n' % (self.name, self.session.get('release'), self.session.get('remoterelease')))
+
+
+
     def unpublish(self):
         """
         Unset *current*
@@ -606,6 +615,13 @@ class Bank(object):
 
         if os.path.lexists(current_link):
             os.remove(current_link)
+
+        release_file = os.path.join(self.config.get('data.dir'),
+                                    self.config.get('dir.version'),
+                                    'RELEASE.txt')
+        if os.path.exists(release_file):
+            os.remove(release_file)
+
         self.banks.update(
             {'name': self.name},
             {'$set': {'current': None}}

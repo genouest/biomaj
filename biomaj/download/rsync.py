@@ -50,9 +50,9 @@ class RSYNCDownload(DownloadInterface):
         err_code = None
         rfiles = []
         rdirs = []
+        logging.debug('RSYNC:List')
         #os.chdir(self.offline_dir)
         if self.remote_dir and self.credentials:
-            logging.info("if self.remote_dir and self.credentials:")
             cmd = str(self.protocol) + " --list-only " + str(self.credentials) + "@" + str(self.server) + ":" + str(self.remote_dir) + str(directory)
         elif (self.remote_dir and not self.credentials):
            cmd = str(self.protocol) + " --list-only " + str(self.server) + ":" + str(self.remote_dir) + str(directory) 
@@ -154,6 +154,7 @@ class RSYNCDownload(DownloadInterface):
     def rsync_download(self,file_path, file_to_download):
         error = False
         err_code = ''
+        logging.debug('RSYNC:RSYNC DOwNLOAD')
         #os.chdir(self.offline_dir)
         try :
             if self.remote_dir and self.credentials: #download on server

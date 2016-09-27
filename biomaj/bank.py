@@ -599,8 +599,6 @@ class Bank(object):
         with open(release_file, 'w') as outfile:
             outfile.write('Bank: %s\nRelease: %s\nRemote release:%s\n' % (self.name, self.session.get('release'), self.session.get('remoterelease')))
 
-
-
     def unpublish(self):
         """
         Unset *current*

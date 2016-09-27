@@ -9,6 +9,7 @@ import tempfile
 import re
 import traceback
 import json
+import hashlib
 
 from biomaj_core.utils import Utils
 from biomaj_download.downloadclient import DownloadClient
@@ -248,7 +249,7 @@ class UpdateWorkflow(Workflow):
         {'name': 'depends', 'steps': []},
         {'name': 'preprocess', 'steps': []},
         {'name': 'release', 'steps': []},
-        {'name': 'download', 'steps': ['uncompress', 'copy', 'copydepends']},
+        {'name': 'download', 'steps': ['checksum', 'uncompress', 'copy', 'copydepends']},
         {'name': 'postprocess', 'steps': ['metadata', 'stats']},
         {'name': 'publish', 'steps': ['old_biomaj_api', 'clean_offline', 'delete_old', 'clean_old_sessions']},
         {'name': 'over', 'steps': []}
@@ -276,6 +277,52 @@ class UpdateWorkflow(Workflow):
         if self.options.get_option(Options.FROMSCRATCH):
             return self.wf_clean_offline()
 
+        return True
+
+    def _md5(self, fname):
+        hash_md5 = hashlib.md5()
+        with open(fname, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_md5.update(chunk)
+        return hash_md5.hexdigest()
+
+    def _sha256(self, fname):
+        hash_sha256 = hashlib.sha256()
+        with open(fname, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_sha256.update(chunk)
+        return hash_sha256.hexdigest()
+
+    def wf_checksum(self):
+        logging.info('Workflow:wf_checksum')
+        offline_dir = self.session.get_offline_directory()
+        error = False
+        for downloaded_file in self.downloaded_files:
+            downloaded_file_name = downloaded_file['name']
+            if 'save_as' in downloaded_file:
+                downloaded_file_name = downloaded_file['save_as']
+            md5_file = os.path.join(offline_dir, downloaded_file_name + '.md5')
+            if os.path.exists(md5_file):
+                with open(md5_file, 'r') as md5_content:
+                    data = md5_content.read().split()
+                    md5_cksum = data[0]
+                    downloaded_file_md5 = self._md5(os.path.join(offline_dir, downloaded_file_name))
+                    logging.debug('Wf_checksum:md5:%s:%s:%s' % (downloaded_file_name, downloaded_file_md5, md5_cksum))
+                    if downloaded_file_md5 != md5_cksum:
+                        logging.error('Invalid md5 checksum for file %s' % (downloaded_file_name))
+                        error = True
+            sha256_file = os.path.join(offline_dir, downloaded_file_name + '.sha256')
+            if os.path.exists(sha256_file):
+                with open(sha256_file, 'r') as sha256_content:
+                    data = sha256_content.read().split()
+                    sha256_cksum = data[0]
+                    downloaded_file_sha256 = self._sha256(os.path.join(offline_dir, downloaded_file_name))
+                    logging.debug('Wf_checksum:sha256:%s:%s:%s' % (downloaded_file_name, downloaded_file_sha256, sha256_cksum))
+                    if downloaded_file_sha256 != sha256_cksum:
+                        logging.error('Invalid sha256 checksum for file %s' % (downloaded_file_name))
+                        error = True
+        if error:
+            return False
         return True
 
     def wf_check(self):
@@ -417,7 +464,7 @@ class UpdateWorkflow(Workflow):
             dserv = DownloadClient(self.bank.config.get('rabbitmq_download_host'))
             proxy = self.bank.config.get('biomaj_proxy')
             session = dserv.create_session(self.name, proxy)
-            logging.info("Workflow:wf_release:DownloadSession:"+str(session))
+            logging.info("Workflow:wf_release:DownloadSession:" + str(session))
 
             http_parse = HTTPParse(
                 cf.get('http.parse.dir.line'),
@@ -785,7 +832,7 @@ class UpdateWorkflow(Workflow):
 
         proxy = self.bank.config.get('biomaj_proxy')
         session = dserv.create_session(self.name, proxy)
-        logging.info("Workflow:wf_download:DownloadSession:"+str(session))
+        logging.info("Workflow:wf_download:DownloadSession:" + str(session))
 
         use_remote_list = False
 
@@ -1124,7 +1171,7 @@ class UpdateWorkflow(Workflow):
 
         proxy = self.bank.config.get('biomaj_proxy')
         session = dserv.create_session(self.name, proxy)
-        logging.info("Workflow:wf_download:DownloadSession:"+str(session))
+        logging.info("Workflow:wf_download:DownloadSession:" + str(session))
 
         for downloader in downloaders:
             for file_to_download in downloader.files_to_download:

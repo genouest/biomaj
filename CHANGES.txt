@@ -3,6 +3,7 @@
   Add possibility to define files to download from a local file with remote.list parameter
   Fix visibility modification (bug deleted the bank properties field)
   Fix #65 Add release file in bank dir after update
+  Add md5 or sha256 checksum checks if files are downloaded and available
 3.0.19:
   Fix missing README.md in package
   Fix #53 avoid duplicates in pending databases

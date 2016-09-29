@@ -228,6 +228,7 @@ class TestBiomajSetup(unittest.TestCase):
     banks = Bank.list()
     self.assertTrue(len(banks) == 2)
 
+  @attr('test')
   @attr('network')
   def test_get_release(self):
     """

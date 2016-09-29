@@ -461,8 +461,12 @@ class UpdateWorkflow(Workflow):
             return True
         else:
             # """""""""""""""""""""""
-            dserv = DownloadClient(self.bank.config.get('rabbitmq_download_host'))
-            proxy = self.bank.config.get('biomaj_proxy')
+            dserv = None
+            if self.bank.config.get('micro.biomaj.service.download'):
+                dserv = DownloadClient(self.bank.config.get('micro.biomaj.rabbit_mq'))
+            else:
+                dserv = DownloadClient()
+            proxy = self.bank.config.get('micro.biomaj.proxy')
             session = dserv.create_session(self.name, proxy)
             logging.info("Workflow:wf_release:DownloadSession:" + str(session))
 
@@ -825,12 +829,16 @@ class UpdateWorkflow(Workflow):
         pool_size = self.session.config.get('files.num.threads', None)
         dserv = None
 
-        if pool_size:
-            dserv = DownloadClient(self.bank.config.get('rabbitmq_download_host'), pool_size=pool_size)
+        if self.bank.config.get('micro.biomaj.service.download'):
+            dserv = DownloadClient(self.bank.config.get('micro.biomaj.rabbit_mq'))
         else:
-            dserv = DownloadClient(self.bank.config.get('rabbitmq_download_host'))
+            dserv = DownloadClient()
 
-        proxy = self.bank.config.get('biomaj_proxy')
+        if pool_size:
+            dserv.set_queue_size(pool_size)
+
+
+        proxy = self.bank.config.get('micro.biomaj.proxy')
         session = dserv.create_session(self.name, proxy)
         logging.info("Workflow:wf_download:DownloadSession:" + str(session))
 
@@ -1164,12 +1172,16 @@ class UpdateWorkflow(Workflow):
 
         pool_size = self.session.config.get('files.num.threads', None)
         dserv = None
-        if pool_size:
-            dserv = DownloadClient(self.bank.config.get('rabbitmq_download_host'), pool_size=pool_size)
-        else:
-            dserv = DownloadClient(self.bank.config.get('rabbitmq_download_host'))
 
-        proxy = self.bank.config.get('biomaj_proxy')
+        if self.bank.config.get('micro.biomaj.service.download'):
+            dserv = DownloadClient(self.bank.config.get('micro.biomaj.rabbit_mq'))
+        else:
+            dserv = DownloadClient()
+
+        if pool_size:
+            dserv.set_queue_size(pool_size)
+
+        proxy = self.bank.config.get('micro.biomaj.proxy')
         session = dserv.create_session(self.name, proxy)
         logging.info("Workflow:wf_download:DownloadSession:" + str(session))
 

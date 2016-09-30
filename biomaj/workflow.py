@@ -295,6 +295,11 @@ class UpdateWorkflow(Workflow):
 
     def wf_checksum(self):
         logging.info('Workflow:wf_checksum')
+        '''
+        if self.bank.config.get('file.md5.check', 'false') != 'true':
+            logging.info('Workflow:wf_checksum:skipping')
+            return True
+        '''
         offline_dir = self.session.get_offline_directory()
         error = False
         for downloaded_file in self.downloaded_files:
@@ -826,7 +831,8 @@ class UpdateWorkflow(Workflow):
 
         downloaders = []
 
-        pool_size = self.session.config.get('files.num.threads', None)
+        pool_size = self.session.config.get('files.num.threads', default=None)
+
         dserv = None
 
         if self.bank.config.get('micro.biomaj.service.download'):
@@ -835,7 +841,7 @@ class UpdateWorkflow(Workflow):
             dserv = DownloadClient()
 
         if pool_size:
-            dserv.set_queue_size(pool_size)
+            dserv.set_queue_size(int(pool_size))
 
 
         proxy = self.bank.config.get('micro.biomaj.proxy')
@@ -1170,7 +1176,7 @@ class UpdateWorkflow(Workflow):
 
         downloader.close()
 
-        pool_size = self.session.config.get('files.num.threads', None)
+        pool_size = self.session.config.get('files.num.threads', default=None)
         dserv = None
 
         if self.bank.config.get('micro.biomaj.service.download'):
@@ -1179,7 +1185,7 @@ class UpdateWorkflow(Workflow):
             dserv = DownloadClient()
 
         if pool_size:
-            dserv.set_queue_size(pool_size)
+            dserv.set_queue_size(int(pool_size))
 
         proxy = self.bank.config.get('micro.biomaj.proxy')
         session = dserv.create_session(self.name, proxy)

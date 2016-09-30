@@ -1283,6 +1283,8 @@ class UpdateWorkflow(Workflow):
                 if not_ok:
                     logging.error('Workflow:wf_uncompress:Failure:' + file['name'])
                     return False
+        else:
+            logging.info("Workflow:wf_uncompress:NoExtract")
         return True
 
     def wf_copy(self):

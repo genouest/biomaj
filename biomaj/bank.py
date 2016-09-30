@@ -313,6 +313,17 @@ class Bank(object):
         return props
 
     @staticmethod
+    def user_banks(user_name):
+        """
+        Get user banks name
+        :param user_name: user identifier
+        :type user_name: str
+        :return: list of bank name
+        """
+        banks = MongoConnector.banks.find({'properties.owner': user_name}, {'name': 1})
+        return banks
+
+    @staticmethod
     def searchindex(query):
         return BmajIndex.searchq(query)
 

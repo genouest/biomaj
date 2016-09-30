@@ -195,10 +195,24 @@ class MetaProcess(threading.Thread):
                     else:
                         if self.bank.config.get('micro.biomaj.service.process'):
                             logging.info("PROC:META:RUN:REMOTEPROCESS: " + bprocess)
+                            # (self, name, exe, args, desc=None, proc_type=None, expand=True,
+                            # bank_env=None, log_dir=None,
+                            # rabbit_mq=None, rabbit_mq_port=5672, rabbit_mq_user=None, rabbit_mq_password=None, rabbit_mq_virtualhost=None,
+                            # proxy=None, bank=None):
                             bmaj_process = RemoteProcess(
-                                meta + '_' + name, exe, args, desc, proc_type,
-                                expand, self.bmaj_env, os.path.dirname(self.bank.config.log_file),
+                                meta + '_' + name,
+                                exe,
+                                args,
+                                desc,
+                                proc_type,
+                                expand,
+                                self.bmaj_env,
+                                os.path.dirname(self.bank.config.log_file),
                                 self.bank.config.get('micro.biomaj.rabbit_mq'),
+                                int(self.bank.config.get('micro.biomaj.rabbit_mq_port', default='5672')),
+                                self.bank.config.get('micro.biomaj.rabbit_mq_user'),
+                                self.bank.config.get('micro.biomaj.rabbit_mq_password'),
+                                self.bank.config.get('micro.biomaj.rabbit_mq_virtualhost', default='/'),
                                 self.bank.config.get('micro.biomaj.proxy'),
                                 self.bank.name
                             )

@@ -468,7 +468,13 @@ class UpdateWorkflow(Workflow):
             # """""""""""""""""""""""
             dserv = None
             if self.bank.config.get('micro.biomaj.service.download'):
-                dserv = DownloadClient(self.bank.config.get('micro.biomaj.rabbit_mq'))
+                dserv = DownloadClient(
+                    self.bank.config.get('micro.biomaj.rabbit_mq'),
+                    int(self.bank.config.get('micro.biomaj.rabbit_mq_port', default='5672')),
+                    self.bank.config.get('micro.biomaj.rabbit_mq_user', default=None),
+                    self.bank.config.get('micro.biomaj.rabbit_mq_password', default=None),
+                    self.bank.config.get('micro.biomaj.rabbit_mq_virtualhost', default='/')
+                )
             else:
                 dserv = DownloadClient()
             proxy = self.bank.config.get('micro.biomaj.proxy')
@@ -836,13 +842,18 @@ class UpdateWorkflow(Workflow):
         dserv = None
 
         if self.bank.config.get('micro.biomaj.service.download'):
-            dserv = DownloadClient(self.bank.config.get('micro.biomaj.rabbit_mq'))
+            dserv = DownloadClient(
+                self.bank.config.get('micro.biomaj.rabbit_mq'),
+                int(self.bank.config.get('micro.biomaj.rabbit_mq_port', default='5672')),
+                self.bank.config.get('micro.biomaj.rabbit_mq_user', default=None),
+                self.bank.config.get('micro.biomaj.rabbit_mq_password', default=None),
+                self.bank.config.get('micro.biomaj.rabbit_mq_virtualhost', default='/')
+            )
         else:
             dserv = DownloadClient()
 
         if pool_size:
             dserv.set_queue_size(int(pool_size))
-
 
         proxy = self.bank.config.get('micro.biomaj.proxy')
         session = dserv.create_session(self.name, proxy)
@@ -1180,7 +1191,13 @@ class UpdateWorkflow(Workflow):
         dserv = None
 
         if self.bank.config.get('micro.biomaj.service.download'):
-            dserv = DownloadClient(self.bank.config.get('micro.biomaj.rabbit_mq'))
+            dserv = DownloadClient(
+                self.bank.config.get('micro.biomaj.rabbit_mq'),
+                int(self.bank.config.get('micro.biomaj.rabbit_mq_port', default='5672')),
+                self.bank.config.get('micro.biomaj.rabbit_mq_user', default=None),
+                self.bank.config.get('micro.biomaj.rabbit_mq_password', default=None),
+                self.bank.config.get('micro.biomaj.rabbit_mq_virtualhost', default='/')
+            )
         else:
             dserv = DownloadClient()
 

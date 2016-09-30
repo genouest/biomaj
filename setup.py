@@ -49,7 +49,7 @@ config = {
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.4'
     ],
-    'install_requires': ['nose',
+    'install_requires': [
                          'biomaj_core',
                          'biomaj_user',
                          'biomaj_download',
@@ -57,12 +57,13 @@ config = {
                          'pymongo>=3.2',
                          'pycurl',
                          'ldap3',
-                         'mock',
                          'py-bcrypt',
                          'drmaa',
                          'future',
                          'tabulate',
                          'elasticsearch'],
+    'tests_require': ['nose', 'mock'],
+    'test_suite': 'nose.collector',
     'packages': find_packages(),
     'include_package_data': True,
     'scripts': ['bin/biomaj-cli.py'],

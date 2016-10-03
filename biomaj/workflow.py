@@ -151,6 +151,7 @@ class Workflow(object):
         """
         Reset progress status when workflow is over
         """
+        return True
 
     def wf_progress(self, task, status):
         """
@@ -645,6 +646,7 @@ class UpdateWorkflow(Workflow):
         """
         self.skip_all = True
         self.session._session['status'][Workflow.FLOW_OVER] = True
+        self.wf_progress(Workflow.FLOW_OVER, True)
         self.session._session['update'] = False
         self.session.set('download_files', [])
         self.session.set('files', [])

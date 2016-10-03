@@ -265,9 +265,19 @@ class Bank(object):
         admin = []
         if admin_config is not None:
             admin = [x.strip() for x in admin_config.split(',')]
-        if admin and os.environ['LOGNAME'] in admin:
+
+        if self.config.get('micro.biomaj.service.daemon'):
+            if self.options and self.options.user:
+                current_user = self.options.user
+            else:
+                logging.debug('Micro services activated but user not authenticated')
+                return False
+        else:
+            current_user = os.environ['LOGNAME']
+
+        if admin and current_user in admin:
             return True
-        if os.environ['LOGNAME'] == self.bank['properties']['owner']:
+        if current_user == self.bank['properties']['owner']:
             return True
         return False
 
@@ -297,8 +307,16 @@ class Bank(object):
 
         :return: properties dict
         """
+        owner = None
+        if self.config.get('micro.biomaj.service.daemon'):
+            if self.options and self.options.user:
+                owner = self.options.user
+            else:
+                logging.debug('Micro services activated but user not authenticated')
+                return False
+        else:
+            owner = os.environ['LOGNAME']
 
-        owner = os.environ['LOGNAME']
         # If owner not set, use current user, else keep current
         if self.bank and 'properties' in self.bank and 'owner' in self.bank['properties']:
             owner = self.bank['properties']['owner']

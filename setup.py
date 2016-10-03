@@ -61,6 +61,7 @@ config = {
                          'drmaa',
                          'future',
                          'tabulate',
+                         'requests',
                          'elasticsearch'],
     'tests_require': ['nose', 'mock'],
     'test_suite': 'nose.collector',

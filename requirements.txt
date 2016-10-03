@@ -12,3 +12,4 @@ py-bcrypt
 drmaa
 future
 elasticsearch
+requests

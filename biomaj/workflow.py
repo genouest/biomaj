@@ -564,7 +564,7 @@ class UpdateWorkflow(Workflow):
                 (file_list, dir_list) = release_downloader.list()
             except Exception as e:
                 self._close_download_service(dserv)
-                logging.exception('Workflow:wf_release:Exception:' +str(e))
+                logging.exception('Workflow:wf_release:Exception:' + str(e))
                 return False
 
             release_downloader.match([cf.get('release.file')], file_list, dir_list)
@@ -1274,7 +1274,7 @@ class UpdateWorkflow(Workflow):
             download_error = dserv.wait_for_download()
         except Exception as e:
             self._close_download_service(dserv)
-            logging.exception('Workflow:wf_download:Exception:' +str(e))
+            logging.exception('Workflow:wf_download:Exception:' + str(e))
             return False
 
         self._close_download_service(dserv)

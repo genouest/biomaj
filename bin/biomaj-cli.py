@@ -69,6 +69,8 @@ def main():
     options = Options()
     parser.parse_args(namespace=options)
 
+    options.user = os.environ['LOGNAME']
+
     options.no_log = False
 
     if options.help:

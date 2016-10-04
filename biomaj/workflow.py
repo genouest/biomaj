@@ -97,7 +97,7 @@ class Workflow(object):
                     self.session._session['status'][flow['name']] = getattr(self, 'wf_' + flow['name'])()
                 except Exception as e:
                     self.session._session['status'][flow['name']] = False
-                    logging.error('Workflow:' + flow['name'] + 'Exception:' + str(e))
+                    logging.exception('Workflow:' + flow['name'] + 'Exception:' + str(e))
                     logging.debug(traceback.format_exc())
                 finally:
                     self.wf_progress(flow['name'], self.session._session['status'][flow['name']])
@@ -560,7 +560,12 @@ class UpdateWorkflow(Workflow):
                 self._close_download_service(dserv)
                 return False
 
-            (file_list, dir_list) = release_downloader.list()
+            try:
+                (file_list, dir_list) = release_downloader.list()
+            except Exception as e:
+                self._close_download_service(dserv)
+                logging.exception('Workflow:wf_release:Exception:' +str(e))
+                return False
 
             release_downloader.match([cf.get('release.file')], file_list, dir_list)
             if len(release_downloader.files_to_download) == 0:
@@ -1264,7 +1269,14 @@ class UpdateWorkflow(Workflow):
                 dserv.download_remote_file(operation)
 
         logging.info("Workflow:wf_download:Download:Waiting")
-        download_error = dserv.wait_for_download()
+        download_error = False
+        try:
+            download_error = dserv.wait_for_download()
+        except Exception as e:
+            self._close_download_service(dserv)
+            logging.exception('Workflow:wf_download:Exception:' +str(e))
+            return False
+
         self._close_download_service(dserv)
 
         self.downloaded_files = copied_files

@@ -1228,7 +1228,10 @@ class UpdateWorkflow(Workflow):
                 remote_file.protocol = message_pb2.DownloadFile.Protocol.Value(protocol.upper())
 
                 remote_file.server = downloader.server
-                remote_file.remote_dir = cf.get('remote.dir')
+                if cf.get('remote.dir'):
+                    remote_file.remote_dir = cf.get('remote.dir')
+                else:
+                    remote_file.remote_dir = ''
 
                 biomaj_file = remote_file.files.add()
                 biomaj_file.name = file_to_download['name']

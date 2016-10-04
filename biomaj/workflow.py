@@ -97,7 +97,7 @@ class Workflow(object):
                     self.session._session['status'][flow['name']] = getattr(self, 'wf_' + flow['name'])()
                 except Exception as e:
                     self.session._session['status'][flow['name']] = False
-                    logging.exception('Workflow:' + flow['name'] + 'Exception:' + str(e))
+                    logging.exception('Workflow:' + flow['name'] + ':Exception:' + str(e))
                     logging.debug(traceback.format_exc())
                 finally:
                     self.wf_progress(flow['name'], self.session._session['status'][flow['name']])
@@ -1139,7 +1139,7 @@ class UpdateWorkflow(Workflow):
                                 logging.debug('Workflow:wf_download:offline:' + file_to_download['name'])
                         except Exception as e:
                             # Could not get stats on file
-                            logging.debu('Workflow:wf_download:offline:failed to stat file: ' + str(e))
+                            logging.debug('Workflow:wf_download:offline:failed to stat file: ' + str(e))
                             os.remove(offline_dir + '/' + file_to_download['name'])
                             keep_files.append(file_to_download)
                     else:

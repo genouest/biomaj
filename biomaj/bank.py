@@ -6,6 +6,8 @@ import time
 import shutil
 import json
 
+import redis
+
 from datetime import datetime
 from biomaj.mongo_connector import MongoConnector
 
@@ -1087,6 +1089,19 @@ class Bank(object):
         :return: bool
         """
         workflow = RemoveWorkflow(self, session)
+        if self.options and self.options.get_option('redis_host'):
+            redis_client = redis.StrictRedis(
+                host=self.options.get_option('redis_host'),
+                port=self.options.get_option('redis_port'),
+                db=self.options.get_option('redis_db'),
+                decode_responses=True
+            )
+            workflow.redis_client = redis_client
+            workflow.redis_prefix = self.options.get_option('redis_prefix')
+            if redis_client.get(self.options.get_option('redis_prefix') + ':' + self.name + ':action:cancel'):
+                logging.warn('Cancel requested, stopping update')
+                redis_client.delete(self.options.get_option('redis_prefix') + ':' + self.name + ':action:cancel')
+                return False
         return workflow.start()
 
     def start_update(self):
@@ -1094,4 +1109,17 @@ class Bank(object):
         Start an update workflow
         """
         workflow = UpdateWorkflow(self)
+        if self.options and self.options.get_option('redis_host'):
+            redis_client = redis.StrictRedis(
+                host=self.options.get_option('redis_host'),
+                port=self.options.get_option('redis_port'),
+                db=self.options.get_option('redis_db'),
+                decode_responses=True
+            )
+            workflow.redis_client = redis_client
+            workflow.redis_prefix = self.options.get_option('redis_prefix')
+            if redis_client.get(self.options.get_option('redis_prefix') + ':' + self.name + ':action:cancel'):
+                logging.warn('Cancel requested, stopping update')
+                redis_client.delete(self.options.get_option('redis_prefix') + ':' + self.name + ':action:cancel')
+                return False
         return workflow.start()

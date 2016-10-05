@@ -67,6 +67,9 @@ class Workflow(object):
         self.session._session['remove'] = False
         self.session.config.set('localrelease', '')
         self.session.config.set('remoterelease', '')
+        # For micro services
+        self.redis_client = None
+        self.redis_prefix = None
 
     def get_flow(self, task):
         for flow in Workflow.FLOW:
@@ -88,6 +91,14 @@ class Workflow(object):
             if self.options.get_option(Options.STOP_BEFORE) == flow['name']:
                 self.wf_over()
                 break
+
+            # Check for cancel request
+            if self.redis_client and self.redis_client.get(self.redis_prefix + ':' + self.bank.name + ':action:cancel'):
+                logging.warn('Cancel requested, stopping update')
+                self.redis_client.delete(self.redis_prefix + ':' + self.bank.name + ':action:cancel')
+                self.wf_over()
+                return False
+
             # Always run INIT
             if flow['name'] != Workflow.FLOW_INIT and self.session.get_status(flow['name']):
                 logging.info('Workflow:Skip:' + flow['name'])
@@ -110,6 +121,12 @@ class Workflow(object):
                 if not self.skip_all:
                     for step in flow['steps']:
                         try:
+                            # Check for cancel request
+                            if self.redis_client and self.redis_client.get(self.redis_prefix + ':' + self.bank.name + ':action:cancel'):
+                                logging.warn('Cancel requested, stopping update')
+                                self.redis_client.delete(self.redis_prefix + ':' + self.bank.name + ':action:cancel')
+                                self.wf_over()
+                                return False
                             res = getattr(self, 'wf_' + step)()
                             if not res:
                                 logging.error('Error during ' + flow['name'] + ' subtask: wf_' + step)
@@ -233,7 +250,7 @@ class RemoveWorkflow(Workflow):
     def wf_removeprocess(self):
         logging.info('Workflow:wf_removepreprocess')
         metas = self.session._session['process']['removeprocess']
-        pfactory = RemoveProcessFactory(self.bank, metas)
+        pfactory = RemoveProcessFactory(self.bank, metas, redis_client=self.redis_client, redis_prefix=self.redis_prefix)
         res = pfactory.run()
         self.session._session['process']['removeprocess'] = pfactory.meta_status
         return res
@@ -395,7 +412,7 @@ class UpdateWorkflow(Workflow):
         """
         logging.info('Workflow:wf_preprocess')
         metas = self.session._session['process']['preprocess']
-        pfactory = PreProcessFactory(self.bank, metas)
+        pfactory = PreProcessFactory(self.bank, metas, redis_client=self.redis_client, redis_prefix=self.redis_prefix)
         res = pfactory.run()
         self.session._session['process']['preprocess'] = pfactory.meta_status
         return res
@@ -1203,7 +1220,9 @@ class UpdateWorkflow(Workflow):
                 int(self.bank.config.get('micro.biomaj.rabbit_mq_port', default='5672')),
                 self.bank.config.get('micro.biomaj.rabbit_mq_user', default=None),
                 self.bank.config.get('micro.biomaj.rabbit_mq_password', default=None),
-                self.bank.config.get('micro.biomaj.rabbit_mq_virtualhost', default='/')
+                self.bank.config.get('micro.biomaj.rabbit_mq_virtualhost', default='/'),
+                redis_client=self.redis_client,
+                redis_prefix=self.redis_prefix
             )
         else:
             dserv = DownloadClient()
@@ -1400,7 +1419,7 @@ class UpdateWorkflow(Workflow):
 
         logging.info('Workflow:wf_postprocess')
         blocks = self.session._session['process']['postprocess']
-        pfactory = PostProcessFactory(self.bank, blocks)
+        pfactory = PostProcessFactory(self.bank, blocks, redis_client=self.redis_client, redis_prefix=self.redis_prefix)
         res = pfactory.run()
         self.session._session['process']['postprocess'] = pfactory.blocks
 

@@ -13,3 +13,4 @@ drmaa
 future
 elasticsearch
 requests
+redis

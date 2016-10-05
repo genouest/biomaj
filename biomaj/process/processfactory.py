@@ -13,13 +13,15 @@ class ProcessFactory(object):
 
     NB_THREAD = 2
 
-    def __init__(self, bank):
+    def __init__(self, bank, redis_client=None, redis_prefix=None):
         self.bank = bank
         self.threads_tasks = []
         if self.bank.session:
             self.meta_data = self.bank.session.get('per_process_metadata')
         else:
             self.meta_data = {}
+        self.redis_client = redis_client
+        self.redis_prefix = redis_prefix
 
     def run(self, simulate=False):
         '''
@@ -56,6 +58,14 @@ class ProcessFactory(object):
             try:
                 # Join all threads using a timeout so it doesn't block
                 # Filter out threads which have been joined or are None
+
+                # Check for cancel request
+                if self.redis_client and self.redis_client.get(self.redis_prefix + ':' + self.bank.name + ':action:cancel'):
+                    logging.warn('Cancel requested, stopping process update')
+                    self.redis_client.delete(self.redis_prefix + ':' + self.bank.name + ':session:' + self.session)
+                    kill_received = True
+                    for t in running_th:
+                        t.kill_received = True
                 running_th = [t.join(1000) for t in running_th if t is not None and t.isAlive()]
             except KeyboardInterrupt:
                 logging.warn("Ctrl-c received! Sending kill to threads...")
@@ -103,7 +113,7 @@ class PreProcessFactory(ProcessFactory):
     Manage preprocesses
     '''
 
-    def __init__(self, bank, metas=None):
+    def __init__(self, bank, metas=None, redis_client=None, redis_prefix=None):
         '''
         Creates a preprocess factory
 
@@ -112,7 +122,7 @@ class PreProcessFactory(ProcessFactory):
         :param metas: initial status of meta processes
         :type metas: dict
         '''
-        ProcessFactory.__init__(self, bank)
+        ProcessFactory.__init__(self, bank, redis_client, redis_prefix)
         self.meta_status = None
         if metas is not None:
             self.meta_status = metas
@@ -141,7 +151,7 @@ class RemoveProcessFactory(ProcessFactory):
     Manage remove processes
     '''
 
-    def __init__(self, bank, metas=None):
+    def __init__(self, bank, metas=None, redis_client=None, redis_prefix=None):
         '''
         Creates a remove process factory
 
@@ -150,7 +160,7 @@ class RemoveProcessFactory(ProcessFactory):
         :param metas: initial status of meta processes
         :type metas: dict
         '''
-        ProcessFactory.__init__(self, bank)
+        ProcessFactory.__init__(self, bank, redis_client, redis_prefix)
         self.meta_status = None
         if metas is not None:
             self.meta_status = metas
@@ -182,7 +192,7 @@ class PostProcessFactory(ProcessFactory):
     Each meta process status is a dict of process status
     '''
 
-    def __init__(self, bank, blocks=None):
+    def __init__(self, bank, blocks=None, redis_client=None, redis_prefix=None):
         '''
         Creates a postprocess factory
 
@@ -191,7 +201,7 @@ class PostProcessFactory(ProcessFactory):
         :param blocks: initial status of block processes
         :type blocks: dict
         '''
-        ProcessFactory.__init__(self, bank)
+        ProcessFactory.__init__(self, bank, redis_client, redis_prefix)
         self.blocks = {}
         if blocks is not None:
             self.blocks = blocks

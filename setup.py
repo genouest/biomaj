@@ -62,7 +62,7 @@ config = {
                          'future',
                          'tabulate',
                          'requests',
-                         'redis'
+                         'redis',
                          'elasticsearch'],
     'tests_require': ['nose', 'mock'],
     'test_suite': 'nose.collector',

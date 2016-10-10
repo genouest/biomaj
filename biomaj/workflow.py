@@ -1298,6 +1298,11 @@ class UpdateWorkflow(Workflow):
             self._close_download_service(dserv)
             logging.exception('Workflow:wf_download:Exception:' + str(e))
             return False
+        except KeyboardInterrupt:
+            logging.warn("Ctrl-c received! Stop downloads...")
+            logging.warn("Running downloads will continue and process will stop.")
+            self._close_download_service(dserv)
+            return False
 
         self._close_download_service(dserv)
 

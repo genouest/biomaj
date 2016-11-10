@@ -489,9 +489,9 @@ class UpdateWorkflow(Workflow):
                 dserv = DownloadClient(
                     self.bank.config.get('micro.biomaj.rabbit_mq'),
                     int(self.bank.config.get('micro.biomaj.rabbit_mq_port', default='5672')),
+                    self.bank.config.get('micro.biomaj.rabbit_mq_virtualhost', default='/'),
                     self.bank.config.get('micro.biomaj.rabbit_mq_user', default=None),
-                    self.bank.config.get('micro.biomaj.rabbit_mq_password', default=None),
-                    self.bank.config.get('micro.biomaj.rabbit_mq_virtualhost', default='/')
+                    self.bank.config.get('micro.biomaj.rabbit_mq_password', default=None)
                 )
             else:
                 dserv = DownloadClient()
@@ -869,9 +869,9 @@ class UpdateWorkflow(Workflow):
             dserv = DownloadClient(
                 self.bank.config.get('micro.biomaj.rabbit_mq'),
                 int(self.bank.config.get('micro.biomaj.rabbit_mq_port', default='5672')),
+                self.bank.config.get('micro.biomaj.rabbit_mq_virtualhost', default='/'), 
                 self.bank.config.get('micro.biomaj.rabbit_mq_user', default=None),
                 self.bank.config.get('micro.biomaj.rabbit_mq_password', default=None),
-                self.bank.config.get('micro.biomaj.rabbit_mq_virtualhost', default='/')
             )
         else:
             dserv = DownloadClient()
@@ -1218,9 +1218,9 @@ class UpdateWorkflow(Workflow):
             dserv = DownloadClient(
                 self.bank.config.get('micro.biomaj.rabbit_mq'),
                 int(self.bank.config.get('micro.biomaj.rabbit_mq_port', default='5672')),
+                self.bank.config.get('micro.biomaj.rabbit_mq_virtualhost', default='/'),
                 self.bank.config.get('micro.biomaj.rabbit_mq_user', default=None),
                 self.bank.config.get('micro.biomaj.rabbit_mq_password', default=None),
-                self.bank.config.get('micro.biomaj.rabbit_mq_virtualhost', default='/'),
                 redis_client=self.redis_client,
                 redis_prefix=self.redis_prefix
             )

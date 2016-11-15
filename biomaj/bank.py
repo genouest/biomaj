@@ -18,6 +18,7 @@ from biomaj.options import Options
 from biomaj.process.processfactory import ProcessFactory
 from biomaj.bmajindex import BmajIndex
 
+import getpass
 
 # from bson.objectid import ObjectId
 
@@ -269,13 +270,14 @@ class Bank(object):
         """
         Checks if current user is owner or admin
         """
+        owner = getpass.getuser()
         admin_config = self.config.get('admin')
         admin = []
         if admin_config is not None:
             admin = [x.strip() for x in admin_config.split(',')]
-        if admin and os.environ['LOGNAME'] in admin:
+        if admin and owner in admin:
             return True
-        if os.environ['LOGNAME'] == self.bank['properties']['owner']:
+        if owner == self.bank['properties']['owner']:
             return True
         return False
 
@@ -305,8 +307,8 @@ class Bank(object):
 
         :return: properties dict
         """
-
-        owner = os.environ['LOGNAME']
+        owner = getpass.getuser()
+        # owner = os.environ['LOGNAME']
         # If owner not set, use current user, else keep current
         if self.bank and 'properties' in self.bank and 'owner' in self.bank['properties']:
             owner = self.bank['properties']['owner']

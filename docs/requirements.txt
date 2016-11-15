@@ -1,0 +1,9 @@
+mock
+nose
+pymongo==3.2
+tabulate
+ldap3
+py-bcrypt
+drmaa
+future
+elasticsearch

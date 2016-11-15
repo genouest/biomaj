@@ -353,7 +353,7 @@ class BiomajConfig(object):
                 elif not self.get('remote.dir').endswith('/'):
                     logging.error('remote.dir must end with a /')
                     return False
-                if protocol not in ['direcftp', 'directhttp', 'directhttps'] and not self.get('remote.files'):
+                if protocol not in ['direcftp', 'directhttp', 'directhttps'] and not self.get('remote.files') and not self.get('remote.list'):
                     logging.error('remote.files not set')
                     status = False
         if not self.get('local.files'):

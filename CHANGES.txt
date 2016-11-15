@@ -1,8 +1,10 @@
 3.0.20:
   Fix #55: Added support for https and directhttps
+  Add possibility to define files to download from a local file with remote.list parameter
+  Fix visibility modification (bug deleted the bank properties field)
 3.0.19:
   Fix missing README.md in package
-  Fix #53 avoid duplicates in pending databases  
+  Fix #53 avoid duplicates in pending databases
 3.0.18:
   Add migration method to update schema when needed
   Manage HTTP month format to support text format (Jan, Feb, ...) and int format (01, 02, ...)

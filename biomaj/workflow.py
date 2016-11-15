@@ -468,8 +468,6 @@ class UpdateWorkflow(Workflow):
             else:
                 release_downloader = self.get_handler(protocol, server, remote_dir)
 
-
-            #release_downloader = self.get_handler(protocol, server, remote_dir)
             if cf.get('server.credentials') is not None:
                 release_downloader.set_credentials(cf.get('server.credentials'))
 
@@ -537,11 +535,6 @@ class UpdateWorkflow(Workflow):
                 self.session.set('release', release+'__'+str(index))
                 release = release+'__'+str(index)
 
-        #if self.options.get_option(Options.FROMSCRATCH) and os.path.exists(self.session.get_full_release_directory()):
-        #  index = 1
-        #  while os.path.exists(self.session.get_full_release_directory()+'_'+str(index)):
-        #    index += 1
-        #  self.session.set('release', release+'_'+str(index))
         self.download_go_ahead = False
         if self.options.get_option(Options.FROM_TASK) == 'download':
             # We want to download again in same release, that's fine, we do not care it is the same release
@@ -707,6 +700,36 @@ class UpdateWorkflow(Workflow):
                 logging.error(e)
         logging.debug('Workflow:wf_download:create_dir_structure:done')
 
+    def _get_list_from_file(self, remote_list):
+        """
+        Load files to download from a file
+        """
+        if not os.path.exists(remote_list):
+            logging.info("remote.list " + remote_list + " does not exists, we suppose there is no new release available")
+            return None
+
+        data = []
+        with open(remote_list) as data_file:
+            data = json.load(data_file)
+
+        for rfile in data:
+            if 'year' not in rfile or 'month' not in rfile or 'day' not in rfile:
+                today = datetime.date.today()
+                rfile['month'] = today.month
+                rfile['day'] = today.day
+                rfile['year'] = today.year
+            if 'permissions' not in rfile:
+                rfile['permissions'] = ''
+            if 'group' not in rfile:
+                rfile['group'] = ''
+            if 'size' not in rfile:
+                rfile['size'] = 0
+            if 'hash' not in rfile:
+                rfile['hash'] = None
+            if 'root' not in rfile and self.session.config.get('remote.dir'):
+                rfile['root'] = self.session.config.get('remote.dir')
+        return data
+
     def wf_download(self):
         """
         Download remote files or use an available local copy from last production directory if possible.
@@ -835,9 +858,18 @@ class UpdateWorkflow(Workflow):
             logging.error('Protocol '+cf.get('protocol')+' not supported')
             return False
 
-        (file_list, dir_list) = downloader.list()
+        remote_list = cf.get('remote.list',default=None)
+        if remote_list is not None:
+            logging.info("Use list from " + remote_list)
+            downloader.files_to_download = self._get_list_from_file(remote_list)
+            if downloader.files_to_download is None:
+                self.session.set('remoterelease', self.session.previous_release )
+                return self.no_need_to_update()
+        else:
+            (file_list, dir_list) = downloader.list()
 
-        downloader.match(cf.get('remote.files',default='.*').split(), file_list, dir_list)
+            downloader.match(cf.get('remote.files',default='.*').split(), file_list, dir_list)
+
         for f in downloader.files_to_download:
             if 'save_as' not in f or not f['save_as']:
                 f['save_as'] = f['name']

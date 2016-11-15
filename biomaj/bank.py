@@ -149,12 +149,16 @@ class Bank(object):
 
         _bank = self.bank
         info = {}
+        release = 'N/A'
+        last_update = 'N/A'
+        if 'last_update_session' in _bank:
+            last_update = datetime.fromtimestamp(_bank['last_update_session']).strftime("%Y-%m-%d %H:%M:%S")
 
         if full:
             bank_info = []
             prod_info = []
             pend_info = []
-            release = None
+
             if 'current' in _bank and _bank['current']:
                 for prod in _bank['production']:
                     if _bank['current'] == prod['session']:
@@ -163,7 +167,7 @@ class Bank(object):
             bank_info.append(["Name", "Type(s)", "Last update status", "Published release"])
             bank_info.append([_bank['name'],
                               str(','.join(_bank['properties']['type'])),
-                              str(datetime.fromtimestamp(_bank['last_update_session']).strftime("%Y-%m-%d %H:%M:%S")),
+                              str(last_update),
                               str(release)])
             # Bank production info header
             prod_info.append(["Session", "Remote release", "Release", "Directory", "Freeze"])
@@ -196,14 +200,12 @@ class Bank(object):
             return info
 
         else:
-            release = 'N/A'
             if 'current' in _bank and _bank['current']:
                 for prod in _bank['production']:
                     if _bank['current'] == prod['session']:
                         release = prod['remoterelease']
             info['info'] = [_bank['name'], ','.join(_bank['properties']['type']),
-                            str(release), _bank['properties']['visibility'],
-                            datetime.fromtimestamp(_bank['last_update_session']).strftime('%Y-%m-%d %H:%M:%S')]
+                            str(release), _bank['properties']['visibility'], last_update]
             return info
 
     def update_dependencies(self):
@@ -295,7 +297,7 @@ class Bank(object):
             logging.error('Not authorized, bank owned by ' + self.bank['properties']['owner'])
             raise Exception('Not authorized, bank owned by ' + self.bank['properties']['owner'])
 
-        self.banks.update({'name': self.name}, {'$set': {'properties': {'visibility': visibility}}})
+        self.banks.update({'name': self.name}, {'$set': {'properties.visibility':  visibility}})
 
     def get_properties(self):
         """

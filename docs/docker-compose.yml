@@ -1,0 +1,11 @@
+version: '2'
+services:
+    biomaj:
+        image: osallou/biomaj-docker
+        links:
+            - mongodb:biomaj-mongodb
+        volumes:
+            - ./data:/var/lib/biomaj
+
+    mongodb:
+        image: mongo

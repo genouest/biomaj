@@ -52,7 +52,7 @@ config = {
     'install_requires': ['nose',
                          'pymongo==3.2',
                          'pycurl',
-                         'ldap3',
+                         'ldap3==1.4.0',
                          'mock',
                          'py-bcrypt',
                          'drmaa',

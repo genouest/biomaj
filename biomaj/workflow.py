@@ -72,6 +72,8 @@ class Workflow(object):
         # For micro services
         self.redis_client = None
         self.redis_prefix = None
+        # Zipkin
+        self.span = None
 
     def get_flow(self, task):
         for flow in Workflow.FLOW:
@@ -111,6 +113,7 @@ class Workflow(object):
                     trace_id = self.options.get_option('traceId')
                     span_id = self.options.get_option('spanId')
                     span = Zipkin('biomaj-workflow', flow['name'], trace_id=trace_id, parent_id=span_id)
+                    self.span = span
                     self.bank.config.set('zipkin_trace_id', span.get_trace_id())
                     self.bank.config.set('zipkin_span_id', span.get_span_id())
 
@@ -148,7 +151,7 @@ class Workflow(object):
                                 trace_id = self.options.get_option('traceId')
                                 span_id = self.options.get_option('spanId')
                                 span = Zipkin('biomaj-workflow', flow['name'] + ":wf_" + step, trace_id=trace_id, parent_id=span_id)
-
+                                self.span = None
                             res = getattr(self, 'wf_' + step)()
 
                             if span:
@@ -1312,6 +1315,12 @@ class UpdateWorkflow(Workflow):
                 timeout_download = cf.get('timeout.download', None)
                 if timeout_download:
                     message.timeout_download = timeout_download
+
+                if self.span:
+                    trace = message_pb2.operation.Trace()
+                    trace.trace_id = self.span.get_trace_id()
+                    trace.span_id = self.span.get_span_id()
+                    operation.trace.MergeFrom(trace)
 
                 message.remote_file.MergeFrom(remote_file)
                 operation.download.MergeFrom(message)

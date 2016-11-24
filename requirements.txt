@@ -7,7 +7,6 @@ nose
 pymongo>=3.2
 pycurl
 tabulate
-ldap3
 py-bcrypt
 drmaa
 future

@@ -22,6 +22,7 @@ from biomaj.options import Options
 
 from biomaj.process.processfactory import RemoveProcessFactory, PreProcessFactory, PostProcessFactory
 
+from biomaj_zipkin.zipkin import Zipkin
 
 class Workflow(object):
     """
@@ -104,6 +105,14 @@ class Workflow(object):
                 logging.info('Workflow:Skip:' + flow['name'])
             if flow['name'] == Workflow.FLOW_INIT or not self.session.get_status(flow['name']):
                 logging.info('Workflow:Start:' + flow['name'])
+                span = None
+                if self.options.get_option('traceId'):
+                    trace_id = self.options.get_option('traceId')
+                    span_id = self.options.get_option('spanId')
+                    span = Zipkin('biomaj-workflow', flow['name'], trace_id= trace_id, parent_id=span_id)
+                    self.bank.config.set('zipkin_trace_id', span.get_trace_id())
+                    self.bank.config.set('zipkin_span_id', span.get_span_id())
+
                 try:
                     self.session._session['status'][flow['name']] = getattr(self, 'wf_' + flow['name'])()
                 except Exception as e:
@@ -112,6 +121,11 @@ class Workflow(object):
                     logging.debug(traceback.format_exc())
                 finally:
                     self.wf_progress(flow['name'], self.session._session['status'][flow['name']])
+
+                if span:
+                    span.add_binary_annotation('status', str(self.session._session['status'][flow['name']]))
+                    span.trace()
+
                 if flow['name'] != Workflow.FLOW_OVER and not self.session.get_status(flow['name']):
                     logging.error('Error during task ' + flow['name'])
                     if flow['name'] != Workflow.FLOW_INIT:
@@ -120,6 +134,7 @@ class Workflow(object):
                 # Main task is over, execute sub tasks of main
                 if not self.skip_all:
                     for step in flow['steps']:
+                        span = None
                         try:
                             # Check for cancel request
                             if self.redis_client and self.redis_client.get(self.redis_prefix + ':' + self.bank.name + ':action:cancel'):
@@ -127,7 +142,18 @@ class Workflow(object):
                                 self.redis_client.delete(self.redis_prefix + ':' + self.bank.name + ':action:cancel')
                                 self.wf_over()
                                 return False
+
+                            if self.options.get_option('traceId'):
+                                trace_id = self.options.get_option('traceId')
+                                span_id = self.options.get_option('spanId')
+                                span = Zipkin('biomaj-workflow', flow['name'] + ":wf_" + step, trace_id= trace_id, parent_id=span_id)
+
                             res = getattr(self, 'wf_' + step)()
+
+                            if span:
+                                span.add_binary_annotation('status', str(res))
+                                span.trace()
+
                             if not res:
                                 logging.error('Error during ' + flow['name'] + ' subtask: wf_' + step)
                                 logging.error('Revert main task status ' + flow['name'] + ' to error status')
@@ -869,7 +895,7 @@ class UpdateWorkflow(Workflow):
             dserv = DownloadClient(
                 self.bank.config.get('micro.biomaj.rabbit_mq'),
                 int(self.bank.config.get('micro.biomaj.rabbit_mq_port', default='5672')),
-                self.bank.config.get('micro.biomaj.rabbit_mq_virtualhost', default='/'), 
+                self.bank.config.get('micro.biomaj.rabbit_mq_virtualhost', default='/'),
                 self.bank.config.get('micro.biomaj.rabbit_mq_user', default=None),
                 self.bank.config.get('micro.biomaj.rabbit_mq_password', default=None),
             )

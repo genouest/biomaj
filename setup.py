@@ -62,7 +62,6 @@ config = {
                          'biomaj_process',
                          'pymongo>=3.2',
                          'pycurl',
-                         'ldap3',
                          'py-bcrypt',
                          'drmaa',
                          'future',

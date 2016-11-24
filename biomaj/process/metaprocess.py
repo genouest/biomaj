@@ -6,7 +6,7 @@ import os
 from biomaj_process.process import Process, DrmaaProcess, DockerProcess
 from biomaj_process.process import RemoteProcess
 from biomaj.mongo_connector import MongoConnector
-
+from biomaj_zipkin.zipkin import Zipkin
 
 class MetaProcess(threading.Thread):
     '''
@@ -230,7 +230,17 @@ class MetaProcess(threading.Thread):
                         bmaj_process.tags = self.bank.config.get(bprocess + '.tags')
                     if self.bank.config.get(bprocess + '.files'):
                         bmaj_process.files = self.bank.config.get(bprocess + '.files')
+
+                    span = None
+                    if self.bank.config.get('zipkin_trace_id'):
+                        span = Zipkin('biomaj-process', bmaj_process.name, trace_id= self.bank.config.get('zipkin_trace_id'), parent_id= self.bank.config.get('zipkin_span_id'))
+
                     res = bmaj_process.run(self.simulate)
+
+                    if span:
+                        span.add_binary_annotation('status', str(res))
+                        span.trace()
+
                     processes_status[bprocess] = res
                     self.set_progress(bmaj_process.name, res)
                     if not res:

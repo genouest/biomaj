@@ -18,6 +18,7 @@ from biomaj.options import Options
 from biomaj.process.processfactory import ProcessFactory
 from biomaj_core.bmajindex import BmajIndex
 
+import getpass
 
 # from bson.objectid import ObjectId
 
@@ -263,6 +264,7 @@ class Bank(object):
         """
         Checks if current user is owner or admin
         """
+        owner = getpass.getuser()
         admin_config = self.config.get('admin')
         admin = []
         if admin_config is not None:
@@ -275,7 +277,7 @@ class Bank(object):
                 logging.debug('Micro services activated but user not authenticated')
                 return False
         else:
-            current_user = os.environ['LOGNAME']
+            current_user = owner
 
         if admin and current_user in admin:
             return True
@@ -317,7 +319,7 @@ class Bank(object):
                 logging.debug('Micro services activated but user not authenticated')
                 return False
         else:
-            owner = os.environ['LOGNAME']
+            owner = getpass.getuser()
 
         # If owner not set, use current user, else keep current
         if self.bank and 'properties' in self.bank and 'owner' in self.bank['properties']:

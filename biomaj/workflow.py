@@ -24,6 +24,7 @@ from biomaj.process.processfactory import RemoveProcessFactory, PreProcessFactor
 
 from biomaj_zipkin.zipkin import Zipkin
 
+
 class Workflow(object):
     """
     Bank update workflow
@@ -109,7 +110,7 @@ class Workflow(object):
                 if self.options.get_option('traceId'):
                     trace_id = self.options.get_option('traceId')
                     span_id = self.options.get_option('spanId')
-                    span = Zipkin('biomaj-workflow', flow['name'], trace_id= trace_id, parent_id=span_id)
+                    span = Zipkin('biomaj-workflow', flow['name'], trace_id=trace_id, parent_id=span_id)
                     self.bank.config.set('zipkin_trace_id', span.get_trace_id())
                     self.bank.config.set('zipkin_span_id', span.get_span_id())
 
@@ -146,7 +147,7 @@ class Workflow(object):
                             if self.options.get_option('traceId'):
                                 trace_id = self.options.get_option('traceId')
                                 span_id = self.options.get_option('spanId')
-                                span = Zipkin('biomaj-workflow', flow['name'] + ":wf_" + step, trace_id= trace_id, parent_id=span_id)
+                                span = Zipkin('biomaj-workflow', flow['name'] + ":wf_" + step, trace_id=trace_id, parent_id=span_id)
 
                             res = getattr(self, 'wf_' + step)()
 

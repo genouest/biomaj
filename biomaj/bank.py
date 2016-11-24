@@ -839,10 +839,9 @@ class Bank(object):
         if self.config.get_bool('keep.old.sessions'):
             logging.debug('keep old sessions')
             if session_release is not None:
-                self.banks.update({'name': self.name}, {'$pull': {
-                    'production': {'session': sid}
-                },
+                self.banks.update({'name': self.name}, {
                     '$pull': {
+                        'production': {'session': sid},
                         'pending': {
                             'release': session_release,
                             'id': sid

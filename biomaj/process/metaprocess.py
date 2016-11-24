@@ -8,6 +8,7 @@ from biomaj_process.process import RemoteProcess
 from biomaj.mongo_connector import MongoConnector
 from biomaj_zipkin.zipkin import Zipkin
 
+
 class MetaProcess(threading.Thread):
     '''
     Meta process in biomaj process workflow. Meta processes are executed in parallel.
@@ -233,7 +234,7 @@ class MetaProcess(threading.Thread):
 
                     span = None
                     if self.bank.config.get('zipkin_trace_id'):
-                        span = Zipkin('biomaj-process', bmaj_process.name, trace_id= self.bank.config.get('zipkin_trace_id'), parent_id= self.bank.config.get('zipkin_span_id'))
+                        span = Zipkin('biomaj-process', bmaj_process.name, trace_id=self.bank.config.get('zipkin_trace_id'), parent_id=self.bank.config.get('zipkin_span_id'))
 
                     res = bmaj_process.run(self.simulate)
 

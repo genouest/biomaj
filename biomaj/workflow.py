@@ -1317,7 +1317,7 @@ class UpdateWorkflow(Workflow):
                     message.timeout_download = timeout_download
 
                 if self.span:
-                    trace = message_pb2.operation.Trace()
+                    trace = message_pb2.Operation.Trace()
                     trace.trace_id = self.span.get_trace_id()
                     trace.span_id = self.span.get_span_id()
                     operation.trace.MergeFrom(trace)

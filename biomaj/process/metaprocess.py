@@ -235,6 +235,7 @@ class MetaProcess(threading.Thread):
                     span = None
                     if self.bank.config.get('zipkin_trace_id'):
                         span = Zipkin('biomaj-process', bmaj_process.name, trace_id=self.bank.config.get('zipkin_trace_id'), parent_id=self.bank.config.get('zipkin_span_id'))
+                        bmaj_process.set_trace(span.get_trace_id(), span.get_parent_id())
 
                     res = bmaj_process.run(self.simulate)
 

@@ -151,7 +151,7 @@ class Workflow(object):
                                 trace_id = self.options.get_option('traceId')
                                 span_id = self.options.get_option('spanId')
                                 span = Zipkin('biomaj-workflow', flow['name'] + ":wf_" + step, trace_id=trace_id, parent_id=span_id)
-                                self.span = None
+                                self.span = span
                             res = getattr(self, 'wf_' + step)()
 
                             if span:

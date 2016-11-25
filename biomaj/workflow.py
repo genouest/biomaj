@@ -152,6 +152,8 @@ class Workflow(object):
                                 span_id = self.options.get_option('spanId')
                                 span = Zipkin('biomaj-workflow', flow['name'] + ":wf_" + step, trace_id=trace_id, parent_id=span_id)
                                 self.span = span
+                                self.bank.config.set('zipkin_trace_id', span.get_trace_id())
+                                self.bank.config.set('zipkin_span_id', span.get_span_id())
                             res = getattr(self, 'wf_' + step)()
 
                             if span:

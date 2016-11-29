@@ -1,4 +1,6 @@
 import pkg_resources
+import string
+import random
 from biomaj.mongo_connector import MongoConnector
 from biomaj_core.config import BiomajConfig
 
@@ -29,6 +31,7 @@ class SchemaVersion(object):
 
         schema = MongoConnector.db_schema
         banks = MongoConnector.banks
+        users = MongoConnector.users
 
         schema_version = schema.find_one({'id': 1})
         installed_version = pkg_resources.get_distribution("biomaj").version
@@ -61,4 +64,13 @@ class SchemaVersion(object):
                                      {'$unset': {'pending': ""}})
 
             print("Migration: %d bank(s) updated" % updated)
+        if moderate < 1:
+            updated = 0
+            user_list = users.find()
+            for user in user_list:
+                if 'apikey' not in user:
+                    updated += 1
+                    api_key = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(10))
+                    users.users.update({'_id': user['_id']}, {'$set': {'apikey': api_key}})
+            print("Migration: %d user(s) updated" % updated)
         schema.update_one({'id': 1}, {'$set': {'version': installed_version}})

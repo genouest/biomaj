@@ -1,21 +1,21 @@
 from future import standard_library
-standard_library.install_aliases()
 from builtins import str
 from builtins import object
 import os
-#import configparser
-#import logging
 import time
 import copy
 import sys
 
 from biomaj.workflow import Workflow
 
+standard_library.install_aliases()
+
 
 class Session(object):
     """
     BioMAJ bank session
     """
+    OVER = 0
 
     @staticmethod
     def get_ordered_dict():
@@ -24,10 +24,6 @@ class Session(object):
         else:
             import collections
             return collections.OrderedDict()
-            #return {}
-
-
-    OVER = 0
 
     def __init__(self, name, config, flow=None, action='update'):
         """
@@ -54,22 +50,24 @@ class Session(object):
             for f_in_list in flist:
                 formats[f_in_list.strip()] = []
 
-        self._session = {'id':  time.time(),
-                          'log_file': self.config.log_file,
-                          'status': {},
-                          'files': [],
-                          'release': None,
-                          'remoterelease': None,
-                          'formats': formats,
-                          'process': {
-                                      'postprocess': {},
-                                      'preprocess': {},
-                                      'removeprocess': {}
-                                      },
-                          'per_process_metadata': {},
-                          'data_dir': self.config.get('data.dir'),
-                          'dir_version': self.config.get('dir.version')
-                        }
+        self._session = {
+            'id': time.time(),
+            'log_file': self.config.log_file,
+            'status': {},
+            'files': [],
+            'release': None,
+            'remoterelease': None,
+            'formats': formats,
+            'process': {
+                'postprocess': {},
+                'preprocess': {},
+                'removeprocess': {}
+            },
+            'per_process_metadata': {},
+            'data_dir': self.config.get('data.dir'),
+            'dir_version': self.config.get('dir.version')
+        }
+
         for flow in self.flow:
             self._session['status'][flow['name']] = False
 
@@ -88,7 +86,7 @@ class Session(object):
         blocks = self.config.get('BLOCKS').split(',')
         for block in blocks:
             copy_postprocess[block] = Session.get_ordered_dict()
-            metas = self.config.get(block.strip()+'.db.post.process').split(',')
+            metas = self.config.get(block.strip() + '.db.post.process').split(',')
             for meta in metas:
                 copy_postprocess[block][meta] = Session.get_ordered_dict()
                 processes = self.config.get(meta.strip()).split(',')
@@ -159,7 +157,6 @@ class Session(object):
             if set_to_false:
                 processes[process] = False
 
-
     def load(self, session):
         """
         Load an existing session
@@ -170,18 +167,17 @@ class Session(object):
         """
         Get release directroy name
         """
-        return self.name+self.config.get('release.separator', default='_')+str(self._session['release'])
+        return self.name + self.config.get('release.separator', default='_') + str(self._session['release'])
 
     def get_full_release_directory(self):
         """
         Get bank directroy for this release
         """
-        #release_dir = os.path.join(self.config.get('data.dir'),
-        #              self.config.get('dir.version'),
-        #              self.get_release_directory())
-        release_dir = os.path.join(self._session['data_dir'],
-                      self._session['dir_version'],
-                      self.get_release_directory())
+        release_dir = os.path.join(
+            self._session['data_dir'],
+            self._session['dir_version'],
+            self.get_release_directory()
+        )
         return release_dir
 
     def get_offline_directory(self):
@@ -189,7 +185,6 @@ class Session(object):
         Get bank offline directory
         """
         return os.path.join(self.config.get('data.dir'), self.config.get('offline.dir.name'))
-
 
     def get(self, attr=None):
         """
@@ -213,7 +208,7 @@ class Session(object):
         """
         Return status for a flow event
         """
-        if status not in  self._session['status']:
+        if status not in self._session['status']:
             return False
         return self._session['status'][status]
 

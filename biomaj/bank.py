@@ -5,22 +5,20 @@ import logging
 import time
 import shutil
 import json
-import pkg_resources
 
+import redis
 
 from datetime import datetime
 from biomaj.mongo_connector import MongoConnector
 
 from biomaj.session import Session
 from biomaj.workflow import UpdateWorkflow, RemoveWorkflow, Workflow
-from biomaj.config import BiomajConfig
+from biomaj_core.config import BiomajConfig
 from biomaj.options import Options
 from biomaj.process.processfactory import ProcessFactory
-from biomaj.bmajindex import BmajIndex
+from biomaj_core.bmajindex import BmajIndex
 
 import getpass
-
-# from bson.objectid import ObjectId
 
 
 class Bank(object):
@@ -106,14 +104,6 @@ class Bank(object):
             return True
         else:
             return False
-
-    def get_bank(self):
-        """
-        Get bank stored in db
-
-        :return: bank json object
-        """
-        return self.bank
 
     @staticmethod
     def get_banks_disk_usage():
@@ -240,10 +230,12 @@ class Bank(object):
                 break
         return res
 
-    def get_bank(self, bank, no_log=False):
+    def get_bank(self, bank=None, no_log=False):
         """
         Gets an other bank
         """
+        if bank is None:
+            return self.bank
         return Bank(bank, no_log=no_log)
 
     def get_dependencies(self, bank=None):
@@ -262,7 +254,7 @@ class Bank(object):
         deps = deps.split(',')
         # Now search in deps if they themselves depend on other banks
         for dep in deps:
-            b = Bank(dep, no_log = True)
+            b = Bank(dep, no_log=True)
             deps = b.get_dependencies() + deps
         return deps
 
@@ -275,9 +267,20 @@ class Bank(object):
         admin = []
         if admin_config is not None:
             admin = [x.strip() for x in admin_config.split(',')]
-        if admin and owner in admin:
+
+        current_user = None
+        if self.config.get('micro.biomaj.service.daemon'):
+            if self.options and self.options.user:
+                current_user = self.options.user
+            else:
+                logging.debug('Micro services activated but user not authenticated')
+                return False
+        else:
+            current_user = owner
+
+        if admin and current_user in admin:
             return True
-        if owner == self.bank['properties']['owner']:
+        if current_user == self.bank['properties']['owner']:
             return True
         return False
 
@@ -299,7 +302,7 @@ class Bank(object):
             logging.error('Not authorized, bank owned by ' + self.bank['properties']['owner'])
             raise Exception('Not authorized, bank owned by ' + self.bank['properties']['owner'])
 
-        self.banks.update({'name': self.name}, {'$set': {'properties.visibility':  visibility}})
+        self.banks.update({'name': self.name}, {'$set': {'properties.visibility': visibility}})
 
     def get_properties(self):
         """
@@ -307,8 +310,16 @@ class Bank(object):
 
         :return: properties dict
         """
-        owner = getpass.getuser()
-        # owner = os.environ['LOGNAME']
+        owner = None
+        if self.config.get('micro.biomaj.service.daemon'):
+            if self.options and self.options.user:
+                owner = self.options.user
+            else:
+                logging.debug('Micro services activated but user not authenticated')
+                return False
+        else:
+            owner = getpass.getuser()
+
         # If owner not set, use current user, else keep current
         if self.bank and 'properties' in self.bank and 'owner' in self.bank['properties']:
             owner = self.bank['properties']['owner']
@@ -321,6 +332,17 @@ class Bank(object):
         }
 
         return props
+
+    @staticmethod
+    def user_banks(user_name):
+        """
+        Get user banks name
+        :param user_name: user identifier
+        :type user_name: str
+        :return: list of bank name
+        """
+        banks = MongoConnector.banks.find({'properties.owner': user_name}, {'name': 1})
+        return banks
 
     @staticmethod
     def searchindex(query):
@@ -442,22 +464,20 @@ class Bank(object):
         if self.session.get('action') == 'remove':
             action = 'last_remove_session'
 
-
         cache_dir = self.config.get('cache.dir')
         download_files = self.session.get('download_files')
         if download_files is not None:
-            f_downloaded_files = open(os.path.join(cache_dir, 'files_'+str(self.session.get('id'))), 'w')
+            f_downloaded_files = open(os.path.join(cache_dir, 'files_' + str(self.session.get('id'))), 'w')
             f_downloaded_files.write(json.dumps(download_files))
             f_downloaded_files.close()
-            self.session.set('download_files',[])
+            self.session.set('download_files', [])
 
         local_files = self.session.get('files')
         if local_files is not None:
-            f_local_files = open(os.path.join(cache_dir, 'local_files_'+str(self.session.get('id'))), 'w')
+            f_local_files = open(os.path.join(cache_dir, 'local_files_' + str(self.session.get('id'))), 'w')
             f_local_files.write(json.dumps(download_files))
             f_local_files.close()
-            self.session.set('files',[])
-
+            self.session.set('files', [])
 
         self.banks.update({'name': self.name}, {
             '$set': {
@@ -485,14 +505,7 @@ class Bank(object):
                 # Remove from database
                 self.banks.update({'name': self.name},
                                   {'$pull': {'production': {'release': self.session._session['release']}}})
-                # Update local object
-                # index = 0
-                # for prod in self.bank['production']:
-                #  if prod['release'] == self.session._session['release']:
-                #    break;
-                #  index += 1
-                # if index < len(self.bank['production']):
-                #  self.bank['production'].pop(index)
+
             release_types = []
             if self.config.get('db.type'):
                 release_types = self.config.get('db.type').split(',')
@@ -528,7 +541,6 @@ class Bank(object):
                                '$pull': {'pending': {'release': self.session.get('release'),
                                                      'id': self.session._session['id']}}
                                })
-
 
         self.bank = self.banks.find_one({'name': self.name})
 
@@ -598,7 +610,6 @@ class Bank(object):
         current_link = os.path.join(self.config.get('data.dir'),
                                     self.config.get('dir.version'),
                                     'current')
-        prod_dir = self.session.get_full_release_directory()
 
         to_dir = os.path.join(self.config.get('data.dir'),
                               self.config.get('dir.version'))
@@ -608,10 +619,17 @@ class Bank(object):
         os.chdir(to_dir)
         os.symlink(self.session.get_release_directory(), 'current')
         self.bank['current'] = self.session._session['id']
-        self.banks.update({'name': self.name},
-                          {
-                              '$set': {'current': self.session._session['id']}
-                          })
+        self.banks.update(
+            {'name': self.name},
+            {'$set': {'current': self.session._session['id']}}
+        )
+
+        release_file = os.path.join(self.config.get('data.dir'),
+                                    self.config.get('dir.version'),
+                                    'RELEASE.txt')
+
+        with open(release_file, 'w') as outfile:
+            outfile.write('Bank: %s\nRelease: %s\nRemote release:%s\n' % (self.name, self.session.get('release'), self.session.get('remoterelease')))
 
     def unpublish(self):
         """
@@ -627,10 +645,17 @@ class Bank(object):
 
         if os.path.lexists(current_link):
             os.remove(current_link)
-        self.banks.update({'name': self.name},
-                          {
-                              '$set': {'current': None}
-                          })
+
+        release_file = os.path.join(self.config.get('data.dir'),
+                                    self.config.get('dir.version'),
+                                    'RELEASE.txt')
+        if os.path.exists(release_file):
+            os.remove(release_file)
+
+        self.banks.update(
+            {'name': self.name},
+            {'$set': {'current': None}}
+        )
 
     def get_production(self, release):
         """
@@ -763,7 +788,7 @@ class Bank(object):
             session_id = None
             # Load previous session for updates only
             if self.session.get('action') == 'update' and 'last_update_session' in self.bank and self.bank[
-                'last_update_session']:
+                    'last_update_session']:
                 session_id = self.bank['last_update_session']
                 load_session = None
                 for session in self.bank['sessions']:
@@ -802,23 +827,24 @@ class Bank(object):
                 session_release = s['release']
 
         cache_dir = self.config.get('cache.dir')
-        download_files = os.path.join(cache_dir, 'files_'+str(sid))
+        download_files = os.path.join(cache_dir, 'files_' + str(sid))
         if os.path.exists(download_files):
             os.remove(download_files)
 
-        local_files = os.path.join(cache_dir, 'local_files_'+str(sid))
+        local_files = os.path.join(cache_dir, 'local_files_' + str(sid))
         if os.path.exists(local_files):
             os.remove(local_files)
 
         if self.config.get_bool('keep.old.sessions'):
             logging.debug('keep old sessions')
             if session_release is not None:
-                self.banks.update({'name': self.name}, {'$pull': {
-                    'production': {'session': sid}
-                },
+                self.banks.update({'name': self.name}, {
                     '$pull': {
-                        'pending': {'release': session_release,
-                                     'id': sid}
+                        'production': {'session': sid},
+                        'pending': {
+                            'release': session_release,
+                            'id': sid
+                        }
                     }
                 })
             else:
@@ -830,7 +856,7 @@ class Bank(object):
                               {'$set': {'sessions.$.deleted': time.time()}})
         else:
             if session_release is not None:
-                result = self.banks.update({'name': self.name}, {'$pull': {
+                self.banks.update({'name': self.name}, {'$pull': {
                     'sessions': {'id': sid},
                     'production': {'session': sid},
                     'pending': {'release': session_release,
@@ -1027,8 +1053,8 @@ class Bank(object):
             set_to_false = False
             for task in self.session.flow:
                 # If task was in False status (KO) and we ask to start after this task, exit
-                if not set_to_false and not self.session.get_status(task['name']) and task[
-                    'name'] != self.options.get_option('from_task'):
+                if not set_to_false and not self.session.get_status(task['name']) and \
+                        task['name'] != self.options.get_option('from_task'):
                     logging.error(
                         'Previous task ' + task['name'] + ' was not successful, cannot restart after this task')
                     return False
@@ -1042,12 +1068,7 @@ class Bank(object):
                                         Workflow.FLOW_REMOVEPROCESS]:
                         proc = self.options.get_option('process')
                         self.session.reset_proc(task['name'], proc)
-                        # if task['name'] == Workflow.FLOW_POSTPROCESS:
-                        #  self.session.reset_proc(Workflow.FLOW_POSTPROCESS, proc)
-                        # elif task['name'] == Workflow.FLOW_PREPROCESS:
-                        #  self.session.reset_proc(Workflow.FLOW_PREPROCESS, proc)
-                        # elif task['name'] == Workflow.FLOW_REMOVEPROCESS:
-                        #  self.session.reset_proc(Workflow.FLOW_REMOVEPROCESS, proc)
+
         self.session.set('action', 'update')
         res = self.start_update()
         self.session.set('workflow_status', res)
@@ -1063,6 +1084,19 @@ class Bank(object):
         :return: bool
         """
         workflow = RemoveWorkflow(self, session)
+        if self.options and self.options.get_option('redis_host'):
+            redis_client = redis.StrictRedis(
+                host=self.options.get_option('redis_host'),
+                port=self.options.get_option('redis_port'),
+                db=self.options.get_option('redis_db'),
+                decode_responses=True
+            )
+            workflow.redis_client = redis_client
+            workflow.redis_prefix = self.options.get_option('redis_prefix')
+            if redis_client.get(self.options.get_option('redis_prefix') + ':' + self.name + ':action:cancel'):
+                logging.warn('Cancel requested, stopping update')
+                redis_client.delete(self.options.get_option('redis_prefix') + ':' + self.name + ':action:cancel')
+                return False
         return workflow.start()
 
     def start_update(self):
@@ -1070,4 +1104,17 @@ class Bank(object):
         Start an update workflow
         """
         workflow = UpdateWorkflow(self)
+        if self.options and self.options.get_option('redis_host'):
+            redis_client = redis.StrictRedis(
+                host=self.options.get_option('redis_host'),
+                port=self.options.get_option('redis_port'),
+                db=self.options.get_option('redis_db'),
+                decode_responses=True
+            )
+            workflow.redis_client = redis_client
+            workflow.redis_prefix = self.options.get_option('redis_prefix')
+            if redis_client.get(self.options.get_option('redis_prefix') + ':' + self.name + ':action:cancel'):
+                logging.warn('Cancel requested, stopping update')
+                redis_client.delete(self.options.get_option('redis_prefix') + ':' + self.name + ':action:cancel')
+                return False
         return workflow.start()

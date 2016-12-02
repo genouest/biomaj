@@ -3,8 +3,11 @@ import threading
 import logging
 import os
 
-from biomaj.process.process import Process, DrmaaProcess, DockerProcess
+from biomaj_process.process import Process, DrmaaProcess, DockerProcess
+from biomaj_process.process import RemoteProcess
 from biomaj.mongo_connector import MongoConnector
+from biomaj_zipkin.zipkin import Zipkin
+
 
 class MetaProcess(threading.Thread):
     '''
@@ -46,14 +49,11 @@ class MetaProcess(threading.Thread):
         self._stopevent = threading.Event()
 
         self.bmaj_env = os.environ.copy()
-        #self.bmaj_env = {}
-        # Copy all config from bank
-
 
         self.bmaj_only_env = {}
-        #The root directory where all databases are stored.
-        #If your data is not stored under one directory hirearchy
-        #you can override this value in the database properties file.
+        # The root directory where all databases are stored.
+        # If your data is not stored under one directory hirearchy
+        # you can override this value in the database properties file.
         for conf in dict(self.bank.config.config_bank.items('GENERAL')):
             self.bmaj_env[conf] = self.bank.config.config_bank.get('GENERAL', conf)
             if self.bmaj_env[conf] is None:
@@ -84,7 +84,7 @@ class MetaProcess(threading.Thread):
             self.bmaj_env['PATH'] += ':' + self.bmaj_env['processdir']
             self.bmaj_only_env['PATH'] = self.bmaj_env['PATH']
         else:
-            self.bmaj_env['PATH'] = self.bmaj_env['processdir']+':/usr/local/bin:/usr/sbin:/usr/bin'
+            self.bmaj_env['PATH'] = self.bmaj_env['processdir'] + ':/usr/local/bin:/usr/sbin:/usr/bin'
             self.bmaj_only_env['PATH'] = self.bmaj_env['PATH']
 
         self.bmaj_env['PP_DEPENDENCE'] = '#'
@@ -108,7 +108,6 @@ class MetaProcess(threading.Thread):
                 self.bmaj_env['logfile'] = log_file
                 self.bmaj_only_env['logfile'] = log_file
 
-
             self.bmaj_env['offlinedir'] = self.bank.session.get_offline_directory()
             self.bmaj_only_env['offlinedir'] = self.bmaj_env['offlinedir']
 
@@ -129,15 +128,14 @@ class MetaProcess(threading.Thread):
                 self.bmaj_only_env['removedrelease'] = self.bmaj_env['removedrelease']
 
         for bdep in self.bank.depends:
-            self.bmaj_env[bdep.name+'source'] = bdep.session.get_full_release_directory()
-            self.bmaj_only_env[bdep.name+'source'] = self.bmaj_env[bdep.name+'source']
+            self.bmaj_env[bdep.name + 'source'] = bdep.session.get_full_release_directory()
+            self.bmaj_only_env[bdep.name + 'source'] = self.bmaj_env[bdep.name + 'source']
 
         # Fix case where a var = None
         for key in list(self.bmaj_only_env.keys()):
             if self.bmaj_only_env[key] is None:
                 self.bmaj_env[key] = ''
                 self.bmaj_only_env[key] = ''
-
 
     def set_progress(self, name, status=None):
         '''
@@ -148,17 +146,19 @@ class MetaProcess(threading.Thread):
         :param status: status of process
         :type status: bool or None
         '''
-        logging.debug('Process:progress:'+name+"="+str(status))
+        logging.debug('Process:progress:' + name + "=" + str(status))
         if self.workflow is not None:
-            MongoConnector.banks.update({'name': self.bank.name},
-                {'$set': {'status.'+self.workflow+'.progress.'+name: status}})
+            MongoConnector.banks.update(
+                {'name': self.bank.name},
+                {'$set': {'status.' + self.workflow + '.progress.' + name: status}}
+            )
 
     def run(self):
         # Run meta processes
         self.global_status = True
         for meta in self.metas:
             if not self._stopevent.isSet():
-                logging.info("PROC:META:RUN:"+meta)
+                logging.info("PROC:META:RUN:" + meta)
                 processes = []
                 if self.bank.config.get(meta) is not None:
                     processes = self.bank.config.get(meta).split(',')
@@ -168,43 +168,81 @@ class MetaProcess(threading.Thread):
                         raise Exception('Kill request received, exiting')
                     # Process status already ok, do not replay
                     if meta in self.meta_status and bprocess in self.meta_status[meta] and self.meta_status[meta][bprocess]:
-                        logging.info("PROC:META:SKIP:PROCESS:"+bprocess)
+                        logging.info("PROC:META:SKIP:PROCESS:" + bprocess)
                         processes_status[bprocess] = True
                         continue
-                    logging.info("PROC:META:RUN:PROCESS:"+bprocess)
+                    logging.info("PROC:META:RUN:PROCESS:" + bprocess)
                     # bprocess.name may not be unique
-                    #name = self.bank.config.get(bprocess+'.name')
                     name = bprocess
-                    desc = self.bank.config.get(bprocess+'.desc')
-                    cluster = self.bank.config.get_bool(bprocess+'.cluster', default=False)
-                    docker = self.bank.config.get(bprocess+'.docker')
-                    proc_type = self.bank.config.get(bprocess+'.type')
-                    exe = self.bank.config.get(bprocess+'.exe')
-                    args = self.bank.config.get(bprocess+'.args')
-                    expand = self.bank.config.get_bool(bprocess+'.expand', default=True)
+                    desc = self.bank.config.get(bprocess + '.desc')
+                    cluster = self.bank.config.get_bool(bprocess + '.cluster', default=False)
+                    docker = self.bank.config.get(bprocess + '.docker')
+                    proc_type = self.bank.config.get(bprocess + '.type')
+                    exe = self.bank.config.get(bprocess + '.exe')
+                    args = self.bank.config.get(bprocess + '.args')
+                    expand = self.bank.config.get_bool(bprocess + '.expand', default=True)
                     if cluster:
-                        native = self.bank.config.get(bprocess+'.native')
-                        bmaj_process = DrmaaProcess(meta+'_'+name, exe, args, desc, proc_type, native,
-                                                        expand, self.bmaj_env,
-                                                        os.path.dirname(self.bank.config.log_file))
+                        native = self.bank.config.get(bprocess + '.native')
+                        bmaj_process = DrmaaProcess(meta + '_' + name, exe, args, desc, proc_type, native,
+                                                    expand, self.bmaj_env,
+                                                    os.path.dirname(self.bank.config.log_file))
                     elif docker:
                         use_sudo = self.bank.config.get_bool('docker.sudo', default=True)
-                        bmaj_process = DockerProcess(meta+'_'+name, exe, args, desc, proc_type, docker,
-                                                        expand, self.bmaj_only_env,
-                                                        os.path.dirname(self.bank.config.log_file), use_sudo)
+                        bmaj_process = DockerProcess(
+                            meta + '_' + name, exe, args, desc, proc_type, docker,
+                            expand, self.bmaj_only_env,
+                            os.path.dirname(self.bank.config.log_file), use_sudo
+                        )
                     else:
-                        bmaj_process = Process(meta+'_'+name, exe, args, desc, proc_type,
-                                                expand, self.bmaj_env, os.path.dirname(self.bank.config.log_file))
+                        if self.bank.config.get('micro.biomaj.service.process'):
+                            logging.info("PROC:META:RUN:REMOTEPROCESS: " + bprocess)
+                            # (self, name, exe, args, desc=None, proc_type=None, expand=True,
+                            # bank_env=None, log_dir=None,
+                            # rabbit_mq=None, rabbit_mq_port=5672, rabbit_mq_user=None, rabbit_mq_password=None, rabbit_mq_virtualhost=None,
+                            # proxy=None, bank=None):
+                            bmaj_process = RemoteProcess(
+                                meta + '_' + name,
+                                exe,
+                                args,
+                                desc,
+                                proc_type,
+                                expand,
+                                self.bmaj_env,
+                                os.path.dirname(self.bank.config.log_file),
+                                self.bank.config.get('micro.biomaj.rabbit_mq'),
+                                int(self.bank.config.get('micro.biomaj.rabbit_mq_port', default='5672')),
+                                self.bank.config.get('micro.biomaj.rabbit_mq_user'),
+                                self.bank.config.get('micro.biomaj.rabbit_mq_password'),
+                                self.bank.config.get('micro.biomaj.rabbit_mq_virtualhost', default='/'),
+                                self.bank.config.get('micro.biomaj.proxy'),
+                                self.bank.name
+                            )
+                        else:
+                            bmaj_process = Process(
+                                meta + '_' + name, exe, args, desc, proc_type,
+                                expand, self.bmaj_env, os.path.dirname(self.bank.config.log_file)
+                            )
                     self.set_progress(bmaj_process.name, None)
-                    if self.bank.config.get(bprocess+'.format'):
-                        bmaj_process.format = self.bank.config.get(bprocess+'.format')
-                    if self.bank.config.get(bprocess+'.types'):
-                        bmaj_process.types = self.bank.config.get(bprocess+'.types')
-                    if self.bank.config.get(bprocess+'.tags'):
-                        bmaj_process.tags = self.bank.config.get(bprocess+'.tags')
-                    if self.bank.config.get(bprocess+'.files'):
-                        bmaj_process.files = self.bank.config.get(bprocess+'.files')
+                    if self.bank.config.get(bprocess + '.format'):
+                        bmaj_process.format = self.bank.config.get(bprocess + '.format')
+                    if self.bank.config.get(bprocess + '.types'):
+                        bmaj_process.types = self.bank.config.get(bprocess + '.types')
+                    if self.bank.config.get(bprocess + '.tags'):
+                        bmaj_process.tags = self.bank.config.get(bprocess + '.tags')
+                    if self.bank.config.get(bprocess + '.files'):
+                        bmaj_process.files = self.bank.config.get(bprocess + '.files')
+
+                    span = None
+                    if self.bank.config.get('zipkin_trace_id'):
+                        span = Zipkin('biomaj-process', bmaj_process.name, trace_id=self.bank.config.get('zipkin_trace_id'), parent_id=self.bank.config.get('zipkin_span_id'))
+                        bmaj_process.set_trace(span.get_trace_id(), span.get_span_id())
+
                     res = bmaj_process.run(self.simulate)
+
+                    if span:
+                        span.add_binary_annotation('status', str(res))
+                        span.trace()
+
                     processes_status[bprocess] = res
                     self.set_progress(bmaj_process.name, res)
                     if not res:
@@ -218,7 +256,7 @@ class MetaProcess(threading.Thread):
                             except Exception as e:
                                 logging.error(e)
                             finally:
-                                self._lock.release() # release lock, no matter what
+                                self._lock.release()  # release lock, no matter what
                         else:
                             self._get_metata_from_outputfile(bmaj_process)
             self.meta_status[meta] = processes_status
@@ -250,7 +288,7 @@ class MetaProcess(threading.Thread):
                     if meta_tags == '':
                         meta_tags = proc.tags
                     meta_files = metas[3]
-                    if not meta_format in self.meta_data[proc_name]:
+                    if meta_format not in self.meta_data[proc_name]:
                         self.meta_data[proc_name][meta_format] = []
                     tags = meta_tags.split(',')
                     tag_list = {}
@@ -258,9 +296,11 @@ class MetaProcess(threading.Thread):
                         for tag in tags:
                             t = tag.split(':')
                             tag_list[t[0]] = t[1]
-                    self.meta_data[proc_name][meta_format].append({'tags': tag_list,
-                                                        'types': meta_type.split(','),
-                                                        'files': meta_files.split(',')})
+                    self.meta_data[proc_name][meta_format].append({
+                        'tags': tag_list,
+                        'types': meta_type.split(','),
+                        'files': meta_files.split(',')}
+                    )
         if proc.files and proc.format:
             tag_list = {}
             if proc.tags != '':
@@ -268,10 +308,11 @@ class MetaProcess(threading.Thread):
                     t = tag.split(':')
                     tag_list[t[0]] = t[1]
             self.meta_data[proc_name][proc.format] = []
-            self.meta_data[proc_name][proc.format].append({'tags': tag_list,
-                                                'types': proc.types.split(','),
-                                                'files': proc.files.split(',')})
-
+            self.meta_data[proc_name][proc.format].append({
+                'tags': tag_list,
+                'types': proc.types.split(','),
+                'files': proc.files.split(',')}
+            )
 
     def stop(self):
         self._stopevent.set()

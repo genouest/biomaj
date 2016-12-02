@@ -14,10 +14,16 @@ class post_install(install):
         SchemaVersion.migrate_pendings()
 
 here = os.path.abspath(os.path.dirname(__file__))
-with open(os.path.join(here, 'README.md')) as f:
-    README = f.read()
-with open(os.path.join(here, 'CHANGES.txt')) as f:
-    CHANGES = f.read()
+try:
+    with open(os.path.join(here, 'README.md')) as f:
+        README = f.read()
+    with open(os.path.join(here, 'CHANGES.txt')) as f:
+        CHANGES = f.read()
+except UnicodeDecodeError:
+    with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
+        README = f.read()
+    with open(os.path.join(here, 'CHANGES.txt'), encoding='utf-8') as f:
+        CHANGES = f.read()
 
 
 config = {
@@ -27,7 +33,7 @@ config = {
     'url': 'http://biomaj.genouest.org',
     'download_url': 'http://biomaj.genouest.org',
     'author_email': 'olivier.sallou@irisa.fr',
-    'version': '3.0.20',
+    'version': '3.1.0',
      'classifiers': [
         # How mature is this project? Common values are
         #   3 - Alpha
@@ -49,19 +55,26 @@ config = {
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.4'
     ],
-    'install_requires': ['nose',
-                         'pymongo==3.2',
+    'install_requires': [
+                         'biomaj_cli',
+                         'biomaj_core',
+                         'biomaj_user',
+                         'biomaj_download',
+                         'biomaj_process',
+                         'pymongo>=3.2',
                          'pycurl',
-                         'ldap3==1.4.0',
-                         'mock',
                          'py-bcrypt',
                          'drmaa',
                          'future',
                          'tabulate',
+                         'requests',
+                         'redis',
                          'elasticsearch'],
+    'tests_require': ['nose', 'mock'],
+    'test_suite': 'nose.collector',
     'packages': find_packages(),
     'include_package_data': True,
-    'scripts': ['bin/biomaj-cli.py'],
+    'scripts': [],
     'name': 'biomaj',
     'cmdclass': {'install': post_install},
 }

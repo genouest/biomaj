@@ -1,3 +1,5 @@
+3.1.0:
+  Fix #67,#66,#61 switch to micro service architecture. Still works in local monolithic install
 3.0.20:
   Fix #55: Added support for https and directhttps
   Add possibility to define files to download from a local file with remote.list parameter

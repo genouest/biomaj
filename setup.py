@@ -56,6 +56,7 @@ config = {
         'Programming Language :: Python :: 3.4'
     ],
     'install_requires': [
+                         'biomaj_cli',
                          'biomaj_core',
                          'biomaj_user',
                          'biomaj_download',

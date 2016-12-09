@@ -222,12 +222,17 @@ class Bank(object):
                 continue
             logging.info('Update:Depends:' + dep)
             b = Bank(dep)
+            if self.options and self.options.user:
+                b.options.user = self.options.user
             res = b.update()
             self.depends.append(b)
             self.session._session['depends'][dep] = res
             logging.info('Update:Depends:' + dep + ':' + str(res))
             if not res:
                 break
+        if depends:
+            # Revert config
+            self.config = BiomajConfig(self.name, self.options)
         return res
 
     def get_bank(self, bank=None, no_log=False):

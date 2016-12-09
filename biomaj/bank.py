@@ -222,7 +222,7 @@ class Bank(object):
                 continue
             logging.info('Update:Depends:' + dep)
             b = Bank(dep)
-            if self.options and self.options.user:
+            if self.options and hasattr(self.options, 'user') and self.options.user:
                 b.options.user = self.options.user
             res = b.update()
             self.depends.append(b)

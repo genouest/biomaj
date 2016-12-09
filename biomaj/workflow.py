@@ -1284,6 +1284,19 @@ class UpdateWorkflow(Workflow):
                 else:
                     remote_file.remote_dir = ''
 
+                if http_parse:
+                    msg_http_parse = message_pb2.DownloadFile.HttpParse()
+                    msg_http_parse.dir_line = http_parse.dir_line
+                    msg_http_parse.file_line = http_parse.file_line
+                    msg_http_parse.dir_name = http_parse.dir_name
+                    msg_http_parse.dir_date = http_parse.dir_date
+                    msg_http_parse.file_name = http_parse.file_name
+                    msg_http_parse.file_date = http_parse.file_date
+                    msg_http_parse.file_size = http_parse.file_size
+                    if http_parse.file_date_format:
+                        msg_http_parse.file_date_format = http_parse.file_date_format
+                    remote_file.http_parse.MergeFrom(msg_http_parse)
+
                 biomaj_file = remote_file.files.add()
                 biomaj_file.name = file_to_download['name']
                 if 'root' in file_to_download and file_to_download['root']:

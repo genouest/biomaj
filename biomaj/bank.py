@@ -231,8 +231,8 @@ class Bank(object):
             if not res:
                 break
         if depends:
-            # Revert config
-            self.config = BiomajConfig(self.name, self.options)
+            # Revert logging config
+            self.config.reset_logger()
         return res
 
     def get_bank(self, bank=None, no_log=False):

@@ -538,7 +538,7 @@ class UpdateWorkflow(Workflow):
                 int(cf.get('http.group.dir.date')),
                 int(cf.get('http.group.file.name')),
                 int(cf.get('http.group.file.date')),
-                cf.get('http.group.file.date_format', None),
+                cf.get('http.group.file.date_format', default=None),
                 int(cf.get('http.group.file.size'))
             )
 
@@ -924,7 +924,7 @@ class UpdateWorkflow(Workflow):
             int(cf.get('http.group.dir.date')),
             int(cf.get('http.group.file.name')),
             int(cf.get('http.group.file.date')),
-            cf.get('http.group.file.date_format', None),
+            cf.get('http.group.file.date_format', default=None),
             int(cf.get('http.group.file.size'))
         )
         proxy = cf.get('proxy')
@@ -1314,7 +1314,7 @@ class UpdateWorkflow(Workflow):
 
                 message.http_method = message_pb2.DownloadFile.HTTP_METHOD.Value(downloader.method.upper())
 
-                timeout_download = cf.get('timeout.download', None)
+                timeout_download = cf.get('timeout.download', default=None)
                 if timeout_download:
                     message.timeout_download = timeout_download
 

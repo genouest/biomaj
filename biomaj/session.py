@@ -163,20 +163,30 @@ class Session(object):
         """
         self._session = session
 
-    def get_release_directory(self):
+    def get_release_directory(self, release=None):
         """
         Get release directroy name
-        """
-        return self.name + self.config.get('release.separator', default='_') + str(self._session['release'])
 
-    def get_full_release_directory(self):
+        :param release: optional release, if not set, use current session release
+        :type release: str
+
+        """
+        if release is not None:
+            return self.name + self.config.get('release.separator', default='_') + str(release)
+        else:
+            return self.name + self.config.get('release.separator', default='_') + str(self._session['release'])
+
+    def get_full_release_directory(self, release=None):
         """
         Get bank directroy for this release
+
+        :param release: optional release, if not set, use current session release
+        :type release: str
         """
         release_dir = os.path.join(
             self._session['data_dir'],
             self._session['dir_version'],
-            self.get_release_directory()
+            self.get_release_directory(release)
         )
         return release_dir
 

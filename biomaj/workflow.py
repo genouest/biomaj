@@ -19,7 +19,6 @@ from biomaj_download.download.localcopy import LocalDownload
 
 from biomaj.mongo_connector import MongoConnector
 from biomaj.options import Options
-
 from biomaj.process.processfactory import RemoveProcessFactory, PreProcessFactory, PostProcessFactory
 
 from biomaj_zipkin.zipkin import Zipkin
@@ -1219,14 +1218,17 @@ class UpdateWorkflow(Workflow):
             last_production = self.bank.bank['production'][nb_prod_dir - 1]
             # Get session corresponding to production directory
             last_production_session = self.banks.find_one({'name': self.name, 'sessions.id': last_production['session']}, {'sessions.$': 1})
-            last_production_dir = os.path.join(last_production['data_dir'], cf.get('dir.version'), last_production['release'])
+            last_production_session_release_directory = self.session.get_full_release_directory(release=last_production['release'])
+            last_production_dir = os.path.join(last_production_session_release_directory, 'flat')
             # Checks if some files can be copied instead of downloaded
             last_production_files = None
             if len(last_production_session['sessions']) > 0:
                 last_production_files = self._load_local_files_from_session(last_production_session['sessions'][0]['id'])
 
-            for downloader in downloaders:
-                downloader.download_or_copy(last_production_files, last_production_dir)
+            if not cf.get_bool('copy.skip', default=False):
+                for downloader in downloaders:
+                    downloader.download_or_copy(last_production_files, last_production_dir)
+
             everything_copied = True
             for downloader in downloaders:
                 if len(downloader.files_to_download) > 0:

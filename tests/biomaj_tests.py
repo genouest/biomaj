@@ -401,6 +401,7 @@ class TestBiomajFunctional(unittest.TestCase):
     self.assertTrue(b.session.get('update'))
     b.update()
     self.assertFalse(b.session.get('update'))
+    b.session.config.set('copy.skip', '1')
     b.session.config.set('remote.files', '^test2.fasta')
     b.update()
     self.assertTrue(b.session.get('update'))

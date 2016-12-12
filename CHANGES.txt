@@ -2,6 +2,7 @@
   Fix #67,#66,#61 switch to micro service architecture. Still works in local monolithic install
   Fix some configuration parameter loading when not defined in config
   Fix HTTP parsing parameters loading
+  Fix download_or_copy to copy files in last production release if available instead of downloading files again
 3.0.20:
   Fix #55: Added support for https and directhttps
   Add possibility to define files to download from a local file with remote.list parameter

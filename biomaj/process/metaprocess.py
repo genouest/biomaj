@@ -186,13 +186,6 @@ class MetaProcess(threading.Thread):
                         bmaj_process = DrmaaProcess(meta + '_' + name, exe, args, desc, proc_type, native,
                                                     expand, self.bmaj_env,
                                                     os.path.dirname(self.bank.config.log_file))
-                    elif docker:
-                        use_sudo = self.bank.config.get_bool('docker.sudo', default=True)
-                        bmaj_process = DockerProcess(
-                            meta + '_' + name, exe, args, desc, proc_type, docker,
-                            expand, self.bmaj_only_env,
-                            os.path.dirname(self.bank.config.log_file), use_sudo
-                        )
                     else:
                         if self.bank.config.get('micro.biomaj.service.process'):
                             logging.info("PROC:META:RUN:REMOTEPROCESS: " + bprocess)
@@ -200,28 +193,47 @@ class MetaProcess(threading.Thread):
                             # bank_env=None, log_dir=None,
                             # rabbit_mq=None, rabbit_mq_port=5672, rabbit_mq_user=None, rabbit_mq_password=None, rabbit_mq_virtualhost=None,
                             # proxy=None, bank=None):
+                            use_sudo = self.bank.config.get_bool('docker.sudo', default=True)
                             bmaj_process = RemoteProcess(
                                 meta + '_' + name,
                                 exe,
                                 args,
-                                desc,
-                                proc_type,
-                                expand,
-                                self.bmaj_env,
-                                os.path.dirname(self.bank.config.log_file),
-                                self.bank.config.get('micro.biomaj.rabbit_mq'),
-                                int(self.bank.config.get('micro.biomaj.rabbit_mq_port', default='5672')),
-                                self.bank.config.get('micro.biomaj.rabbit_mq_user'),
-                                self.bank.config.get('micro.biomaj.rabbit_mq_password'),
-                                self.bank.config.get('micro.biomaj.rabbit_mq_virtualhost', default='/'),
-                                self.bank.config.get('micro.biomaj.proxy'),
-                                self.bank.name
+                                desc=desc,
+                                proc_type=proc_type,
+                                expand=expand,
+                                docker=docker,
+                                docker_sudo=use_sudo,
+                                bank_env=self.bmaj_only_env,
+                                log_dir=os.path.dirname(self.bank.config.log_file),
+                                rabbit_mq=self.bank.config.get('micro.biomaj.rabbit_mq'),
+                                rabbit_mq_port=int(self.bank.config.get('micro.biomaj.rabbit_mq_port', default='5672')),
+                                rabbit_mq_user=self.bank.config.get('micro.biomaj.rabbit_mq_user'),
+                                rabbit_mq_password=self.bank.config.get('micro.biomaj.rabbit_mq_password'),
+                                rabbit_mq_virtualhost=self.bank.config.get('micro.biomaj.rabbit_mq_virtualhost', default='/'),
+                                proxy=self.bank.config.get('micro.biomaj.proxy'),
+                                bank=self.bank.name
                             )
                         else:
-                            bmaj_process = Process(
-                                meta + '_' + name, exe, args, desc, proc_type,
-                                expand, self.bmaj_env, os.path.dirname(self.bank.config.log_file)
-                            )
+                            if docker:
+                                use_sudo = self.bank.config.get_bool('docker.sudo', default=True)
+                                bmaj_process = DockerProcess(
+                                    meta + '_' + name, exe, args,
+                                    desc=desc,
+                                    proc_type=proc_type,
+                                    docker=docker,
+                                    expand=expand,
+                                    bank_env=self.bmaj_only_env,
+                                    log_file=os.path.dirname(self.bank.config.log_file),
+                                    use_sudo=use_sudo)
+                            else:
+                                bmaj_process = Process(
+                                    meta + '_' + name, exe, args,
+                                    desc=desc,
+                                    proc_type=proc_type,
+                                    expand=expand,
+                                    bank_env=self.bmaj_env,
+                                    log_file=os.path.dirname(self.bank.config.log_file)
+                                )
                     self.set_progress(bmaj_process.name, None)
                     if self.bank.config.get(bprocess + '.format'):
                         bmaj_process.format = self.bank.config.get(bprocess + '.format')

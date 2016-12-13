@@ -223,7 +223,7 @@ class MetaProcess(threading.Thread):
                                     docker=docker,
                                     expand=expand,
                                     bank_env=self.bmaj_only_env,
-                                    log_file=os.path.dirname(self.bank.config.log_file),
+                                    log_dir=os.path.dirname(self.bank.config.log_file),
                                     use_sudo=use_sudo)
                             else:
                                 bmaj_process = Process(
@@ -232,7 +232,7 @@ class MetaProcess(threading.Thread):
                                     proc_type=proc_type,
                                     expand=expand,
                                     bank_env=self.bmaj_env,
-                                    log_file=os.path.dirname(self.bank.config.log_file)
+                                    log_dir=os.path.dirname(self.bank.config.log_file)
                                 )
                     self.set_progress(bmaj_process.name, None)
                     if self.bank.config.get(bprocess + '.format'):

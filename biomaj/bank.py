@@ -259,7 +259,11 @@ class Bank(object):
         deps = deps.split(',')
         # Now search in deps if they themselves depend on other banks
         for dep in deps:
-            b = Bank(dep, no_log=True)
+            sub_options = None
+            if self.options and hasattr(self.options, 'user') and self.options.user:
+                sub_options = Options()
+                sub_options.user = self.options.user
+            b = Bank(dep, options=sub_options, no_log=True)
             deps = b.get_dependencies() + deps
         return deps
 
@@ -321,7 +325,7 @@ class Bank(object):
                 owner = self.options.user
             else:
                 logging.debug('Micro services activated but user not authenticated')
-                return False
+                raise Exception('Micro services activated but user not authenticated')
         else:
             owner = getpass.getuser()
 

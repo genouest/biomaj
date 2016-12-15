@@ -275,7 +275,7 @@ class Bank(object):
 
         current_user = None
         if self.config.get('micro.biomaj.service.daemon'):
-            if self.options and self.options.user:
+            if self.options and hasattr(self.options, 'user') and self.options.user:
                 current_user = self.options.user
             else:
                 logging.debug('Micro services activated but user not authenticated')
@@ -317,7 +317,7 @@ class Bank(object):
         """
         owner = None
         if self.config.get('micro.biomaj.service.daemon'):
-            if self.options and self.options.user:
+            if self.options and hasattr(self.options, 'user') and self.options.user:
                 owner = self.options.user
             else:
                 logging.debug('Micro services activated but user not authenticated')

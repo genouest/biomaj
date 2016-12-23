@@ -1673,6 +1673,27 @@ class ReleaseCheckWorkflow(UpdateWorkflow):
         logging.debug('New release check workflow')
         self.session.config.set('releaseonly', 'true')
 
+    def wf_init(self):
+        """
+        Initialize workflow, do not lock bank as it is not modified
+        If bank is already locked, stop workflow
+        """
+        logging.info('Workflow:wf_init')
+        data_dir = self.session.config.get('data.dir')
+        lock_dir = self.session.config.get('lock.dir', default=data_dir)
+        lock_file = os.path.join(lock_dir, self.name + '.lock')
+        if os.path.exists(lock_file):
+            logging.error('Bank ' + self.name + ' is locked, a process may be in progress, else remove the lock file ' + lock_file)
+            return False
+        return True
+
+    def wf_over(self):
+        """
+        Workflow is over
+        """
+        logging.info('Workflow:wf_over')
+        return True
+
     def __update_info(self, info):
         return
 

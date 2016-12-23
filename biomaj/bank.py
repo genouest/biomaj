@@ -12,7 +12,10 @@ from datetime import datetime
 from biomaj.mongo_connector import MongoConnector
 
 from biomaj.session import Session
-from biomaj.workflow import UpdateWorkflow, RemoveWorkflow, Workflow
+from biomaj.workflow import UpdateWorkflow
+from biomaj.workflow import RemoveWorkflow
+from biomaj.workflow import Workflow
+from biomaj.workflow import ReleaseCheckWorkflow
 from biomaj_core.config import BiomajConfig
 from biomaj.options import Options
 from biomaj.process.processfactory import ProcessFactory
@@ -1083,6 +1086,21 @@ class Bank(object):
         self.session.set('workflow_status', res)
         self.save_session()
         return res
+
+    def check_remote_release(self):
+        '''
+        Check remote release of the bank
+        '''
+        logging.warning('Bank:' + self.name + ':Check remote release')
+        self.controls()
+        logging.info('Bank:' + self.name + ':Release:latest')
+        self.load_session(ReleaseCheckWorkflow.FLOW)
+        workflow = ReleaseCheckWorkflow(self)
+        res = workflow.start()
+        remoterelease = None
+        if res:
+            remoterelease = workflow.session.get('remoterelease')
+        return (res, remoterelease)
 
     def start_remove(self, session):
         """

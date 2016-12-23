@@ -17,15 +17,20 @@ from optparse import OptionParser
 
 from biomaj.bank import Bank
 from biomaj.session import Session
-from biomaj.workflow import Workflow, UpdateWorkflow
+from biomaj.workflow import Workflow
+from biomaj.workflow import UpdateWorkflow
+from biomaj.workflow import ReleaseCheckWorkflow
 from biomaj_core.utils import Utils
 from biomaj_download.download.ftp import FTPDownload
-from biomaj_download.download.direct import DirectFTPDownload, DirectHttpDownload
+from biomaj_download.download.direct import DirectFTPDownload
+from biomaj_download.download.direct import DirectHttpDownload
 from biomaj_download.download.http import HTTPDownload
 from biomaj_download.download.localcopy  import LocalDownload
 from biomaj_download.download.downloadthreads import DownloadThread
 from biomaj_core.config import BiomajConfig
-from biomaj.process.processfactory import PostProcessFactory,PreProcessFactory,RemoveProcessFactory
+from biomaj.process.processfactory import PostProcessFactory
+from biomaj.process.processfactory import PreProcessFactory
+from biomaj.process.processfactory import RemoveProcessFactory
 from biomaj_user.user import BmajUser
 from biomaj_core.bmajindex import BmajIndex
 
@@ -328,6 +333,16 @@ class TestBiomajFunctional(unittest.TestCase):
     w = UpdateWorkflow(b)
     w.wf_release()
     self.assertTrue(b.session.get('release') == '100')
+
+  def test_remoterelease_check(self):
+      b = Bank('local')
+      b.load_session(ReleaseCheckWorkflow.FLOW)
+      b.session.config.set('release.file', 'test_(\d+)\.txt')
+      b.session.config.set('release.regexp', '')
+      workflow = ReleaseCheckWorkflow(b)
+      res = workflow.start()
+      remoterelease = b.session.get('remoterelease')
+      self.assertTrue(remoterelease == '100')
 
   def test_extract_release_from_file_content(self):
     b = Bank('local')

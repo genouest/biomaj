@@ -457,6 +457,14 @@ class UpdateWorkflow(Workflow):
             dserv.clean()
             dserv.close()
 
+    def __update_info(self, info):
+        '''
+        Update some info in db for current bank
+        '''
+        if info is not None:
+            MongoConnector.banks.update({'name': self.bank.name},
+                                        info)
+
     def wf_release(self):
         """
         Find current release on remote
@@ -482,8 +490,11 @@ class UpdateWorkflow(Workflow):
                 return False
 
             release = self.session.get('release')
+            self.__update_info({'$set': {'status.release.progress': str(release)}})
+            '''
             MongoConnector.banks.update({'name': self.bank.name},
                                         {'$set': {'status.release.progress': str(release)}})
+            '''
 
             logging.info('Workflow:wf_release:FromDepends:' + depbank.name + ':' + self.session.get('release'))
             if got_update:
@@ -661,10 +672,13 @@ class UpdateWorkflow(Workflow):
         self.session.set('release', release)
         self.session.set('remoterelease', release)
 
+        self.__update_info({'$set': {'status.release.progress': str(release)}})
+        '''
         MongoConnector.banks.update(
             {'name': self.bank.name},
             {'$set': {'status.release.progress': str(release)}}
         )
+        '''
 
         # We restart from scratch, a directory with this release already exists
         # Check directory existence if from scratch to change local release
@@ -878,6 +892,8 @@ class UpdateWorkflow(Workflow):
         if self.session.get('release') is not None:
             self.session.config.set('localrelease', self.session.get('release'))
             self.session.config.set('remoterelease', self.session.get('remoterelease'))
+            if self.session.config.get_bool('releaseonly', default=False):
+                return True
 
         if cf.get('protocol') == 'none':
             if self.session.get('release') is None:
@@ -1137,10 +1153,14 @@ class UpdateWorkflow(Workflow):
 
             logging.info('Workflow:wf_download:release:remoterelease:' + self.session.get('remoterelease'))
             logging.info('Workflow:wf_download:release:release:' + release)
+
+            self.__update_info({'$set': {'status.release.progress': str(release)}})
+            '''
             MongoConnector.banks.update(
                 {'name': self.bank.name},
                 {'$set': {'status.release.progress': str(release)}}
             )
+            '''
             self.download_go_ahead = False
             if self.options.get_option(Options.FROM_TASK) == 'download':
                 # We want to download again in same release, that's fine, we do not care it is the same release
@@ -1155,6 +1175,9 @@ class UpdateWorkflow(Workflow):
 
         self.session.config.set('localrelease', self.session.get('release'))
         self.session.config.set('remoterelease', self.session.get('remoterelease'))
+
+        if self.session.config.get_bool('releaseonly', default=False):
+            return True
 
         self.banks = MongoConnector.banks
         self.bank.bank = self.banks.find_one({'name': self.name})
@@ -1623,3 +1646,35 @@ class UpdateWorkflow(Workflow):
         self.bank.session = keep_session
 
         return True
+
+
+class ReleaseCheckWorkflow(UpdateWorkflow):
+    """
+    Workflow for a bank update
+    """
+
+    FLOW = [
+        {'name': 'init', 'steps': []},
+        {'name': 'check', 'steps': []},
+        {'name': 'preprocess', 'steps': []},
+        {'name': 'release', 'steps': []},
+        {'name': 'download', 'steps': []},
+        {'name': 'over', 'steps': []}
+    ]
+
+    def __init__(self, bank):
+        """
+        Instantiate a new workflow
+
+        :param bank: bank on which to apply the workflow
+        :type bank: Bank
+        """
+        UpdateWorkflow.__init__(self, bank)
+        logging.debug('New release check workflow')
+        self.session.config.set('releaseonly', 'true')
+
+    def __update_info(self, info):
+        return
+
+    def wf_progress(self, task, status):
+        return

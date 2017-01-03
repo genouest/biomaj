@@ -1107,7 +1107,7 @@ class Bank(object):
         influxdb = None
         try:
             if db_user and db_password:
-                influxdb = InfluxDBClient(host=db_host, port=db_port, user=db_user, password=db_password, database=db_name)
+                influxdb = InfluxDBClient(host=db_host, port=db_port, username=db_user, password=db_password, database=db_name)
             else:
                 influxdb = InfluxDBClient(host=db_host, port=db_port, database=db_name)
         except Exception as e:

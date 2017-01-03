@@ -1138,6 +1138,20 @@ class Bank(object):
         }
         metrics.append(influx_metric)
 
+        all_banks = Bank.list()
+        nb_banks_with_prod = 0
+        if all_banks:
+            for bank_info in all_banks:
+                if 'production' in bank_info and len(bank_info['procution']) > 0:
+                    nb_banks_with_prod += 1
+            influx_metric = {
+                "measurement": 'biomaj.banks.quantity',
+                "fields": {
+                    "value": nb_banks_with_prod
+                }
+            }
+            metrics.append(influx_metric)
+
         workflow_duration = 0
         for flow in list(self.session._session['stats']['workflow'].keys()):
             workflow_duration += self.session._session['stats']['workflow'][flow]

@@ -1142,7 +1142,7 @@ class Bank(object):
         nb_banks_with_prod = 0
         if all_banks:
             for bank_info in all_banks:
-                if 'production' in bank_info and len(bank_info['procution']) > 0:
+                if 'production' in bank_info and len(bank_info['production']) > 0:
                     nb_banks_with_prod += 1
             influx_metric = {
                 "measurement": 'biomaj.banks.quantity',

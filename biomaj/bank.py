@@ -1100,7 +1100,7 @@ class Bank(object):
         if 'stats' not in self.session._session:
             return
 
-        db_port = int(self.config.get('influxdb.host', default='8086'))
+        db_port = int(self.config.get('influxdb.port', default='8086'))
         db_user = self.config.get('influxdb.user', default=None)
         db_password = self.config.get('influxdb.password', default=None)
         db_name = self.config.get('influxdb.db', default='biomaj')

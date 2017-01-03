@@ -149,6 +149,19 @@ Execute unit tests but disable ones needing network access
 
     nosetests -a '!network'
 
+
+Monitoring
+==========
+
+InfluxDB can be used to monitor biomaj. Following series are available:
+
+* biomaj.banks.quantity (number of banks)
+* biomaj.production.size.total (size of all production directories)
+* biomaj.workflow.duration (workflow duration)
+* biomaj.production.size.latest (size of latest update)
+* biomaj.bank.update.downloaded_files (number of downloaded files)
+* biomaj.bank.update.new (track updates)
+
 License
 =======
 

@@ -69,7 +69,9 @@ config = {
                          'tabulate',
                          'requests',
                          'redis',
-                         'elasticsearch'],
+                         'elasticsearch',
+                         'influxdb'
+                         ],
     'tests_require': ['nose', 'mock'],
     'test_suite': 'nose.collector',
     'packages': find_packages(),

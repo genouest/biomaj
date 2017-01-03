@@ -5,12 +5,12 @@ import logging
 import time
 import shutil
 import json
+from datetime import datetime
 
 import redis
+from influxdb import InfluxDBClient
 
-from datetime import datetime
 from biomaj.mongo_connector import MongoConnector
-
 from biomaj.session import Session
 from biomaj.workflow import UpdateWorkflow
 from biomaj.workflow import RemoveWorkflow
@@ -1085,7 +1085,107 @@ class Bank(object):
         res = self.start_update()
         self.session.set('workflow_status', res)
         self.save_session()
+        self.__stats()
         return res
+
+    def __stats(self):
+        '''
+        Send stats to Influxdb if enabled
+        '''
+        db_host = self.config.get('influxdb.host', default=None)
+        if not db_host:
+            return
+        if not self.session.get_status(Workflow.FLOW_OVER):
+            return
+        if 'stats' not in self.session._session:
+            return
+
+        db_port = int(self.config.get('influxdb.host', default='8086'))
+        db_user = self.config.get('influxdb.user', default=None)
+        db_password = self.config.get('influxdb.password', default=None)
+        db_name = self.config.get('influxdb.db', default='biomaj')
+        influxdb = None
+        try:
+            if db_user and db_password:
+                influxdb = InfluxDBClient(host=db_host, port=db_port, user=db_user, password=db_password, database=db_name)
+            else:
+                influxdb = InfluxDBClient(host=db_host, port=db_port, database=db_name)
+        except Exception as e:
+            logging.error('InfluxDB connection error: ' + str(e))
+            return
+        metrics = []
+
+        productions = self.session.get('production')
+        total_size = 0
+        latest_size = 0
+        for production in productions:
+            if 'size' in production:
+                total_size += production['size']
+
+        influx_metric = {
+            "measurement": 'biomaj.production.size.total',
+            "fields": {
+                "value": float(total_size)
+            },
+            "tags": {
+                "bank": self.name
+            }
+        }
+        metrics.append(influx_metric)
+
+        workflow_duration = 0
+        for flow in list(self.session._session['stats']['workflow'].keys()):
+            workflow_duration += self.session._session['stats']['workflow'][flow]
+
+        influx_metric = {
+            "measurement": 'biomaj.workflow.duration',
+            "fields": {
+                "value": workflow_duration
+            },
+            "tags": {
+                "bank": self.name
+            }
+        }
+        metrics.append(influx_metric)
+
+        if self.session.get('update'):
+            latest_size = self.session.get('fullsize')
+            influx_metric = {
+                "measurement": 'biomaj.production.size.latest',
+                "fields": {
+                    "value": float(latest_size)
+                },
+                "tags": {
+                    "bank": self.name
+                }
+            }
+            metrics.append(influx_metric)
+
+            influx_metric = {
+                "measurement": 'biomaj.bank.update.downloaded_files',
+                "fields": {
+                    "value": self.session._session['stats']['nb_downloaded_files']
+                },
+                "tags": {
+                    "bank": self.name
+                }
+            }
+            metrics.append(influx_metric)
+
+            influx_metric = {
+                "measurement": 'biomaj.bank.update.new',
+                "fields": {
+                    "value": 1
+                },
+                "tags": {
+                    "bank": self.name
+                }
+            }
+            metrics.append(influx_metric)
+
+        res = influxdb.write_points(metrics, time_precision="s")
+        if not res:
+            logging.error('Failed to send metrics to database')
 
     def check_remote_release(self):
         '''

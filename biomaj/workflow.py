@@ -3,6 +3,7 @@ from builtins import range
 from builtins import object
 import logging
 import datetime
+import time
 import os
 import shutil
 import tempfile
@@ -84,7 +85,15 @@ class Workflow(object):
         Start the workflow
         """
         logging.info('Workflow:Start')
+        if 'stats' not in self.session._session:
+            self.session._session['stats'] = {
+                'workflow': {},
+                'nb_downloaded_files': 0
+            }
+
         for flow in self.session.flow:
+            dt = datetime.datetime.now()
+            start_timestamp = time.mktime(dt.timetuple())
             if self.skip_all:
                 logging.info('Workflow:Skip:' + flow['name'])
                 self.session._session['status'][flow['name']] = None
@@ -171,6 +180,9 @@ class Workflow(object):
                             logging.debug(traceback.format_exc())
                             self.wf_over()
                             return False
+            dt = datetime.datetime.now()
+            end_timestamp = time.mktime(dt.timetuple())
+            self.session._session['stats']['workflow'][flow['name']] = end_timestamp - start_timestamp
             if self.options.get_option(Options.STOP_AFTER) == flow['name']:
                 self.wf_over()
                 break
@@ -1125,6 +1137,7 @@ class UpdateWorkflow(Workflow):
             files_to_download += downloader.files_to_download
 
         self.session.set('download_files', downloader.files_to_download)
+        self.session._session['stats']['nb_downloaded_files'] = len(files_to_download)
 
         if self.session.get('release') and self.session.config.get_bool('release.control', default=False):
             if self.session.previous_release == self.session.get('remoterelease'):

@@ -1115,9 +1115,14 @@ class Bank(object):
             return
         metrics = []
 
-        productions = self.session.get('production')
+        if 'production' not in self.bank or not self.bank['production']:
+            return
+
+        productions = self.bank['production']
         total_size = 0
         latest_size = 0
+        if not productions:
+            return
         for production in productions:
             if 'size' in production:
                 total_size += production['size']

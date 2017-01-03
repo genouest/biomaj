@@ -57,8 +57,17 @@ Application Features
  * Optional Administration web interface (biomaj-watcher)
  * CLI management
  * Mail alerts for the update cycle supervision
+ * Prometheus and Influxdb optional integration
+ * Optional consul supervision of processes
 
 
+* Scalability:
+  * Monolithic (local install) or microservice architecture (remote access to a BioMAJ server)
+  * Microservice installation allows per process scalability and supervision (number of process in charge of download, execution, etc.)
+
+
+* Remote access:
+  * Optional FTP server providing authenticated or anonymous data access
 
 Dependencies
 ============

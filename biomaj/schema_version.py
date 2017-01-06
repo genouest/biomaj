@@ -71,6 +71,6 @@ class SchemaVersion(object):
                 if 'apikey' not in user:
                     updated += 1
                     api_key = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(10))
-                    users.users.update({'_id': user['_id']}, {'$set': {'apikey': api_key}})
+                    users.update({'_id': user['_id']}, {'$set': {'apikey': api_key}})
             print("Migration: %d user(s) updated" % updated)
         schema.update_one({'id': 1}, {'$set': {'version': installed_version}})

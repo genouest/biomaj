@@ -34,8 +34,10 @@ for bank in banks:
         continue
     nb_banks += 1
     latest_size = productions[len(productions) - 1]['size']
+    if not latest_size:
+        latest_size = 0
     for production in productions:
-        if 'size' in production:
+        if 'size' in production and production['size']:
             total_size += production['size']
 
     influx_metric = {

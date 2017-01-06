@@ -6,7 +6,7 @@ from biomaj.bank import Bank
 from biomaj_core.config import BiomajConfig
 import sys
 
-if len(sys.argv) != 1:
+if len(sys.argv) != 2:
     print('Usage: influxdb_import.py path_to_global.properties')
     sys.exit(1)
 

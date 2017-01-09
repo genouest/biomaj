@@ -1367,7 +1367,10 @@ class UpdateWorkflow(Workflow):
 
                 timeout_download = cf.get('timeout.download', default=None)
                 if timeout_download:
-                    message.timeout_download = timeout_download
+                    try:
+                        message.timeout_download = int(timeout_download)
+                    except Exception as e:
+                        logging.error('Wrong timeout type for timeout.download: ' + str(e))
 
                 if self.span:
                     trace = message_pb2.Operation.Trace()

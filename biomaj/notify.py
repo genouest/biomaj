@@ -31,7 +31,11 @@ class Notify(object):
         log_file = bank.config.log_file
         msg = MIMEText('')
         if log_file:
-            fp = open(log_file, 'rb')
+            fp = None
+            if sys.version < '3':
+                fp = open(log_file, 'rb')
+            else:
+                fp = open(log_file, 'r')
             msg = MIMEText(fp.read())
             fp.close()
 

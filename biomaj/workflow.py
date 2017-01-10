@@ -1201,8 +1201,11 @@ class UpdateWorkflow(Workflow):
         copied_files = []
 
         # Check if already in offlinedir
+        files_in_offline = 0
+        nb_expected_files = 0
         for downloader in downloaders:
             keep_files = []
+            nb_expected_files += len(downloader.files_to_download)
             if os.path.exists(offline_dir):
                 for file_to_download in downloader.files_to_download:
                     # If file is in offline dir and has same date and size, do not download again
@@ -1221,6 +1224,7 @@ class UpdateWorkflow(Workflow):
                                 keep_files.append(file_to_download)
                             else:
                                 logging.debug('Workflow:wf_download:offline:' + file_to_download['name'])
+                                files_in_offline += 1
                         except Exception as e:
                             # Could not get stats on file
                             logging.debug('Workflow:wf_download:offline:failed to stat file: ' + str(e))
@@ -1229,7 +1233,8 @@ class UpdateWorkflow(Workflow):
                     else:
                         keep_files.append(file_to_download)
                 downloader.files_to_download = keep_files
-
+        logging.info("Workflow:wf_download:nb_expected_files:" + str(nb_expected_files))
+        logging.info("Workflow:wf_download:nb_files_in_offline_dir:" + str(files_in_offline))
         # If everything was already in offline dir
         everything_present = True
         for downloader in downloaders:

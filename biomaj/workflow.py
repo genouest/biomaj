@@ -1442,11 +1442,9 @@ class UpdateWorkflow(Workflow):
         Copy files from offline directory to release directory
         """
         logging.info('Workflow:wf_copy')
-        '''
         if len(self.downloaded_files) == 0:
             logging.info("Workflow:wf_copy:NoFileDownload:NoCopy")
             return True
-        '''
         from_dir = os.path.join(self.session.config.get('data.dir'),
                                 self.session.config.get('offline.dir.name'))
         regexp = self.session.config.get('local.files', default='**/*').split()

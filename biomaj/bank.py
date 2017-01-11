@@ -281,7 +281,7 @@ class Bank(object):
             admin = [x.strip() for x in admin_config.split(',')]
 
         current_user = None
-        if self.config.get('micro.biomaj.service.daemon'):
+        if self.config.get('micro.biomaj.service.daemon', default=None) == '1':
             if self.options and hasattr(self.options, 'user') and self.options.user:
                 current_user = self.options.user
             else:
@@ -323,7 +323,7 @@ class Bank(object):
         :return: properties dict
         """
         owner = None
-        if self.config.get('micro.biomaj.service.daemon'):
+        if self.config.get('micro.biomaj.service.daemon', default=None) == '1':
             if self.options and hasattr(self.options, 'user') and self.options.user:
                 owner = self.options.user
             else:

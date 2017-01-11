@@ -187,7 +187,7 @@ class MetaProcess(threading.Thread):
                                                     expand, self.bmaj_env,
                                                     os.path.dirname(self.bank.config.log_file))
                     else:
-                        if self.bank.config.get('micro.biomaj.service.process'):
+                        if self.bank.config.get('micro.biomaj.service.process', default=None) == '1':
                             logging.info("PROC:META:RUN:REMOTEPROCESS: " + bprocess)
                             # (self, name, exe, args, desc=None, proc_type=None, expand=True,
                             # bank_env=None, log_dir=None,

@@ -1225,6 +1225,7 @@ class UpdateWorkflow(Workflow):
                             else:
                                 logging.debug('Workflow:wf_download:offline:' + file_to_download['name'])
                                 files_in_offline += 1
+                                copied_files.append(file_to_download)
                         except Exception as e:
                             # Could not get stats on file
                             logging.debug('Workflow:wf_download:offline:failed to stat file: ' + str(e))

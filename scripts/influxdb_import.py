@@ -14,7 +14,12 @@ BiomajConfig.load_config(config_file=sys.argv[1])
 
 influxdb = None
 try:
-    influxdb = InfluxDBClient(host='biomaj-influxdb', database='biomaj')
+    host = BiomajConfig.global_config.get('GENERAL', 'influxdb.host')
+    user = BiomajConfig.global_config.get('GENERAL', 'influxdb.user')
+    password = BiomajConfig.global_config.get('GENERAL', 'influxdb.password')
+    port = BiomajConfig.global_config.get('GENERAL', 'influxdb.port')
+    database = BiomajConfig.global_config.get('GENERAL', 'influxdb.db')
+    influxdb = InfluxDBClient(host=host, database=database, port=port, username=user, password=password)
 except Exception as e:
     print('Failed to connect to influxdb, check configuration in global.properties: ' + str(e))
     sys.exit(1)

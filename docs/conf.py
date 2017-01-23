@@ -22,7 +22,14 @@ class Mock(MagicMock):
     def __getattr__(cls, name):
             return Mock()
 
-MOCK_MODULES = ['pycurl', 'pymongo', 'elasticsearch', 'drmaa', 'biomaj_download', 'influxdb']
+MOCK_MODULES = ['pycurl', 'pymongo', 'elasticsearch', 'drmaa', 'influxdb',
+                'biomaj_download',
+                'biomaj_download.downloadclient',
+                'biomaj_download.download',
+                'biomaj_download.download.localcopy',
+                'biomaj_download.download.http',
+                'biomaj_download.download.http.HTTPParse',
+                'biomaj_download.message']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # If extensions (or modules to document with autodoc) are in another directory,

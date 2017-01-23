@@ -9,7 +9,6 @@ future
 elasticsearch
 biomaj_core
 biomaj_user
-biomaj_download
 biomaj_process
 biomaj_cli
 

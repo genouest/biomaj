@@ -143,17 +143,38 @@ index.number_of_replicas: 0
 <h1>
 <a id="installation" class="anchor" href="#installation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installation</h1>
 
-<p>After dependencies installation, go in BioMAJ source directory:</p>
-
-<pre><code>python setup.py install
-</code></pre>
-
 <p>You should consider using a Python virtual environment (virtualenv) to install BioMAJ.</p>
 
 <p>In tools/examples, copy the global.properties and update it to match your local
 installation.</p>
 
 <p>The tools/process contains example process files (python and shell).</p>
+
+
+<h2>From source</h2>
+<p>After dependencies installation, go in BioMAJ source directory:</p>
+
+<pre><code>python setup.py install
+</code></pre>
+
+<h2>From packages</h2>
+<pre><code>pip install biomaj biomaj-cli biomaj-daemon
+</code></pre>
+
+<h2>Components</h2>
+
+BioMAJ uses several packages, each one with its own git repository:
+
+<ul>
+    <li>biomaj-cli: command line client</li>
+    <li>biomaj: main component running an update workflow for a bank</li>
+    <li>biomaj-daemon: for microservices, manage workflow executions and authorizations.</li>
+    <li>biomaj-download: manages the download of remote files</li>
+    <li>biomaj-process: manages pre and post processes</li>
+    <li>biomaj-ftp: access updated banks via FTP</li>
+    <li>biomaj-docker: docker installation</li>
+    <li>biomaj-watcher: web frontend for biomaj</li>
+</ul>
 
 <h1>
 <a id="api-documentation" class="anchor" href="#api-documentation" aria-hidden="true"><span class="octicon octicon-link"></span></a>API documentation</h1>

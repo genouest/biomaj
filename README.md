@@ -30,9 +30,14 @@ Edit global.properties file to match your settings. Minimal conf are database co
 Migration
 =========
 
-To migrate from previous BioMAJ, a script is available at:
+To migrate from previous BioMAJ 1.x, a script is available at:
 https://github.com/genouest/biomaj-migrate. Script will import old database to
 the new database, and update configuration files to the modified format. Data directory is the same.
+
+Migration for 3.0 to 3.1:
+
+Biomaj 3.1 provides an optional micro service architecture, allowing to separate and distributute/scale biomaj components on one or many hosts. This implementation is optional but recommended for server installations. Monolithic installation can be kept for local computer installation.
+To upgrade an existing 3.0 installation, as biomaj code has been split into multiple components, it is necessary to install/update biomaj python package but also biomaj-cli and biomaj-daemon packages. Then database must be upgraded manually (see Upgrading in documentation).
 
 Application Features
 ====================
@@ -98,9 +103,15 @@ accordingly:
 Installation
 ============
 
+From source:
+
 After dependencies installation, go in BioMAJ source directory:
 
     python setup.py install
+
+From packages:
+
+    pip install biomaj biomaj-cli biomaj-daemon
 
 
 You should consider using a Python virtual environment (virtualenv) to install BioMAJ.
@@ -109,6 +120,7 @@ In tools/examples, copy the global.properties and update it to match your local
 installation.
 
 The tools/process contains example process files (python and shell).
+
 
 Docker
 ======

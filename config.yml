@@ -1,0 +1,48 @@
+biomaj:
+    global_properties: '/home/osallou/Development/NOSAVE/genouest/global.properties'
+
+rabbitmq:
+    host: '127.0.0.1'
+    port: 5672
+    user: null
+    password: null
+    virtual_host: '/'
+
+mongo:
+    url: 'mongodb://localhost:27017'
+    db: 'biomaj'
+
+consul:
+    host: null
+    # Unique agent identifier name among biomaj downloaders
+    id: 'biomaj_daemon_agent'
+
+web:
+    debug: true
+    port: 5000
+    local_endpoint: 'http://127.0.0.1:5000'
+
+tls:
+    key: null
+    cert: null
+
+log_config:
+    'version': 1
+    'formatters':
+        'generic':
+            'format': '%(asctime)s %(levelname)-5.5s [%(name)s][%(threadName)s] %(message)s'
+    'handlers':
+        'console':
+            'class': 'logging.StreamHandler'
+            'formatter': 'generic'
+            'level': 'DEBUG'
+    'loggers':
+        'root':
+            'level': 'INFO'
+            'handlers':
+                - 'console'
+        'biomaj':
+            'level': 'DEBUG'
+            'handlers':
+                - 'console'
+    'disable_existing_loggers': False

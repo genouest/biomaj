@@ -1,14 +1,15 @@
 [GENERAL]
+root.dir=/var/lib/biomaj
+conf.dir=%(root.dir)s/conf
+log.dir=%(root.dir)s/log
+process.dir=%(root.dir)s/process
+cache.dir=%(root.dir)s/cache
+lock.dir=%(root.dir)s/lock
 #The root directory where all databases are stored.
 #If your data is not stored under one directory hirearchy
 #you can override this value in the database properties file.
-data.dir=/var/lib/biomaj3/banks
+data.dir=%(root.dir)s//data
 
-conf.dir=/etc/biomaj3
-log.dir=/var/log/biomaj3
-process.dir=/usr/share/biomaj3/process
-cache.dir=/var/cache/biomaj3
-lock.dir= /var/lib/biomaj/lock
 
 db.url=mongodb://localhost:27017
 db.name=biomaj
@@ -22,45 +23,36 @@ use_elastic=0
 #Comma separated list of elasticsearch nodes  host1,host2:port2
 elastic_nodes=localhost
 elastic_index=biomaj
-
 # Calculate data.dir size stats
 data.stats=1
 
-# Auto publish on updates (do not need publish flag, can be ovveriden in bank property file)
-auto_publish=0
-
-# Microservices
-# You can activate all microservices or only a few (download only for example).
-# Proxy is the API proxy that would load-balance API requests between services. If using only 1 service then you
-# can specify in proxy the URL to the biomaj web service in question.
-#
-# If using download micro service only you can execute for example 4 biomaj download message processes and 1 biomaj web process,
-# proxy would match the URL to the biomaj web process in this case.
-# See micro services documentation.
-micro.biomaj.proxy=
-#micro.biomaj.service.download=1
-#micro.biomaj.service.process=1
-#micro.biomaj.service.user=1
-#micro.biomaj.service.daemon=1
-
-# Rabbitmq configuration (if using microservices)
-# Rabbitmq must be configured to get remote access with defined user (by default guest access is allowed only from localhost),
-# see rabbitmq configuration for help (https://www.rabbitmq.com/access-control.html)
-micro.biomaj.rabbit_mq=
-micro.biomaj.rabbit_mq_port=5672
-micro.biomaj.rabbit_mq_virtualhost=/
-micro.biomaj.rabbit_mq_user=
-micro.biomaj.rabbit_mq_password=
+redis.host=localhost
+redis.port=6379
+redis.db=0
+redis.prefix=biomaj
 
 
-# Influxdb (optional)
-# keep host empty or commented if you do not use influxdb
-# database n influxdb must be created first
+# Influxdb configuration (optional)
+# User and db must be manually created in influxdb before use
 influxdb.host=
 influxdb.port=8086
 influxdb.user=root
 influxdb.password=root
 influxdb.db=biomaj
+
+# Needed for download remote service (should be a load balancer to services
+#micro.biomaj.proxy=http://127.0.0.1:5000
+#micro.biomaj.rabbit_mq=127.0.0.1
+#micro.biomaj.rabbit_mq_port=5672
+#micro.biomaj.rabbit_mq_user=
+#micro.biomaj.rabbit_mq_password=
+#micro.biomaj.rabbit_mq_virtualhost=
+#micro.biomaj.service.download=1
+#micro.biomaj.service.process=1
+#micro.biomaj.service.user=1
+#micro.biomaj.service.daemon=1
+
+auto_publish=1
 
 ########################
 # Global properties file
@@ -75,13 +67,31 @@ influxdb.db=biomaj
 #---------------
 #Uncomment thes lines if you want receive mail when the workflow is finished
 
-mail.smtp.host=localhost
+mail.smtp.host=
 mail.admin=
-mail.from=biomaj@localhost
+mail.from=
 mail.user=
 mail.password=
-mail.tls=
+mail.tls=true
 
+#---------------------
+#Proxy authentification
+#---------------------
+#proxyHost=
+#proxyPort=
+#proxyUser=
+#proxyPassword=
+
+#---------------------
+# PROTOCOL
+#-------------------
+#possible values : ftp, http, rsync, local
+port=21
+username=anonymous
+password=anonymous@nowhere.com
+
+#access user for production directories
+production.directory.chmod=775
 
 #Number of thread during the download
 bank.num.threads=4
@@ -91,6 +101,10 @@ files.num.threads=4
 
 #to keep more than one release increase this value
 keep.old.version=0
+
+#Link copy property
+do.link.copy=true
+
 
 #The historic log file is generated in log/
 #define level information for output : DEBUG,INFO,WARN,ERR
@@ -105,17 +119,18 @@ http.group.file.name=1
 http.group.file.date=2
 http.group.file.size=3
 
+#Needed if data sources are contains in an archive
+log.files=true
+
+local.files.excluded=\\.panfs.*
+
+#~40mn
+ftp.timeout=2000000
+ftp.automatic.reconnect=5
+ftp.active.mode=false
 
 # Bank default access
 visibility.default=public
-
-# Proxy, optional proxy (see format at
-# http://curl.haxx.se/libcurl/c/CURLOPT_PROXY.html)
-# biomaj >= 3.0.7
-#proxy=myproxyhost:1080
-#proxy=myproxyhost
-# Set proxy authentication if any, else keep commented
-#proxy_auth=user:password
 
 [loggers]
 keys = root, biomaj
@@ -127,11 +142,11 @@ keys = console
 keys = generic
 
 [logger_root]
-level =INFO
+level = DEBUG
 handlers = console
 
 [logger_biomaj]
-level = INFO
+level = DEBUG
 handlers = console
 qualname = biomaj
 propagate=0
@@ -139,7 +154,7 @@ propagate=0
 [handler_console]
 class = StreamHandler
 args = (sys.stderr,)
-level = INFO
+level = DEBUG
 formatter = generic
 
 [formatter_generic]

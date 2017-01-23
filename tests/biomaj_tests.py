@@ -17,20 +17,22 @@ from optparse import OptionParser
 
 from biomaj.bank import Bank
 from biomaj.session import Session
-from biomaj.workflow import Workflow, UpdateWorkflow
-from biomaj.utils import Utils
-from biomaj.download.ftp import FTPDownload
-from biomaj.download.direct import DirectFTPDownload, DirectHttpDownload
-from biomaj.download.http import HTTPDownload
-from biomaj.download.localcopy  import LocalDownload
-from biomaj.download.downloadthreads import DownloadThread
-from biomaj.config import BiomajConfig
-from biomaj.process.processfactory import PostProcessFactory,PreProcessFactory,RemoveProcessFactory
-from biomaj.user import BmajUser
-from biomaj.bmajindex import BmajIndex
-
-from ldap3.core.exceptions import LDAPBindError
-
+from biomaj.workflow import Workflow
+from biomaj.workflow import UpdateWorkflow
+from biomaj.workflow import ReleaseCheckWorkflow
+from biomaj_core.utils import Utils
+from biomaj_download.download.ftp import FTPDownload
+from biomaj_download.download.direct import DirectFTPDownload
+from biomaj_download.download.direct import DirectHttpDownload
+from biomaj_download.download.http import HTTPDownload
+from biomaj_download.download.localcopy  import LocalDownload
+from biomaj_download.download.downloadthreads import DownloadThread
+from biomaj_core.config import BiomajConfig
+from biomaj.process.processfactory import PostProcessFactory
+from biomaj.process.processfactory import PreProcessFactory
+from biomaj.process.processfactory import RemoveProcessFactory
+from biomaj_user.user import BmajUser
+from biomaj_core.bmajindex import BmajIndex
 
 import unittest
 
@@ -140,335 +142,7 @@ class UtilsForTest():
     fout.close()
 
 
-class TestBiomajUtils(unittest.TestCase):
-
-  def setUp(self):
-    self.utils = UtilsForTest()
-
-  def tearDown(self):
-    self.utils.clean()
-
-
-  def test_mimes(self):
-    fasta_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),'bank/test2.fasta')
-    (mime, encoding) = Utils.detect_format(fasta_file)
-    self.assertTrue('application/fasta' == mime)
-
-  @attr('compress')
-  def test_uncompress(self):
-    from_file = { 'root': os.path.dirname(os.path.realpath(__file__)),
-                  'name': 'bank/test.fasta.gz'
-                  }
-
-    to_dir = self.utils.data_dir
-    Utils.copy_files([from_file], to_dir)
-    Utils.uncompress(os.path.join(to_dir, from_file['name']))
-    self.assertTrue(os.path.exists(to_dir+'/bank/test.fasta'))
-
-  def test_copy_with_regexp(self):
-    from_dir = os.path.dirname(os.path.realpath(__file__))
-    to_dir = self.utils.data_dir
-    Utils.copy_files_with_regexp(from_dir, to_dir, ['.*\.py'])
-    self.assertTrue(os.path.exists(to_dir+'/biomaj_tests.py'))
-
-  def test_copy(self):
-    from_dir = os.path.dirname(os.path.realpath(__file__))
-    local_file = 'biomaj_tests.py'
-    files_to_copy = [ {'root': from_dir, 'name': local_file}]
-    to_dir = self.utils.data_dir
-    Utils.copy_files(files_to_copy, to_dir)
-    self.assertTrue(os.path.exists(to_dir+'/biomaj_tests.py'))
-
-class TestBiomajLocalDownload(unittest.TestCase):
-  """
-  Test Local downloader
-  """
-
-  def setUp(self):
-    self.utils = UtilsForTest()
-
-    self.curdir = os.path.dirname(os.path.realpath(__file__))
-    self.examples = os.path.join(self.curdir,'bank') + '/'
-
-    BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
-
-    """
-    if not os.path.exists('/tmp/biomaj/config'):
-      os.makedirs('/tmp/biomaj/config')
-    if not os.path.exists(os.path.join('/tmp/biomaj/config','local.properties')):
-      shutil.copyfile(os.path.join(self.curdir,'local.properties'),
-                      os.path.join('/tmp/biomaj/config','local.properties'))
-      flocal = open(os.path.join('/tmp/biomaj/config','local.properties'),'a')
-      flocal.write('\nremote.dir='+self.examples+"\n")
-      flocal.close()
-    """
-
-  def tearDown(self):
-    self.utils.clean()
-
-  def test_local_list(self):
-    locald = LocalDownload(self.examples)
-    (file_list, dir_list) = locald.list()
-    locald.close()
-    self.assertTrue(len(file_list) > 1)
-
-  def test_local_download(self):
-    locald = LocalDownload(self.examples)
-    (file_list, dir_list) = locald.list()
-    locald.match([r'^test.*\.gz$'], file_list, dir_list)
-    locald.download(self.utils.data_dir)
-    locald.close()
-    self.assertTrue(len(locald.files_to_download) == 1)
-
-  def test_local_download_in_subdir(self):
-    locald = LocalDownload(self.curdir+'/')
-    (file_list, dir_list) = locald.list()
-    locald.match([r'^/bank/test.*\.gz$'], file_list, dir_list)
-    locald.download(self.utils.data_dir)
-    locald.close()
-    self.assertTrue(len(locald.files_to_download) == 1)
-
-  def test_parallel_local_download(self):
-    locald = LocalDownload(self.examples)
-    (file_list, dir_list) = locald.list()
-    locald.match([r'^test'], file_list, dir_list)
-    list1 = [locald.files_to_download[0]]
-    list2 = locald.files_to_download[1:]
-    locald.close()
-
-    locald1 = LocalDownload(self.examples)
-    locald1.files_to_download = list1
-    locald2 = LocalDownload(self.examples)
-    locald2.files_to_download = list2
-    t1 = DownloadThread(locald1, self.utils.data_dir)
-    t2 = DownloadThread(locald2, self.utils.data_dir)
-    t1.start()
-    t2.start()
-    t1.join()
-    t2.join()
-    self.assertTrue(len(t1.downloader.files_to_download) == 1)
-    self.assertTrue(os.path.exists(self.utils.data_dir + '/' +list1[0]['name']))
-    self.assertTrue(len(t2.downloader.files_to_download) == 2)
-    self.assertTrue(os.path.exists(self.utils.data_dir + '/' +list2[0]['name']))
-    self.assertTrue(os.path.exists(self.utils.data_dir + '/' +list2[1]['name']))
-
-@attr('network')
-@attr('http')
-class TestBiomajHTTPDownload(unittest.TestCase):
-  """
-  Test HTTP downloader
-  """
-  def setUp(self):
-    self.utils = UtilsForTest()
-    BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
-    self.config = BiomajConfig('testhttp')
-
-  def tearDown(self):
-    self.utils.clean()
-
-  def test_http_list(self):
-    httpd = HTTPDownload('http', 'ftp2.fr.debian.org', '/debian/dists/', self.config)
-    (file_list, dir_list) = httpd.list()
-    httpd.close()
-    self.assertTrue(len(file_list) == 1)
-
-  def test_http_list_dateregexp(self):
-    self.config.set('http.parse.file.date.format',"%%d-%%b-%%Y %%H:%%M")
-    httpd = HTTPDownload('http', 'ftp2.fr.debian.org', '/debian/dists/', self.config)
-    (file_list, dir_list) = httpd.list()
-    httpd.close()
-    self.assertTrue(len(file_list) == 1)
-
-  def test_http_download(self):
-    httpd = HTTPDownload('http', 'ftp2.fr.debian.org', '/debian/dists/', self.config)
-    (file_list, dir_list) = httpd.list()
-    httpd.match([r'^README$'], file_list, dir_list)
-    httpd.download(self.utils.data_dir)
-    httpd.close()
-    self.assertTrue(len(httpd.files_to_download) == 1)
-
-  def test_http_download_in_subdir(self):
-    httpd = HTTPDownload('http', 'ftp2.fr.debian.org', '/debian/', self.config)
-    (file_list, dir_list) = httpd.list()
-    httpd.match([r'^dists/README$'], file_list, dir_list)
-    httpd.download(self.utils.data_dir)
-    httpd.close()
-    self.assertTrue(len(httpd.files_to_download) == 1)
-
-
-@attr('directftp')
-@attr('network')
-class TestBiomajDirectFTPDownload(unittest.TestCase):
-  """
-  Test DirectFTP downloader
-  """
-
-  def setUp(self):
-    self.utils = UtilsForTest()
-
-  def tearDown(self):
-    self.utils.clean()
-
-  def test_ftp_list(self):
-    file_list = ['/blast/db/FASTA/alu.n.gz.md5']
-    ftpd = DirectFTPDownload('ftp', 'ftp.ncbi.nih.gov', '', file_list)
-    (file_list, dir_list) = ftpd.list()
-    ftpd.close()
-    self.assertTrue(len(file_list) == 1)
-
-  def test_download(self):
-    file_list = ['/blast/db/FASTA/alu.n.gz.md5']
-    ftpd = DirectFTPDownload('ftp', 'ftp.ncbi.nih.gov', '', file_list)
-    (file_list, dir_list) = ftpd.list()
-    ftpd.download(self.utils.data_dir, False)
-    ftpd.close()
-    self.assertTrue(os.path.exists(os.path.join(self.utils.data_dir,'alu.n.gz.md5')))
-
-
-@attr('directhttp')
-@attr('network')
-class TestBiomajDirectHTTPDownload(unittest.TestCase):
-  """
-  Test DirectFTP downloader
-  """
-
-  def setUp(self):
-    self.utils = UtilsForTest()
-
-  def tearDown(self):
-    self.utils.clean()
-
-  def test_http_list(self):
-    file_list = ['/debian/README.html']
-    ftpd = DirectHttpDownload('http', 'ftp2.fr.debian.org', '', file_list)
-    fday = ftpd.files_to_download[0]['day']
-    fmonth = ftpd.files_to_download[0]['month']
-    fyear = ftpd.files_to_download[0]['year']
-    (file_list, dir_list) = ftpd.list()
-    ftpd.close()
-    self.assertTrue(len(file_list) == 1)
-    self.assertTrue(file_list[0]['size']!=0)
-    self.assertFalse(fyear == ftpd.files_to_download[0]['year'] and fmonth == ftpd.files_to_download[0]['month'] and fday == ftpd.files_to_download[0]['day'])
-
-  def test_download(self):
-    file_list = ['/debian/README.html']
-    ftpd = DirectHttpDownload('http', 'ftp2.fr.debian.org', '', file_list)
-    (file_list, dir_list) = ftpd.list()
-    ftpd.download(self.utils.data_dir, False)
-    ftpd.close()
-    self.assertTrue(os.path.exists(os.path.join(self.utils.data_dir,'README.html')))
-
-  def test_download_get_params_save_as(self):
-    file_list = ['/get']
-    ftpd = DirectHttpDownload('http', 'httpbin.org', '', file_list)
-    ftpd.param = { 'key1': 'value1', 'key2': 'value2'}
-    ftpd.save_as = 'test.json'
-    (file_list, dir_list) = ftpd.list()
-    ftpd.download(self.utils.data_dir, False)
-    ftpd.close()
-    self.assertTrue(os.path.exists(os.path.join(self.utils.data_dir,'test.json')))
-    with open(os.path.join(self.utils.data_dir,'test.json'), 'r') as content_file:
-      content = content_file.read()
-      my_json = json.loads(content)
-      self.assertTrue(my_json['args']['key1'] == 'value1')
-
-  def test_download_save_as(self):
-    file_list = ['/debian/README.html']
-    ftpd = DirectHttpDownload('http', 'ftp2.fr.debian.org', '', file_list)
-    ftpd.save_as = 'test.html'
-    (file_list, dir_list) = ftpd.list()
-    ftpd.download(self.utils.data_dir, False)
-    ftpd.close()
-    self.assertTrue(os.path.exists(os.path.join(self.utils.data_dir,'test.html')))
-
-  def test_download_post_params(self):
-    #file_list = ['/debian/README.html']
-    file_list = ['/post']
-    ftpd = DirectHttpDownload('http', 'httpbin.org', '', file_list)
-    #ftpd = DirectHttpDownload('http', 'ftp2.fr.debian.org', '', file_list)
-    ftpd.param = { 'key1': 'value1', 'key2': 'value2'}
-    ftpd.save_as = 'test.json'
-    ftpd.method = 'POST'
-    (file_list, dir_list) = ftpd.list()
-    ftpd.download(self.utils.data_dir, False)
-    ftpd.close()
-    self.assertTrue(os.path.exists(os.path.join(self.utils.data_dir,'test.json')))
-    with open(os.path.join(self.utils.data_dir,'test.json'), 'r') as content_file:
-      content = content_file.read()
-      my_json = json.loads(content)
-      self.assertTrue(my_json['form']['key1'] == 'value1')
-
-
-@attr('ftp')
-@attr('network')
-class TestBiomajFTPDownload(unittest.TestCase):
-  """
-  Test FTP downloader
-  """
-
-  def setUp(self):
-    self.utils = UtilsForTest()
-
-  def tearDown(self):
-    self.utils.clean()
-
-  def test_ftp_list(self):
-    ftpd = FTPDownload('ftp', 'ftp.ncbi.nih.gov', '/blast/db/FASTA/')
-    (file_list, dir_list) = ftpd.list()
-    ftpd.close()
-    self.assertTrue(len(file_list) > 1)
-
-  def test_download(self):
-    ftpd = FTPDownload('ftp', 'ftp.ncbi.nih.gov', '/blast/db/FASTA/')
-    (file_list, dir_list) = ftpd.list()
-    ftpd.match([r'^alu.*\.gz$'], file_list, dir_list)
-    ftpd.download(self.utils.data_dir)
-    ftpd.close()
-    self.assertTrue(len(ftpd.files_to_download) == 2)
-
-
-  def test_download_in_subdir(self):
-    ftpd = FTPDownload('ftp', 'ftp.ncbi.nih.gov', '/blast/')
-    (file_list, dir_list) = ftpd.list()
-    ftpd.match([r'^db/FASTA/alu.*\.gz$'], file_list, dir_list)
-    ftpd.download(self.utils.data_dir)
-    ftpd.close()
-    self.assertTrue(len(ftpd.files_to_download) == 2)
-
-  def test_download_or_copy(self):
-    ftpd = FTPDownload('ftp', 'ftp.ncbi.nih.gov', '/blast/')
-    ftpd.files_to_download = [
-          {'name':'/test1', 'year': '2013', 'month': '11', 'day': '10', 'size': 10},
-          {'name':'/test2', 'year': '2013', 'month': '11', 'day': '10', 'size': 10},
-          {'name':'/test/test1', 'year': '2013', 'month': '11', 'day': '10', 'size': 10},
-          {'name':'/test/test11', 'year': '2013', 'month': '11', 'day': '10', 'size': 10}
-          ]
-    available_files = [
-          {'name':'/test1', 'year': '2013', 'month': '11', 'day': '10', 'size': 10},
-          {'name':'/test12', 'year': '2013', 'month': '11', 'day': '10', 'size': 10},
-          {'name':'/test3', 'year': '2013', 'month': '11', 'day': '10', 'size': 10},
-          {'name':'/test/test1', 'year': '2013', 'month': '11', 'day': '10', 'size': 20},
-          {'name':'/test/test11', 'year': '2013', 'month': '11', 'day': '10', 'size': 10}
-          ]
-    ftpd.download_or_copy(available_files, '/biomaj', False)
-    ftpd.close()
-    self.assertTrue(len(ftpd.files_to_download)==2)
-    self.assertTrue(len(ftpd.files_to_copy)==2)
-
-  def test_get_more_recent_file(self):
-    files = [
-          {'name':'/test1', 'year': '2013', 'month': '11', 'day': '10', 'size': 10},
-          {'name':'/test2', 'year': '2013', 'month': '11', 'day': '12', 'size': 10},
-          {'name':'/test/test1', 'year': '1988', 'month': '11', 'day': '10', 'size': 10},
-          {'name':'/test/test11', 'year': '2013', 'month': '9', 'day': '23', 'size': 10}
-          ]
-    release = Utils.get_more_recent_file(files)
-    self.assertTrue(release['year']=='2013')
-    self.assertTrue(release['month']=='11')
-    self.assertTrue(release['day']=='12')
-
 class TestBiomajSetup(unittest.TestCase):
-
 
   def setUp(self):
     self.utils = UtilsForTest()
@@ -559,6 +233,7 @@ class TestBiomajSetup(unittest.TestCase):
     banks = Bank.list()
     self.assertTrue(len(banks) == 2)
 
+  @attr('test')
   @attr('network')
   def test_get_release(self):
     """
@@ -659,6 +334,16 @@ class TestBiomajFunctional(unittest.TestCase):
     w.wf_release()
     self.assertTrue(b.session.get('release') == '100')
 
+  def test_remoterelease_check(self):
+      b = Bank('local')
+      b.load_session(ReleaseCheckWorkflow.FLOW)
+      b.session.config.set('release.file', 'test_(\d+)\.txt')
+      b.session.config.set('release.regexp', '')
+      workflow = ReleaseCheckWorkflow(b)
+      res = workflow.start()
+      remoterelease = b.session.get('remoterelease')
+      self.assertTrue(remoterelease == '100')
+
   def test_extract_release_from_file_content(self):
     b = Bank('local')
     b.load_session(UpdateWorkflow.FLOW)
@@ -713,7 +398,6 @@ class TestBiomajFunctional(unittest.TestCase):
           #os.remove(file_path)
           print(file_path)
 
-
   @attr('release')
   def test_release_control(self):
     """
@@ -732,6 +416,7 @@ class TestBiomajFunctional(unittest.TestCase):
     self.assertTrue(b.session.get('update'))
     b.update()
     self.assertFalse(b.session.get('update'))
+    b.session.config.set('copy.skip', '1')
     b.session.config.set('remote.files', '^test2.fasta')
     b.update()
     self.assertTrue(b.session.get('update'))
@@ -825,7 +510,6 @@ class TestBiomajFunctional(unittest.TestCase):
       self.assertTrue(b3.session.get('release') == rel+'__1')
       self.assertTrue(res)
 
-
   def test_mix_stop_from_task4(self):
       """
       Get a first release, then fromscratch --stop-after, then restart from-task
@@ -841,7 +525,6 @@ class TestBiomajFunctional(unittest.TestCase):
       b3.options.from_task = 'postprocess'
       res = b3.update()
       self.assertFalse(res)
-
 
   def test_delete_old_dirs(self):
       """
@@ -880,7 +563,6 @@ class TestBiomajFunctional(unittest.TestCase):
       self.assertTrue(b.session.get('update'))
       # one new dir, but olders must be deleted
       self.assertTrue(len(b.bank['production']) == 3)
-
 
   def test_removeAll(self):
     b = Bank('local')
@@ -990,7 +672,6 @@ class TestBiomajFunctional(unittest.TestCase):
     res = nextb.update(True)
     self.assertFalse(nextb.session.get('update'))
 
-
   @attr('nofile')
   def test_computed_nofile(self):
     b = Bank('computed2')
@@ -1000,7 +681,6 @@ class TestBiomajFunctional(unittest.TestCase):
     res = b.update(True)
     self.assertTrue(res)
     self.assertTrue(os.path.exists(b.session.get_full_release_directory()+'/sub1/flat/test_100.txt'))
-
 
   def test_computed_ref_release(self):
     b = Bank('computed2')
@@ -1034,8 +714,8 @@ class TestBiomajFunctional(unittest.TestCase):
       res = b.update()
       self.assertTrue(b.session.get('update'))
       self.assertTrue(os.path.exists(b.session.get_full_release_directory()+'/flat/debian/README.html'))
-      #print str(b.session.get('release'))
-      #print str(b.session.get('remoterelease'))
+      # print str(b.session.get('release'))
+      # print str(b.session.get('remoterelease'))
 
   @attr('network')
   def test_multi(self):
@@ -1065,7 +745,6 @@ class TestBiomajFunctional(unittest.TestCase):
     res = b.remove(rel)
     self.assertTrue(res == True)
 
-
   def test_stats(self):
     b = Bank('local')
     b.update()
@@ -1075,7 +754,6 @@ class TestBiomajFunctional(unittest.TestCase):
     for release in stats[0]['releases']:
       if release['name'] == rel:
         self.assertTrue(release['size']>0)
-
 
   @attr('process')
   def test_processes_meta_data(self):
@@ -1098,7 +776,6 @@ class TestBiomajFunctional(unittest.TestCase):
     search_res = Bank.search(['blast'],['proteic'])
     self.assertTrue(len(search_res)==0)
 
-
   def test_owner(self):
     """
     test ACL with owner
@@ -1113,193 +790,3 @@ class TestBiomajFunctional(unittest.TestCase):
       self.fail('not owner, should not be allowed')
     except Exception as e:
       pass
-
-@attr('elastic')
-class TestElastic(unittest.TestCase):
-    """
-    test indexing and search
-    """
-
-    def setUp(self):
-        BmajIndex.es = None
-        self.utils = UtilsForTest()
-        curdir = os.path.dirname(os.path.realpath(__file__))
-        BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
-        if BmajIndex.do_index == False:
-            self.skipTest("Skipping indexing tests due to elasticsearch not available")
-        # Delete all banks
-        b = Bank('local')
-        b.banks.remove({})
-        BmajIndex.delete_all_bank('local')
-
-        self.config = BiomajConfig('local')
-        data_dir = self.config.get('data.dir')
-        lock_file = os.path.join(data_dir,'local.lock')
-        if os.path.exists(lock_file):
-          os.remove(lock_file)
-
-    def tearDown(self):
-        data_dir = self.config.get('data.dir')
-        lock_file = os.path.join(data_dir,'local.lock')
-        if os.path.exists(lock_file):
-          os.remove(lock_file)
-        self.utils.clean()
-        BmajIndex.delete_all_bank('test')
-
-    def test_index(self):
-        BmajIndex.do_index = True
-        prod = {
-    			"data_dir" : "/tmp/test/data",
-    			"formats" : {
-    				"fasta" : [
-    					{
-    						"files" : [
-    							"fasta/chr1.fa",
-    							"fasta/chr2.fa"
-    						],
-    						"types" : [
-    							"nucleic"
-    						],
-    						"tags" : {
-    							"organism" : "hg19"
-    						}
-    					}
-    				],
-    				"blast": [
-    					{
-    						"files" : [
-    							"blast/chr1/chr1db"
-    						],
-    						"types" : [
-    							"nucleic"
-    						],
-    						"tags" : {
-    							"chr" : "chr1",
-    							"organism" : "hg19"
-    						}
-    					}
-    				]
-
-    			},
-    			"freeze" : False,
-    			"session" : 1416229253.930908,
-    			"prod_dir" : "alu-2003-11-26",
-    			"release" : "2003-11-26",
-    			"types" : [
-    				"nucleic"
-    			]
-    		}
-
-        BmajIndex.add('test',prod, True)
-
-        query = {
-          'query' : {
-            'match' : {'bank': 'test'}
-            }
-          }
-        res = BmajIndex.search(query)
-        self.assertTrue(len(res)==2)
-
-
-    def test_remove_all(self):
-        self.test_index()
-        query = {
-          'query' : {
-            'match' : {'bank': 'test'}
-            }
-          }
-        BmajIndex.delete_all_bank('test')
-        res = BmajIndex.search(query)
-        self.assertTrue(len(res)==0)
-
-
-class MockLdapConn(object):
-
-  ldap_user = 'biomajldap'
-  ldap_user_email = 'bldap@no-reply.org'
-
-  STRATEGY_SYNC = 0
-  AUTH_SIMPLE = 0
-  STRATEGY_SYNC = 0
-  STRATEGY_ASYNC_THREADED = 0
-  SEARCH_SCOPE_WHOLE_SUBTREE = 0
-  GET_ALL_INFO = 0
-
-  @staticmethod
-  def Server(ldap_host, port, get_info):
-      return None
-
-  @staticmethod
-  def Connection(ldap_server, auto_bind=True, read_only=True, client_strategy=0, user=None, password=None, authentication=0,check_names=True):
-      if user is not None and password is not None:
-          if password == 'notest':
-              #raise ldap3.core.exceptions.LDAPBindError('no bind')
-              return None
-      return MockLdapConn(ldap_server)
-
-  def __init__(self, url=None):
-    #self.ldap_user = 'biomajldap'
-    #self.ldap_user_email = 'bldap@no-reply.org'
-    pass
-
-  def search(self, base_dn, filter, scope, attributes=[]):
-    if MockLdapConn.ldap_user in filter:
-      self.response = [{'dn': MockLdapConn.ldap_user, 'attributes': {'mail': [MockLdapConn.ldap_user_email]}}]
-      return [(MockLdapConn.ldap_user, {'mail': [MockLdapConn.ldap_user_email]})]
-    else:
-      raise Exception('no match')
-
-  def unbind(self):
-    pass
-
-
-@attr('user')
-class TestUser(unittest.TestCase):
-  """
-  Test user management
-  """
-
-  def setUp(self):
-    self.utils = UtilsForTest()
-    self.curdir = os.path.dirname(os.path.realpath(__file__))
-    BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
-
-  def tearDown(self):
-    self.utils.clean()
-
-  @patch('ldap3.Connection')
-  def test_get_user(self, initialize_mock):
-    mockldap = MockLdapConn()
-    initialize_mock.return_value = MockLdapConn.Connection(None, None, None, None)
-    user = BmajUser('biomaj')
-    self.assertTrue(user.user is None)
-    user.remove()
-
-  @patch('ldap3.Connection')
-  def test_create_user(self, initialize_mock):
-    mockldap = MockLdapConn()
-    initialize_mock.return_value = MockLdapConn.Connection(None, None, None, None)
-    user = BmajUser('biomaj')
-    user.create('test', 'test@no-reply.org')
-    self.assertTrue(user.user['email'] == 'test@no-reply.org')
-    user.remove()
-
-  @patch('ldap3.Connection')
-  def test_check_password(self, initialize_mock):
-    mockldap = MockLdapConn()
-    initialize_mock.return_value = MockLdapConn.Connection(None, None, None, None)
-    user = BmajUser('biomaj')
-    user.create('test', 'test@no-reply.org')
-    self.assertTrue(user.check_password('test'))
-    user.remove()
-
-
-  @patch('ldap3.Connection')
-  def test_ldap_user(self, initialize_mock):
-    mockldap = MockLdapConn()
-    initialize_mock.return_value = MockLdapConn.Connection(None, None, None, None)
-    user = BmajUser('biomajldap')
-    self.assertTrue(user.user['is_ldap'] == True)
-    self.assertTrue(user.user['_id'] is not None)
-    self.assertTrue(user.check_password('test'))
-    user.remove()

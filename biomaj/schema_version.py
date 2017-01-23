@@ -1,6 +1,12 @@
 import pkg_resources
+import string
+import random
+import os
 from biomaj.mongo_connector import MongoConnector
-from biomaj.config import BiomajConfig
+from biomaj_core.config import BiomajConfig
+from biomaj_core.utils import Utils
+
+import logging
 
 
 class SchemaVersion(object):
@@ -21,7 +27,7 @@ class SchemaVersion(object):
             try:
                 BiomajConfig.load_config()
             except Exception as err:
-                print("* SchemaVersion: Can't find config file")
+                print("* SchemaVersion: Can't find config file: " + str(err))
                 return None
         if MongoConnector.db is None:
             MongoConnector(BiomajConfig.global_config.get('GENERAL', 'db.url'),
@@ -29,6 +35,7 @@ class SchemaVersion(object):
 
         schema = MongoConnector.db_schema
         banks = MongoConnector.banks
+        users = MongoConnector.users
 
         schema_version = schema.find_one({'id': 1})
         installed_version = pkg_resources.get_distribution("biomaj").version
@@ -61,4 +68,39 @@ class SchemaVersion(object):
                                      {'$unset': {'pending': ""}})
 
             print("Migration: %d bank(s) updated" % updated)
+        if moderate < 1:
+            updated = 0
+            user_list = users.find()
+            for user in user_list:
+                if 'apikey' not in user:
+                    updated += 1
+                    api_key = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(10))
+                    users.update({'_id': user['_id']}, {'$set': {'apikey': api_key}})
+            print("Migration: %d user(s) updated" % updated)
+            # production size
+            bank_list = banks.find()
+            updated = 0
+            for bank in bank_list:
+                for prod in bank['production']:
+                    '''
+                    { "_id" : ObjectId("54edb10856e8bb11340b5f51"), "production" : [
+                        { "freeze" : false, "remoterelease" : "2003-11-26", "session" : 1427809848.560108,
+                        "data_dir" : "/db", "formats" : [ ], "release" : "2003-11-26",
+                        "dir_version" : "ncbi/blast/alu",
+                        "prod_dir" : "alu-2003-11-26", "types" : [ ], "size" : 319432 } ] }
+                    '''
+                    if 'size' not in prod or prod['size'] == 0:
+                        logging.info('Calculate size for bank %s' % (bank['name']))
+                        if 'data_dir' not in prod or not prod['data_dir'] or 'prod_dir' not in prod or not prod['prod_dir'] or 'dir_version' not in prod or not prod['dir_version']:
+                            logging.warn('no production directory information for %s, skipping...' % (bank['name']))
+                            continue
+                        prod_dir = os.path.join(prod['data_dir'], prod['dir_version'], prod['prod_dir'])
+                        if not os.path.exists(prod_dir):
+                            logging.warn('production directory %s does not exists for %s, skipping...' % (prod_dir, bank['name']))
+                            continue
+                        dir_size = Utils.get_folder_size(prod_dir)
+                        banks.update({'name': bank['name'], 'production.release': prod['release']}, {'$set': {'production.$.size': dir_size}})
+                        updated += 1
+            print("Migration: %d bank production info updated" % updated)
+
         schema.update_one({'id': 1}, {'$set': {'version': installed_version}})

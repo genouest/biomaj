@@ -7,8 +7,7 @@ layout: default
 
 ## About
 
-This feature is under development and not yet available in current release.
-This page explains expected architecture.
+Feature is available from version 3.1
 
 Biomaj was a monolithic application. Goal is to split the application in multiple specialized components.
 Once split, Biomaj will still be usable/callable in monolithic mode for single server/local user usage.

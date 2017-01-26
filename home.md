@@ -9,7 +9,7 @@ BioMAJ (BIOlogie Mise A Jour) is a workflow engine dedicated to data synchroniza
 
 Previous release web site (download, doc, ...): http://biomaj.genouest.org/
 
-[About](/About)
+[About](About)
 
 [Migration](Migration)
 

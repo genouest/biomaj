@@ -1322,6 +1322,9 @@ class UpdateWorkflow(Workflow):
                 protocol = downloader.protocol
                 remote_file.protocol = message_pb2.DownloadFile.Protocol.Value(protocol.upper())
 
+                if downloader.credentials:
+                    remote_file.credentials = downloader.credentials
+
                 remote_file.server = downloader.server
                 if cf.get('remote.dir'):
                     remote_file.remote_dir = cf.get('remote.dir')

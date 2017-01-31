@@ -1279,7 +1279,7 @@ class UpdateWorkflow(Workflow):
                     break
             if everything_copied:
                 logging.info('Workflow:wf_download:all files copied from %s' % (str(last_production_dir)))
-                #return self.no_need_to_update()
+                # return self.no_need_to_update()
 
             logging.debug('Workflow:wf_download:Copy files from ' + last_production_dir)
             for downloader in downloaders:

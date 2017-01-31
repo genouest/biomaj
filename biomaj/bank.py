@@ -595,11 +595,12 @@ class Bank(object):
                 session_id = session['id']
                 self.banks.update({'name': self.name}, {'$pull': {'sessions': {'id': session_id}}})
                 # Check if in pending sessions
-                for rel in self.bank['pending']:
-                    rel_session = rel['id']
-                    if rel_session == session_id:
-                        self.banks.update({'name': self.name},
-                                          {'$pull': {'pending': {'release': session['release'], 'id': session_id}}})
+                if 'pending' in self.bank:
+                    for rel in self.bank['pending']:
+                        rel_session = rel['id']
+                        if rel_session == session_id:
+                            self.banks.update({'name': self.name},
+                                              {'$pull': {'pending': {'release': session['release'], 'id': session_id}}})
                 if session['release'] not in prod_releases and session['release'] != self.session.get('release'):
                     # There might be unfinished releases linked to session, delete them
                     # if they are not related to a production directory or latest run

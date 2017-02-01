@@ -81,10 +81,11 @@ mail.smtp.host=
 mail.admin=
 mail.from=
 
-#Number of thread during the processes management
+# Number of thread during the processes management
 bank.num.threads=4
 
-#Number of threads to use for downloading
+# Number of threads to use for downloading
+# set to 0 for no limit in parallelization when using micro services
 files.num.threads=4
 
 #to keep more than one release increase this value

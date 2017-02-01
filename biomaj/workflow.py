@@ -924,7 +924,6 @@ class UpdateWorkflow(Workflow):
         pool_size = self.session.config.get('files.num.threads', default=None)
 
         dserv = None
-
         if self.bank.config.get('micro.biomaj.service.download', default=None) == '1':
             dserv = DownloadClient(
                 self.bank.config.get('micro.biomaj.rabbit_mq'),
@@ -1301,6 +1300,10 @@ class UpdateWorkflow(Workflow):
                 redis_client=self.redis_client,
                 redis_prefix=self.redis_prefix
             )
+            if pool_size:
+                logging.debug('Set rate limiting: %s' % (str(pool_size)))
+                dserv.set_rate_limiting(int(pool_size))
+
         else:
             dserv = DownloadClient()
 

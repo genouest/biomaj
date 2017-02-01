@@ -8,6 +8,7 @@
   Feature #74 add influxdb statistics
   Feature #65 add a release info file at the root of the bank which can be used by other services to know the latest release available
   Feature #25 experimental support of rsync protocol
+  Add rate limiting for download with micro services
 3.0.20:
   Fix #55: Added support for https and directhttps
   Add possibility to define files to download from a local file with remote.list parameter

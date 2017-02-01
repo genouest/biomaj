@@ -150,6 +150,7 @@ production.directory.chmod=775
 
 
 ```
+
 # Bank configuration
 
 Each bank owns its configuration file. It must be named **bank_name**.properties and located in *conf.dir*.

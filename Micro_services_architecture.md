@@ -21,7 +21,7 @@ Biomaj client can also request update/status etc.. from a remote server with his
 ## Architecture
 
 
-[https://drive.google.com/open?id=0B-1RyLsumsUwWHZnMVhhRFdscUk](https://drive.google.com/open?id=0B-1RyLsumsUwWHZnMVhhRFdscUk)
+[microservices.pdf](microservices.pdf)
 
 
 ## Deploying

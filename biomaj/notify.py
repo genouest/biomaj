@@ -36,7 +36,7 @@ class Notify(object):
                 fp = open(log_file, 'rb')
             else:
                 fp = open(log_file, 'r')
-            msg = MIMEText(fp.read())
+            msg = MIMEText(fp.read(2000000))
             fp.close()
 
         msg['From'] = email.utils.formataddr(('Author', mfrom))

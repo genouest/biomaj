@@ -1138,6 +1138,7 @@ class UpdateWorkflow(Workflow):
 
         self.session.set('download_files', downloader.files_to_download)
         self.session._session['stats']['nb_downloaded_files'] = len(files_to_download)
+        logging.info('Workflow:wf_download:nb_files_to_download:%d' % (len(files_to_download)))
 
         if self.session.get('release') and self.session.config.get_bool('release.control', default=False):
             if self.session.previous_release == self.session.get('remoterelease'):

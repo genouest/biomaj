@@ -4,7 +4,7 @@ import os,sys
 import argparse
 import logging.config
 
-from biomaj.utils import Utils
+from biomaj_core.utils import Utils
 
 def main():
 
@@ -41,7 +41,7 @@ def main():
     if args.tags:
         tags = ','.join(args.tags)
     for fformat in res.keys():
-        print '##BIOMAJ#'+fformat+'#'+f_type+'#'+tags+'#'+','.join(res[fformat])
+        print('##BIOMAJ#'+fformat+'#'+f_type+'#'+tags+'#'+','.join(res[fformat]))
 
 
 if __name__ == '__main__':

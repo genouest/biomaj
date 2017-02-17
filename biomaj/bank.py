@@ -5,21 +5,23 @@ import logging
 import time
 import shutil
 import json
-import pkg_resources
-
-
 from datetime import datetime
-from biomaj.mongo_connector import MongoConnector
 
+import redis
+from influxdb import InfluxDBClient
+
+from biomaj.mongo_connector import MongoConnector
 from biomaj.session import Session
-from biomaj.workflow import UpdateWorkflow, RemoveWorkflow, Workflow
-from biomaj.config import BiomajConfig
+from biomaj.workflow import UpdateWorkflow
+from biomaj.workflow import RemoveWorkflow
+from biomaj.workflow import Workflow
+from biomaj.workflow import ReleaseCheckWorkflow
+from biomaj_core.config import BiomajConfig
 from biomaj.options import Options
 from biomaj.process.processfactory import ProcessFactory
-from biomaj.bmajindex import BmajIndex
+from biomaj_core.bmajindex import BmajIndex
 
-
-# from bson.objectid import ObjectId
+import getpass
 
 
 class Bank(object):
@@ -105,14 +107,6 @@ class Bank(object):
             return True
         else:
             return False
-
-    def get_bank(self):
-        """
-        Get bank stored in db
-
-        :return: bank json object
-        """
-        return self.bank
 
     @staticmethod
     def get_banks_disk_usage():
@@ -231,18 +225,25 @@ class Bank(object):
                 continue
             logging.info('Update:Depends:' + dep)
             b = Bank(dep)
+            if self.options and hasattr(self.options, 'user') and self.options.user:
+                b.options.user = self.options.user
             res = b.update()
             self.depends.append(b)
             self.session._session['depends'][dep] = res
             logging.info('Update:Depends:' + dep + ':' + str(res))
             if not res:
                 break
+        if depends:
+            # Revert logging config
+            self.config.reset_logger()
         return res
 
-    def get_bank(self, bank, no_log=False):
+    def get_bank(self, bank=None, no_log=False):
         """
         Gets an other bank
         """
+        if bank is None:
+            return self.bank
         return Bank(bank, no_log=no_log)
 
     def get_dependencies(self, bank=None):
@@ -261,7 +262,11 @@ class Bank(object):
         deps = deps.split(',')
         # Now search in deps if they themselves depend on other banks
         for dep in deps:
-            b = Bank(dep, no_log = True)
+            sub_options = None
+            if self.options and hasattr(self.options, 'user') and self.options.user:
+                sub_options = Options()
+                sub_options.user = self.options.user
+            b = Bank(dep, options=sub_options, no_log=True)
             deps = b.get_dependencies() + deps
         return deps
 
@@ -269,13 +274,25 @@ class Bank(object):
         """
         Checks if current user is owner or admin
         """
+        owner = getpass.getuser()
         admin_config = self.config.get('admin')
         admin = []
         if admin_config is not None:
             admin = [x.strip() for x in admin_config.split(',')]
-        if admin and os.environ['LOGNAME'] in admin:
+
+        current_user = None
+        if self.config.get('micro.biomaj.service.daemon', default=None) == '1':
+            if self.options and hasattr(self.options, 'user') and self.options.user:
+                current_user = self.options.user
+            else:
+                logging.debug('Micro services activated but user not authenticated')
+                return False
+        else:
+            current_user = owner
+
+        if admin and current_user in admin:
             return True
-        if os.environ['LOGNAME'] == self.bank['properties']['owner']:
+        if current_user == self.bank['properties']['owner']:
             return True
         return False
 
@@ -297,7 +314,7 @@ class Bank(object):
             logging.error('Not authorized, bank owned by ' + self.bank['properties']['owner'])
             raise Exception('Not authorized, bank owned by ' + self.bank['properties']['owner'])
 
-        self.banks.update({'name': self.name}, {'$set': {'properties.visibility':  visibility}})
+        self.banks.update({'name': self.name}, {'$set': {'properties.visibility': visibility}})
 
     def get_properties(self):
         """
@@ -305,8 +322,16 @@ class Bank(object):
 
         :return: properties dict
         """
+        owner = None
+        if self.config.get('micro.biomaj.service.daemon', default=None) == '1':
+            if self.options and hasattr(self.options, 'user') and self.options.user:
+                owner = self.options.user
+            else:
+                logging.debug('Micro services activated but user not authenticated')
+                raise Exception('Micro services activated but user not authenticated')
+        else:
+            owner = getpass.getuser()
 
-        owner = os.environ['LOGNAME']
         # If owner not set, use current user, else keep current
         if self.bank and 'properties' in self.bank and 'owner' in self.bank['properties']:
             owner = self.bank['properties']['owner']
@@ -319,6 +344,17 @@ class Bank(object):
         }
 
         return props
+
+    @staticmethod
+    def user_banks(user_name):
+        """
+        Get user banks name
+        :param user_name: user identifier
+        :type user_name: str
+        :return: list of bank name
+        """
+        banks = MongoConnector.banks.find({'properties.owner': user_name}, {'name': 1})
+        return banks
 
     @staticmethod
     def searchindex(query):
@@ -440,22 +476,20 @@ class Bank(object):
         if self.session.get('action') == 'remove':
             action = 'last_remove_session'
 
-
         cache_dir = self.config.get('cache.dir')
         download_files = self.session.get('download_files')
         if download_files is not None:
-            f_downloaded_files = open(os.path.join(cache_dir, 'files_'+str(self.session.get('id'))), 'w')
+            f_downloaded_files = open(os.path.join(cache_dir, 'files_' + str(self.session.get('id'))), 'w')
             f_downloaded_files.write(json.dumps(download_files))
             f_downloaded_files.close()
-            self.session.set('download_files',[])
+            self.session.set('download_files', [])
 
         local_files = self.session.get('files')
         if local_files is not None:
-            f_local_files = open(os.path.join(cache_dir, 'local_files_'+str(self.session.get('id'))), 'w')
+            f_local_files = open(os.path.join(cache_dir, 'local_files_' + str(self.session.get('id'))), 'w')
             f_local_files.write(json.dumps(download_files))
             f_local_files.close()
-            self.session.set('files',[])
-
+            self.session.set('files', [])
 
         self.banks.update({'name': self.name}, {
             '$set': {
@@ -483,14 +517,7 @@ class Bank(object):
                 # Remove from database
                 self.banks.update({'name': self.name},
                                   {'$pull': {'production': {'release': self.session._session['release']}}})
-                # Update local object
-                # index = 0
-                # for prod in self.bank['production']:
-                #  if prod['release'] == self.session._session['release']:
-                #    break;
-                #  index += 1
-                # if index < len(self.bank['production']):
-                #  self.bank['production'].pop(index)
+
             release_types = []
             if self.config.get('db.type'):
                 release_types = self.config.get('db.type').split(',')
@@ -526,7 +553,6 @@ class Bank(object):
                                '$pull': {'pending': {'release': self.session.get('release'),
                                                      'id': self.session._session['id']}}
                                })
-
 
         self.bank = self.banks.find_one({'name': self.name})
 
@@ -569,11 +595,12 @@ class Bank(object):
                 session_id = session['id']
                 self.banks.update({'name': self.name}, {'$pull': {'sessions': {'id': session_id}}})
                 # Check if in pending sessions
-                for rel in self.bank['pending']:
-                    rel_session = rel['id']
-                    if rel_session == session_id:
-                        self.banks.update({'name': self.name},
-                                          {'$pull': {'pending': {'release': session['release'], 'id': session_id}}})
+                if 'pending' in self.bank:
+                    for rel in self.bank['pending']:
+                        rel_session = rel['id']
+                        if rel_session == session_id:
+                            self.banks.update({'name': self.name},
+                                              {'$pull': {'pending': {'release': session['release'], 'id': session_id}}})
                 if session['release'] not in prod_releases and session['release'] != self.session.get('release'):
                     # There might be unfinished releases linked to session, delete them
                     # if they are not related to a production directory or latest run
@@ -596,7 +623,6 @@ class Bank(object):
         current_link = os.path.join(self.config.get('data.dir'),
                                     self.config.get('dir.version'),
                                     'current')
-        prod_dir = self.session.get_full_release_directory()
 
         to_dir = os.path.join(self.config.get('data.dir'),
                               self.config.get('dir.version'))
@@ -606,10 +632,17 @@ class Bank(object):
         os.chdir(to_dir)
         os.symlink(self.session.get_release_directory(), 'current')
         self.bank['current'] = self.session._session['id']
-        self.banks.update({'name': self.name},
-                          {
-                              '$set': {'current': self.session._session['id']}
-                          })
+        self.banks.update(
+            {'name': self.name},
+            {'$set': {'current': self.session._session['id']}}
+        )
+
+        release_file = os.path.join(self.config.get('data.dir'),
+                                    self.config.get('dir.version'),
+                                    'RELEASE.txt')
+
+        with open(release_file, 'w') as outfile:
+            outfile.write('Bank: %s\nRelease: %s\nRemote release:%s\n' % (self.name, self.session.get('release'), self.session.get('remoterelease')))
 
     def unpublish(self):
         """
@@ -625,10 +658,17 @@ class Bank(object):
 
         if os.path.lexists(current_link):
             os.remove(current_link)
-        self.banks.update({'name': self.name},
-                          {
-                              '$set': {'current': None}
-                          })
+
+        release_file = os.path.join(self.config.get('data.dir'),
+                                    self.config.get('dir.version'),
+                                    'RELEASE.txt')
+        if os.path.exists(release_file):
+            os.remove(release_file)
+
+        self.banks.update(
+            {'name': self.name},
+            {'$set': {'current': None}}
+        )
 
     def get_production(self, release):
         """
@@ -761,7 +801,7 @@ class Bank(object):
             session_id = None
             # Load previous session for updates only
             if self.session.get('action') == 'update' and 'last_update_session' in self.bank and self.bank[
-                'last_update_session']:
+                    'last_update_session']:
                 session_id = self.bank['last_update_session']
                 load_session = None
                 for session in self.bank['sessions']:
@@ -800,23 +840,24 @@ class Bank(object):
                 session_release = s['release']
 
         cache_dir = self.config.get('cache.dir')
-        download_files = os.path.join(cache_dir, 'files_'+str(sid))
+        download_files = os.path.join(cache_dir, 'files_' + str(sid))
         if os.path.exists(download_files):
             os.remove(download_files)
 
-        local_files = os.path.join(cache_dir, 'local_files_'+str(sid))
+        local_files = os.path.join(cache_dir, 'local_files_' + str(sid))
         if os.path.exists(local_files):
             os.remove(local_files)
 
         if self.config.get_bool('keep.old.sessions'):
             logging.debug('keep old sessions')
             if session_release is not None:
-                self.banks.update({'name': self.name}, {'$pull': {
-                    'production': {'session': sid}
-                },
+                self.banks.update({'name': self.name}, {
                     '$pull': {
-                        'pending': {'release': session_release,
-                                     'id': sid}
+                        'production': {'session': sid},
+                        'pending': {
+                            'release': session_release,
+                            'id': sid
+                        }
                     }
                 })
             else:
@@ -828,7 +869,7 @@ class Bank(object):
                               {'$set': {'sessions.$.deleted': time.time()}})
         else:
             if session_release is not None:
-                result = self.banks.update({'name': self.name}, {'$pull': {
+                self.banks.update({'name': self.name}, {'$pull': {
                     'sessions': {'id': sid},
                     'production': {'session': sid},
                     'pending': {'release': session_release,
@@ -1025,8 +1066,8 @@ class Bank(object):
             set_to_false = False
             for task in self.session.flow:
                 # If task was in False status (KO) and we ask to start after this task, exit
-                if not set_to_false and not self.session.get_status(task['name']) and task[
-                    'name'] != self.options.get_option('from_task'):
+                if not set_to_false and not self.session.get_status(task['name']) and \
+                        task['name'] != self.options.get_option('from_task'):
                     logging.error(
                         'Previous task ' + task['name'] + ' was not successful, cannot restart after this task')
                     return False
@@ -1040,17 +1081,146 @@ class Bank(object):
                                         Workflow.FLOW_REMOVEPROCESS]:
                         proc = self.options.get_option('process')
                         self.session.reset_proc(task['name'], proc)
-                        # if task['name'] == Workflow.FLOW_POSTPROCESS:
-                        #  self.session.reset_proc(Workflow.FLOW_POSTPROCESS, proc)
-                        # elif task['name'] == Workflow.FLOW_PREPROCESS:
-                        #  self.session.reset_proc(Workflow.FLOW_PREPROCESS, proc)
-                        # elif task['name'] == Workflow.FLOW_REMOVEPROCESS:
-                        #  self.session.reset_proc(Workflow.FLOW_REMOVEPROCESS, proc)
+
         self.session.set('action', 'update')
         res = self.start_update()
         self.session.set('workflow_status', res)
         self.save_session()
+        self.__stats()
         return res
+
+    def __stats(self):
+        '''
+        Send stats to Influxdb if enabled
+        '''
+        db_host = self.config.get('influxdb.host', default=None)
+        if not db_host:
+            return
+        if not self.session.get_status(Workflow.FLOW_OVER):
+            return
+        if 'stats' not in self.session._session:
+            return
+
+        db_port = int(self.config.get('influxdb.port', default='8086'))
+        db_user = self.config.get('influxdb.user', default=None)
+        db_password = self.config.get('influxdb.password', default=None)
+        db_name = self.config.get('influxdb.db', default='biomaj')
+        influxdb = None
+        try:
+            if db_user and db_password:
+                influxdb = InfluxDBClient(host=db_host, port=db_port, username=db_user, password=db_password, database=db_name)
+            else:
+                influxdb = InfluxDBClient(host=db_host, port=db_port, database=db_name)
+        except Exception as e:
+            logging.error('InfluxDB connection error: ' + str(e))
+            return
+        metrics = []
+
+        if 'production' not in self.bank or not self.bank['production']:
+            return
+
+        productions = self.bank['production']
+        total_size = 0
+        latest_size = 0
+        if not productions:
+            return
+        for production in productions:
+            if 'size' in production:
+                total_size += production['size']
+
+        influx_metric = {
+            "measurement": 'biomaj.production.size.total',
+            "fields": {
+                "value": float(total_size)
+            },
+            "tags": {
+                "bank": self.name
+            }
+        }
+        metrics.append(influx_metric)
+
+        all_banks = Bank.list()
+        nb_banks_with_prod = 0
+        if all_banks:
+            for bank_info in all_banks:
+                if 'production' in bank_info and len(bank_info['production']) > 0:
+                    nb_banks_with_prod += 1
+            influx_metric = {
+                "measurement": 'biomaj.banks.quantity',
+                "fields": {
+                    "value": nb_banks_with_prod
+                }
+            }
+            metrics.append(influx_metric)
+
+        workflow_duration = 0
+        for flow in list(self.session._session['stats']['workflow'].keys()):
+            workflow_duration += self.session._session['stats']['workflow'][flow]
+
+        influx_metric = {
+            "measurement": 'biomaj.workflow.duration',
+            "fields": {
+                "value": workflow_duration
+            },
+            "tags": {
+                "bank": self.name
+            }
+        }
+        metrics.append(influx_metric)
+
+        if self.session.get('update'):
+            latest_size = self.session.get('fullsize')
+            influx_metric = {
+                "measurement": 'biomaj.production.size.latest',
+                "fields": {
+                    "value": float(latest_size)
+                },
+                "tags": {
+                    "bank": self.name
+                }
+            }
+            metrics.append(influx_metric)
+
+            influx_metric = {
+                "measurement": 'biomaj.bank.update.downloaded_files',
+                "fields": {
+                    "value": self.session._session['stats']['nb_downloaded_files']
+                },
+                "tags": {
+                    "bank": self.name
+                }
+            }
+            metrics.append(influx_metric)
+
+            influx_metric = {
+                "measurement": 'biomaj.bank.update.new',
+                "fields": {
+                    "value": 1
+                },
+                "tags": {
+                    "bank": self.name
+                }
+            }
+            metrics.append(influx_metric)
+
+        res = influxdb.write_points(metrics, time_precision="s")
+        if not res:
+            logging.error('Failed to send metrics to database')
+
+    def check_remote_release(self):
+        '''
+        Check remote release of the bank
+        '''
+        logging.warning('Bank:' + self.name + ':Check remote release')
+        self.controls()
+        logging.info('Bank:' + self.name + ':Release:latest')
+        self.load_session(ReleaseCheckWorkflow.FLOW)
+        workflow = ReleaseCheckWorkflow(self)
+        res = workflow.start()
+        remoterelease = None
+        if res:
+            remoterelease = workflow.session.get('remoterelease')
+        return (res, remoterelease)
 
     def start_remove(self, session):
         """
@@ -1061,6 +1231,19 @@ class Bank(object):
         :return: bool
         """
         workflow = RemoveWorkflow(self, session)
+        if self.options and self.options.get_option('redis_host'):
+            redis_client = redis.StrictRedis(
+                host=self.options.get_option('redis_host'),
+                port=self.options.get_option('redis_port'),
+                db=self.options.get_option('redis_db'),
+                decode_responses=True
+            )
+            workflow.redis_client = redis_client
+            workflow.redis_prefix = self.options.get_option('redis_prefix')
+            if redis_client.get(self.options.get_option('redis_prefix') + ':' + self.name + ':action:cancel'):
+                logging.warn('Cancel requested, stopping update')
+                redis_client.delete(self.options.get_option('redis_prefix') + ':' + self.name + ':action:cancel')
+                return False
         return workflow.start()
 
     def start_update(self):
@@ -1068,4 +1251,17 @@ class Bank(object):
         Start an update workflow
         """
         workflow = UpdateWorkflow(self)
+        if self.options and self.options.get_option('redis_host'):
+            redis_client = redis.StrictRedis(
+                host=self.options.get_option('redis_host'),
+                port=self.options.get_option('redis_port'),
+                db=self.options.get_option('redis_db'),
+                decode_responses=True
+            )
+            workflow.redis_client = redis_client
+            workflow.redis_prefix = self.options.get_option('redis_prefix')
+            if redis_client.get(self.options.get_option('redis_prefix') + ':' + self.name + ':action:cancel'):
+                logging.warn('Cancel requested, stopping update')
+                redis_client.delete(self.options.get_option('redis_prefix') + ':' + self.name + ':action:cancel')
+                return False
         return workflow.start()

@@ -43,6 +43,7 @@ class Session(object):
         self.name = name
         self.config = config
         self.flow = copy.deepcopy(flow)
+        self.reset_done = False
 
         formats = {}
         if self.config.get('db.formats') is not None:
@@ -156,6 +157,7 @@ class Session(object):
                 set_to_false = True
             if set_to_false:
                 processes[process] = False
+        self.reset_done = set_to_false
 
     def load(self, session):
         """

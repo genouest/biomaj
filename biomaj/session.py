@@ -5,6 +5,7 @@ import os
 import time
 import copy
 import sys
+import logging
 
 from biomaj.workflow import Workflow
 
@@ -43,7 +44,7 @@ class Session(object):
         self.name = name
         self.config = config
         self.flow = copy.deepcopy(flow)
-        self.reset_done = False
+        self._reset_done = False
 
         formats = {}
         if self.config.get('db.formats') is not None:
@@ -122,6 +123,9 @@ class Session(object):
         :param proc: reset from block/meta/proc, all reset all
         :type proc: str
         """
+        # If --process option not given on command line, we won't find it in following loop(s)
+        if proc == None:
+            self._reset_done = True
         if type_proc == Workflow.FLOW_POSTPROCESS:
             if proc in self._session['process']['postprocess']:
                 self._session['process']['postprocess'] = self.reload_postprocess_in_order(self._session['process']['postprocess'])
@@ -135,6 +139,7 @@ class Session(object):
         elif type_proc == Workflow.FLOW_REMOVEPROCESS:
             self._session['process']['removeprocess'] = self.reload_in_order('db.remove.process', self._session['process']['removeprocess'])
             self.reset_meta(self._session['process']['removeprocess'], proc)
+        return self._reset_done
 
     def reset_meta(self, metas, proc=None):
         """
@@ -155,9 +160,9 @@ class Session(object):
         for process in list(processes.keys()):
             if process == proc or proc is None:
                 set_to_false = True
+                self._reset_done = True
             if set_to_false:
                 processes[process] = False
-        self.reset_done = set_to_false
 
     def load(self, session):
         """

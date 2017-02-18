@@ -1080,11 +1080,10 @@ class Bank(object):
                     if task['name'] in [Workflow.FLOW_POSTPROCESS, Workflow.FLOW_PREPROCESS,
                                         Workflow.FLOW_REMOVEPROCESS]:
                         proc = self.options.get_option('process')
-                        self.session.reset_proc(task['name'], proc)
-                        if not self.session.reset_done:
-                            logging.error("Process %s not found in %s" % (str(proc), task['name']))
+                        reset = self.session.reset_proc(task['name'], proc)
+                        if not reset:
+                            logging.info("Process %s not found in %s" % (str(proc), task['name']))
                             return False
-
 
         self.session.set('action', 'update')
         res = self.start_update()

@@ -5,7 +5,6 @@ import os
 import time
 import copy
 import sys
-import logging
 
 from biomaj.workflow import Workflow
 
@@ -124,7 +123,7 @@ class Session(object):
         :type proc: str
         """
         # If --process option not given on command line, we won't find it in following loop(s)
-        if proc == None:
+        if proc is None:
             self._reset_done = True
         if type_proc == Workflow.FLOW_POSTPROCESS:
             if proc in self._session['process']['postprocess']:

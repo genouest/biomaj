@@ -76,7 +76,7 @@ config = {
     'test_suite': 'nose.collector',
     'packages': find_packages(),
     'include_package_data': True,
-    'scripts': [],
+    'scripts': ['scripts/biomaj_migrate_database.py'],
     'name': 'biomaj',
     'cmdclass': {'install': post_install},
 }

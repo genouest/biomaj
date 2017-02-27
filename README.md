@@ -16,6 +16,8 @@ downloaded again only if a change is detected.
 
 More documentation is available in wiki page.
 
+BioMAJ is python 2 and 3 compatible.
+
 Getting started
 ===============
 
@@ -38,6 +40,10 @@ Migration for 3.0 to 3.1:
 
 Biomaj 3.1 provides an optional micro service architecture, allowing to separate and distributute/scale biomaj components on one or many hosts. This implementation is optional but recommended for server installations. Monolithic installation can be kept for local computer installation.
 To upgrade an existing 3.0 installation, as biomaj code has been split into multiple components, it is necessary to install/update biomaj python package but also biomaj-cli and biomaj-daemon packages. Then database must be upgraded manually (see Upgrading in documentation).
+
+To execute database migration:
+
+    python biomaj_migrate_database.py
 
 Application Features
 ====================

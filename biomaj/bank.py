@@ -935,7 +935,7 @@ class Bank(object):
 
         :return: dict of current workflow status
         """
-        if self.bank['status'] is None:
+        if 'status' not in self.bank or self.bank['status'] is None:
             return {}
         return self.bank['status']
 

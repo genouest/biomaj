@@ -661,6 +661,21 @@ class TestBiomajFunctional(unittest.TestCase):
     #self.assertFalse(os.path.exists(proc1file))
     self.assertTrue(os.path.exists(proc2file))
 
+  @attr('process')
+  def test_postprocess_wrong_process_name(self):
+    """If a wrong process name is given, update returns False and prints an error message"""
+    b = Bank('local')
+    b.options.stop_after = 'download'
+    b.update()
+    self.assertFalse(b.session.get_status('postprocess'))
+    b2 = Bank('local')
+    b2.options.from_task = 'postprocess'
+    b2.options.release = b.session.get('release')
+    b2.options.process = 'fake'
+    self.assertFalse(b2.update())
+    self.assertFalse(b2.session.get_status('postprocess'))
+    self.assertEqual(b.session.get_full_release_directory(), b2.session.get_full_release_directory())
+
   def test_computed(self):
     b = Bank('computed')
     res = b.update(True)

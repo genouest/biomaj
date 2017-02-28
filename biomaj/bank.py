@@ -595,11 +595,12 @@ class Bank(object):
                 session_id = session['id']
                 self.banks.update({'name': self.name}, {'$pull': {'sessions': {'id': session_id}}})
                 # Check if in pending sessions
-                for rel in self.bank['pending']:
-                    rel_session = rel['id']
-                    if rel_session == session_id:
-                        self.banks.update({'name': self.name},
-                                          {'$pull': {'pending': {'release': session['release'], 'id': session_id}}})
+                if 'pending' in self.bank:
+                    for rel in self.bank['pending']:
+                        rel_session = rel['id']
+                        if rel_session == session_id:
+                            self.banks.update({'name': self.name},
+                                              {'$pull': {'pending': {'release': session['release'], 'id': session_id}}})
                 if session['release'] not in prod_releases and session['release'] != self.session.get('release'):
                     # There might be unfinished releases linked to session, delete them
                     # if they are not related to a production directory or latest run
@@ -934,7 +935,7 @@ class Bank(object):
 
         :return: dict of current workflow status
         """
-        if self.bank['status'] is None:
+        if 'status' not in self.bank or self.bank['status'] is None:
             return {}
         return self.bank['status']
 
@@ -1079,7 +1080,10 @@ class Bank(object):
                     if task['name'] in [Workflow.FLOW_POSTPROCESS, Workflow.FLOW_PREPROCESS,
                                         Workflow.FLOW_REMOVEPROCESS]:
                         proc = self.options.get_option('process')
-                        self.session.reset_proc(task['name'], proc)
+                        reset = self.session.reset_proc(task['name'], proc)
+                        if not reset:
+                            logging.info("Process %s not found in %s" % (str(proc), task['name']))
+                            return False
 
         self.session.set('action', 'update')
         res = self.start_update()

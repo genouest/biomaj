@@ -1,4 +1,8 @@
+3.1.1:
+
 3.1.0:
+  ## Needs database upgrade
+  If using biomaj-watcher, must use version >= 3.1.0
   Feature #67,#66,#61 switch to micro service architecture. Still works in local monolithic install
   Fix some configuration parameter loading when not defined in config
   Fix HTTP parsing parameters loading
@@ -7,6 +11,8 @@
   Feature #74 add influxdb statistics
   Feature #65 add a release info file at the root of the bank which can be used by other services to know the latest release available
   Feature #25 experimental support of rsync protocol
+  Add rate limiting for download with micro services
+  Limit email size to 2Mb, log file may be truncated
 3.0.20:
   Fix #55: Added support for https and directhttps
   Add possibility to define files to download from a local file with remote.list parameter

@@ -710,6 +710,7 @@ class UpdateWorkflow(Workflow):
         if self.options.get_option(Options.FROM_TASK) == 'download':
             # We want to download again in same release, that's fine, we do not care it is the same release
             self.download_go_ahead = True
+
         if not self.download_go_ahead and self.session.previous_release == self.session.get('remoterelease'):
             if not self.session.config.get_bool('release.control', default=False):
                 logging.info('Workflow:wf_release:same_as_previous_session')
@@ -923,7 +924,6 @@ class UpdateWorkflow(Workflow):
         pool_size = self.session.config.get('files.num.threads', default=None)
 
         dserv = None
-
         if self.bank.config.get('micro.biomaj.service.download', default=None) == '1':
             dserv = DownloadClient(
                 self.bank.config.get('micro.biomaj.rabbit_mq'),
@@ -1138,6 +1138,7 @@ class UpdateWorkflow(Workflow):
 
         self.session.set('download_files', downloader.files_to_download)
         self.session._session['stats']['nb_downloaded_files'] = len(files_to_download)
+        logging.info('Workflow:wf_download:nb_files_to_download:%d' % (len(files_to_download)))
 
         if self.session.get('release') and self.session.config.get_bool('release.control', default=False):
             if self.session.previous_release == self.session.get('remoterelease'):
@@ -1278,7 +1279,7 @@ class UpdateWorkflow(Workflow):
                     break
             if everything_copied:
                 logging.info('Workflow:wf_download:all files copied from %s' % (str(last_production_dir)))
-                return self.no_need_to_update()
+                # return self.no_need_to_update()
 
             logging.debug('Workflow:wf_download:Copy files from ' + last_production_dir)
             for downloader in downloaders:
@@ -1300,6 +1301,10 @@ class UpdateWorkflow(Workflow):
                 redis_client=self.redis_client,
                 redis_prefix=self.redis_prefix
             )
+            if pool_size:
+                logging.debug('Set rate limiting: %s' % (str(pool_size)))
+                dserv.set_rate_limiting(int(pool_size))
+
         else:
             dserv = DownloadClient()
 
@@ -1321,6 +1326,9 @@ class UpdateWorkflow(Workflow):
                 remote_file = message_pb2.DownloadFile.RemoteFile()
                 protocol = downloader.protocol
                 remote_file.protocol = message_pb2.DownloadFile.Protocol.Value(protocol.upper())
+
+                if downloader.credentials:
+                    remote_file.credentials = downloader.credentials
 
                 remote_file.server = downloader.server
                 if cf.get('remote.dir'):

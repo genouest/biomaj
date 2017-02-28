@@ -7,3 +7,8 @@ py-bcrypt
 drmaa
 future
 elasticsearch
+biomaj_core
+biomaj_user
+biomaj_process
+biomaj_cli
+

@@ -218,7 +218,7 @@ timeout.download=300
 # release.url.method =
 # release.url.params =
 # release.remote.dir =
-# release.format = "%Y-%m-%d"  >= 3.0.15
+# release.format = %Y-%m-%d  >= 3.0.15
 release.file=
 release.regexp=
 

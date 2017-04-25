@@ -340,7 +340,8 @@ class Bank(object):
             'visibility': self.config.get('visibility.default'),
             'type': self.config.get('db.type').split(','),
             'tags': [],
-            'owner': owner
+            'owner': owner,
+            'desc': self.config.get('db.fullname')
         }
 
         return props

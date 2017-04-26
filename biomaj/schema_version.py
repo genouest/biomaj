@@ -145,7 +145,6 @@ class SchemaVersion(object):
         banks = MongoConnector.banks
 
         schema_version = schema.find_one({'id': 1})
-        installed_version = pkg_resources.get_distribution("biomaj").version
         if schema_version is None:
             schema_version = {'id': 1, 'version': '3.0.0'}
             schema.insert(schema_version)
@@ -173,7 +172,7 @@ class SchemaVersion(object):
                                   "corresponding value" % str(bank['name']), file=sys.stderr)
                             continue
                     banks.update({'name': bank['name']},
-                                 {'$set': {new_prop: new_value }})
+                                 {'$set': {new_prop: new_value}})
                     updated += 1
                 else:
                     print("[WARN] Bank %s does not have 'properties' field!" % str(bank['name']))

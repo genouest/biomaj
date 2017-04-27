@@ -12,6 +12,8 @@ class post_install(install):
         install.run(self)
         from biomaj.schema_version import SchemaVersion
         SchemaVersion.migrate_pendings()
+        SchemaVersion.add_property(prop='desc', cfg='db.fullname')
+        SchemaVersion.set_version()
 
 here = os.path.abspath(os.path.dirname(__file__))
 try:

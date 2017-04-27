@@ -196,6 +196,12 @@ class SchemaVersion(object):
         installed_version = version
         if installed_version is None:
             installed_version = pkg_resources.get_distribution("biomaj").version
+        if BiomajConfig.global_config is None:
+            try:
+                BiomajConfig.load_config()
+            except Exception as err:
+                print("* SchemaVersion: Can't find config file: " + str(err))
+                return None
         if MongoConnector.db is None:
             MongoConnector(BiomajConfig.global_config.get('GENERAL', 'db.url'),
                            BiomajConfig.global_config.get('GENERAL', 'db.name'))

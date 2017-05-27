@@ -1,6 +1,12 @@
+3.1.2:
+  Fix #86 remove special character from README.md
+  Feature #85 SchemaVersion automatically add new property
+  Feature #84New property to store in db
+
 3.1.1:
   Fix #80 Check process exists with `--from-task` and `--process`
   Manage old banks with no status
+
 3.1.0:
   ## Needs database upgrade
   If using biomaj-watcher, must use version >= 3.1.0
@@ -14,31 +20,38 @@
   Feature #25 experimental support of rsync protocol
   Add rate limiting for download with micro services
   Limit email size to 2Mb, log file may be truncated
+
 3.0.20:
   Fix #55: Added support for https and directhttps
   Add possibility to define files to download from a local file with remote.list parameter
   Fix visibility modification (bug deleted the bank properties field)
   Fix #65 Add release file in bank dir after update
   Add md5 or sha256 checksum checks if files are downloaded and available
+
 3.0.19:
   Fix missing README.md in package
   Fix #53 avoid duplicates in pending databases
+
 3.0.18:
   Add migration method to update schema when needed
   Manage HTTP month format to support text format (Jan, Feb, ...) and int format (01, 02, ...)
   New optional bank property http.parse.file.date.format to extract date in HTTP protocol following python date regexp format (http://www.tutorialspoint.com/python/time_strptime.htm)
       Example: %d-%b-%Y %H:%M
+
 3.0.17:
   Fix #47: save_as error with directhttp protocol
   Fix #45: error with pending releases when release has dots in value
   typo/pylint fixes
+
 3.0.16:
   Do not use config values, trust database values #39
   Fix #42: Add optional release.separator to name the bank directory bankname_release (underscore as default)
+
 3.0.15:
   Fix #37: remote local files history from db and put it in cache.dir
   Feature #38: add optional keep.old.sessions parameter to keep all sessions in database, even for removed releases
   Feature #28: add optional release.format parameter to specify the date format of a release
+
 3.0.14:
   Fix in method set_owner
   Force release to be a str
@@ -47,21 +60,25 @@
   Remove logs on some operations
   Add --status-ko option to list bank in error state
   Fix #36 manage workflows over by error or unfinished
+
 3.0.13:
   Fix #27: Thread lock issue during download
            New optional attribute in bank properties: timeout.download
   HTTP protocol fix (deepcopy error)
+
 3.0.12:
   Fix index deletion on bank removal
   Fix lock errors on dir creation for multi-threads,
       pre-create directroy structure in offline directory
   Fix #26: save error when too many files in bank
+
 3.0.11:
   Fix in session management with pre and rm processes
   Fix #23: Check workflow step name passed to
            --stop-after/--start-after/--from-task
   Fix #24: deprecated delete_by_query method in elasticsearch
   Add some controls on base directories
+
 
 3.0.10:
   Change dir to process.dir to find processes in subdirs
@@ -88,27 +105,31 @@
       the fix prevents using Ctrl-C during download
   Workflow fix:
       if subtask of workflow fails, fail main task
-osallou authored 14 hours ago
+
 3.0.8:
   do not test index if elasticsearch is not up
   minor fixes
   add http proxy support
   pylint fixes
   retry uncompress once in case of failure (#13)
+
 3.0.7:
   Reindent code, pep8 fixes
   Various fixes on var names and OrderedDict suport for Python < 2.7
   Merge config files to be able to reference global.properties variables in bank
     property file in format %(xx)s
   Use ConfigParser instead of SafeConfigParser that will be deprecated
+
 3.0.6:
   Add option --remove-pending to remove all pending sessions and directories
   Add process env variables logdir and logfile
   Fix Unicode issue with old versions of PyCurl.
+
 3.0.5:
   Fix removal workflow during an update workflow, removedrelease was current
   release.
   Fix shebang of biomaj-cli, and python 2/3 compat issue
+
 3.0.4:
   Update code to make it Python 3 compatible
   Use ldap3 library (pure Python and p2,3 compatible) instead of python-ldap

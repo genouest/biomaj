@@ -8,7 +8,7 @@ synchronization and processing. The Software automates the update cycle and the
 supervision of the locally mirrored databank repository.
 
 Common usages are to download remote databanks (Genbank for example) and apply
-some transformations (blast indexing, emboss indexing,...). Any script can be
+some transformations (blast indexing, emboss indexing, etc.). Any script can be
 applied on downloaded data. When all treatments are successfully applied, bank
 is put in "production" on a dedicated release directory.
 With cron tasks, update tasks can be executed at regular interval, data are
@@ -49,7 +49,7 @@ Application Features
 ====================
 
 * Synchronisation:
- * Multiple remote protocols (ftp, sftp, http, local copy, ....)
+ * Multiple remote protocols (ftp, sftp, http, local copy, etc.)
  * Data transfers integrity check
  * Release versioning using a incremental approach
  * Multi threading
@@ -59,8 +59,7 @@ Application Features
 
 * Pre &Post processing :
  * Advanced workflow description (D.A.G)
- * Post-process indexation for various bioinformatics software (blast, srs,
-   fastacmd, readseq, etc…)
+ * Post-process indexation for various bioinformatics software (blast, srs, fastacmd, readseq, etc.)
  * Easy integration of personal scripts for bank post-processing automation
 
 
@@ -73,12 +72,12 @@ Application Features
 
 
 * Scalability:
-  * Monolithic (local install) or microservice architecture (remote access to a BioMAJ server)
-  * Microservice installation allows per process scalability and supervision (number of process in charge of download, execution, etc.)
+ * Monolithic (local install) or microservice architecture (remote access to a BioMAJ server)
+ * Microservice installation allows per process scalability and supervision (number of process in charge of download, execution, etc.)
 
 
 * Remote access:
-  * Optional FTP server providing authenticated or anonymous data access
+ * Optional FTP server providing authenticated or anonymous data access
 
 Dependencies
 ============
@@ -95,12 +94,9 @@ Database:
 Indexing (optional):
  * elasticsearch (global property, use_elastic=1)
 
-ElasticSearch indexing add advanced search features to biomaj to find bank
-having files with specific format etc...
+ElasticSearch indexing adds advanced search features to biomaj to find bank having files with specific format or type.
 Configuration of ElasticSearch is not in the scope of BioMAJ documentation.
-For a basic installation, one instance of ElasticSearch is enough (low volume of
-data), in such a case, the ElasticSearch configuration file should be modified
-accordingly:
+For a basic installation, one instance of ElasticSearch is enough (low volume of data), in such a case, the ElasticSearch configuration file should be modified accordingly:
 
     node.name: "biomaj" (or any other name)
     index.number_of_shards: 1
@@ -206,8 +202,7 @@ To delete elasticsearch index:
 Credits
 ======
 
-Special thanks for tuco at Pasteur Institute for the intensive testing and new
-ideas....
+Special thanks for tuco at Pasteur Institute for the intensive testing and new ideas.
 Thanks to the old BioMAJ team for the work they have done.
 
 BioMAJ is developped at IRISA research institute.

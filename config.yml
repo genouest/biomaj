@@ -1,5 +1,5 @@
 biomaj:
-    global_properties: '/home/osallou/Development/NOSAVE/genouest/global.properties'
+    global_properties: '/pasteur/services/policy01/banques/biomaj3/global.properties'
 
 rabbitmq:
     host: '127.0.0.1'

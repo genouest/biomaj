@@ -35,7 +35,7 @@ config = {
     'url': 'http://biomaj.genouest.org',
     'download_url': 'http://biomaj.genouest.org',
     'author_email': 'olivier.sallou@irisa.fr',
-    'version': '3.1.2',
+    'version': '3.1.3',
      'classifiers': [
         # How mature is this project? Common values are
         #   3 - Alpha
@@ -80,7 +80,7 @@ config = {
     'include_package_data': True,
     'scripts': ['scripts/biomaj_migrate_database.py'],
     'name': 'biomaj',
-    'cmdclass': {'install': post_install},
+    #'cmdclass': {'install': post_install},
 }
 
 setup(**config)

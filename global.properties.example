@@ -110,6 +110,7 @@ do.link.copy=true
 #define level information for output : DEBUG,INFO,WARN,ERR
 historic.logfile.level=DEBUG
 
+# Hint: you can use online service https://regex101.com/ to test your regexps
 http.parse.dir.line=<a[\\s]+href=\"([\\S]+)/\".*alt=\"\\[DIR\\]\">.*([\\d]{2}-[\\w\\d]{2,5}-[\\d]{4}\\s[\\d]{2}:[\\d]{2})
 http.parse.file.line=<a[\\s]+href=\"([\\S]+)\".*([\\d]{2}-[\\w\\d]{2,5}-[\\d]{4}\\s[\\d]{2}:[\\d]{2})[\\s]+([\\d\\.]+[MKG]{0,1})
 

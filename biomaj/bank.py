@@ -340,7 +340,8 @@ class Bank(object):
             'visibility': self.config.get('visibility.default'),
             'type': self.config.get('db.type').split(','),
             'tags': [],
-            'owner': owner
+            'owner': owner,
+            'desc': self.config.get('db.fullname')
         }
 
         return props
@@ -935,7 +936,7 @@ class Bank(object):
 
         :return: dict of current workflow status
         """
-        if self.bank['status'] is None:
+        if 'status' not in self.bank or self.bank['status'] is None:
             return {}
         return self.bank['status']
 

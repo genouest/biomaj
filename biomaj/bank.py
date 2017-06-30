@@ -959,6 +959,9 @@ class Bank(object):
         if 'pending' not in self.bank:
             return True
         pendings = self.bank['pending']
+        last_update = None
+        if 'last_update_session' in self.bank:
+            last_update = self.bank['last_update_session']
 
         for pending in pendings:
             # Only work with pending for argument release
@@ -979,6 +982,10 @@ class Bank(object):
                 logging.debug("Remove:Pending:Dir:" + session.get_full_release_directory())
                 shutil.rmtree(session.get_full_release_directory())
             self.remove_session(pending['id'])
+            if last_update and last_update == pending_session_id:
+                self.banks.update({'name': self.name},
+                                  {'$unset': {'last_update_session': ''}})
+
         # If no release ask for deletion, remove all pending
         if not release:
             self.banks.update({'name': self.name}, {'$set': {'pending': []}})

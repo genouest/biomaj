@@ -11,10 +11,12 @@ class MongoConnector(object):
     db = None
     banks = None
     users = None
+    remote_hooks = None
 
     def __init__(self, url, db):
         MongoConnector.client = MongoClient(url)
         MongoConnector.db = MongoConnector.client[db]
         MongoConnector.banks = MongoConnector.db.banks
         MongoConnector.users = MongoConnector.db.users
+        MongoConnector.remote_hooks = MongoConnector.db.remote_hooks
         MongoConnector.db_schema = MongoConnector.db.db_schema

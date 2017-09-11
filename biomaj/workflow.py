@@ -1680,7 +1680,7 @@ class UpdateWorkflow(Workflow):
         # Set session back
         self.bank.session = keep_session
         if old_deleted:
-            seld.bank.session.remove = True
+            self.bank.session._session['remove'] = True
 
         return True
 

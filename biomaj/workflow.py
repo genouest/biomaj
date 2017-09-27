@@ -586,13 +586,6 @@ class UpdateWorkflow(Workflow):
 
             params = None
             keys = cf.get('url.params')
-#            if keys is not None:
-#                params = {}
-#                keys = keys.split(',')
-#                for key in keys:
-#                    param = cf.get(key.strip() + '.value')
-#                    params[key.strip()] = param.strip()
-#
             credentials = cf.get('server.credentials')
             if cf.get('release.credentials') is not None:
                 credentials = cf.get('release.credentials')
@@ -615,15 +608,21 @@ class UpdateWorkflow(Workflow):
                 if cf.get('release.url.method') is not None:
                     method = cf.get('release.url.method')
             #add params for irods to get port, password, user, zone
+            logging.error("DEBUG wf_release Workflow.py in protocol == irods:"+str(params))
             if protocol == 'irods':
-                keys = cf.get('irods.params')
+                logging.error("DEBUG wf_download Workflow.py in if protocol == 'irods':")
+                keys=None
+                keys = str(str(cf.get('irods.user'))+','+ str(cf.get('irods.password'))+','+ str(cf.get( 'irods.port'))+','+ str(cf.get('irods.protocol')))
                 if keys is not None:
                     params = {}
-                    keys = keys.split(',')
-                    for key in keys:
-                        param = cf.get(key.strip() + '.value')
-                        params[key.strip()] = param.strip()
- 
+                    keys = str(keys).split(',')
+                    logging.error("DEBUG wf_download Workflow.py keys: "+str(keys))
+                    params['user'] = str(cf.get('irods.user')).strip()
+                    params['password'] = str(cf.get('irods.password')).strip()
+                    params['port'] = str(cf.get('irods.port')).strip()
+                    params['protocol'] = str(cf.get('irods.protocol')).strip()
+                    params['zone'] = str(cf.get('irods.zone')).strip()
+            
             release_downloader = dserv.get_handler(
                 protocol,
                 server,
@@ -1072,14 +1071,6 @@ class UpdateWorkflow(Workflow):
             server = cf.get('server')
 
             params = None
-#            keys = cf.get('url.params')
-#            if keys is not None:
-#                params = {}
-#                keys = keys.split(',')
-#                for key in keys:
-#                    param = cf.get(key.strip() + '.value')
-#                    params[key.strip()] = param.strip()
-#
             method = cf.get('url.method')
             if method is None:
                 method = 'GET'
@@ -1100,13 +1091,16 @@ class UpdateWorkflow(Workflow):
                 remote_dir = '/'
             #add params for irods to get port, password, user, zone
             if protocol == 'irods':
-                keys = cf.get('irods.params')
+                keys=None
+                keys = str(str(cf.get('irods.user'))+','+ str(cf.get('irods.password'))+','+ str(cf.get( 'irods.port'))+','+ str(cf.get('irods.protocol')))
                 if keys is not None:
                     params = {}
-                    keys = keys.split(',')
-                    for key in keys:
-                        param = cf.get(key.strip() + '.value')
-                        params[key.strip()] = param.strip()
+                    keys = str(keys).split(',')
+                    params['user'] = str(cf.get('irods.user')).strip()
+                    params['password'] = str(cf.get('irods.password')).strip()
+                    params['port'] = str(cf.get('irods.port')).strip()
+                    params['protocol'] = str(cf.get('irods.protocol')).strip()
+                    params['zone'] = str(cf.get('irods.zone')).strip()
  
             save_as = cf.get('target.name')
 

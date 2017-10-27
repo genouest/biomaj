@@ -193,6 +193,10 @@ class MetaProcess(threading.Thread):
                             # bank_env=None, log_dir=None,
                             # rabbit_mq=None, rabbit_mq_port=5672, rabbit_mq_user=None, rabbit_mq_password=None, rabbit_mq_virtualhost=None,
                             # proxy=None, bank=None):
+                            proxy = self.bank.config.get('micro.biomaj.proxy.process')
+                            if not proxy:
+                                proxy = self.bank.config.get('micro.biomaj.proxy')
+
                             use_sudo = self.bank.config.get_bool('docker.sudo', default=True)
                             bmaj_process = RemoteProcess(
                                 meta + '_' + name,
@@ -210,7 +214,7 @@ class MetaProcess(threading.Thread):
                                 rabbit_mq_user=self.bank.config.get('micro.biomaj.rabbit_mq_user'),
                                 rabbit_mq_password=self.bank.config.get('micro.biomaj.rabbit_mq_password'),
                                 rabbit_mq_virtualhost=self.bank.config.get('micro.biomaj.rabbit_mq_virtualhost', default='/'),
-                                proxy=self.bank.config.get('micro.biomaj.proxy'),
+                                proxy=proxy,
                                 bank=self.bank.name
                             )
                         else:

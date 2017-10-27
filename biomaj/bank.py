@@ -8,7 +8,6 @@ import json
 from datetime import datetime
 
 import redis
-from influxdb import InfluxDBClient
 
 from biomaj.mongo_connector import MongoConnector
 from biomaj.session import Session
@@ -1097,6 +1096,11 @@ class Bank(object):
         '''
         Send stats to Influxdb if enabled
         '''
+        try:
+            from influxdb import InfluxDBClient
+        except Exception as e:
+            logging.error('Cannot load influxdb library' + str(e))
+            return
         db_host = self.config.get('influxdb.host', default=None)
         if not db_host:
             return

@@ -549,7 +549,11 @@ class UpdateWorkflow(Workflow):
                 )
             else:
                 dserv = DownloadClient()
-            proxy = self.bank.config.get('micro.biomaj.proxy')
+
+            proxy = self.bank.config.get('micro.biomaj.proxy.download')
+            if not proxy:
+                proxy = self.bank.config.get('micro.biomaj.proxy')
+
             session = dserv.create_session(self.name, proxy)
             logging.info("Workflow:wf_release:DownloadSession:" + str(session))
 
@@ -938,7 +942,10 @@ class UpdateWorkflow(Workflow):
         if pool_size:
             dserv.set_queue_size(int(pool_size))
 
-        proxy = self.bank.config.get('micro.biomaj.proxy')
+        proxy = self.bank.config.get('micro.biomaj.proxy.download')
+        if not proxy:
+            proxy = self.bank.config.get('micro.biomaj.proxy')
+
         session = dserv.create_session(self.name, proxy)
         logging.info("Workflow:wf_download:DownloadSession:" + str(session))
 
@@ -1311,7 +1318,10 @@ class UpdateWorkflow(Workflow):
         if pool_size:
             dserv.set_queue_size(int(pool_size))
 
-        proxy = self.bank.config.get('micro.biomaj.proxy')
+        proxy = self.bank.config.get('micro.biomaj.proxy.download')
+        if not proxy:
+            proxy = self.bank.config.get('micro.biomaj.proxy')
+
         session = dserv.create_session(self.name, proxy)
         logging.info("Workflow:wf_download:DownloadSession:" + str(session))
 

@@ -1646,14 +1646,17 @@ class UpdateWorkflow(Workflow):
         nb_prod = len(self.bank.bank['production'])
         # save session during delete workflow
         keep_session = self.bank.session
-
+        old_deleted = False
         if nb_prod > keep:
             for prod in self.bank.bank['production']:
                 if prod['release'] == keep_session.get('release'):
+                    logging.info('Release %s tagged as keep_session, skipping' % (str(prod['release'])))
                     continue
                 if 'freeze' in prod and prod['freeze']:
+                    logging.info('Release %s tagged as freezed, skipping' % (str(prod['release'])))
                     continue
                 if self.bank.bank['current'] == prod['session']:
+                    logging.info('Release %s tagged as current, skipping' % (str(prod['release'])))
                     continue
                 if nb_prod - keep > 0:
                     nb_prod -= 1
@@ -1680,10 +1683,14 @@ class UpdateWorkflow(Workflow):
                     res = self.bank.start_remove(session)
                     if not res:
                         logging.error('Workflow:wf_delete_old:ErrorDelete:' + prod['release'])
+                    else:
+                        old_deleted = True
                 else:
                     break
         # Set session back
         self.bank.session = keep_session
+        if old_deleted:
+            self.bank.session._session['remove'] = True
 
         return True
 

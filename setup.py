@@ -72,9 +72,10 @@ config = {
                          'requests',
                          'redis',
                          'elasticsearch',
-                         'influxdb'
+                         'influxdb',
+                         'mock'
                          ],
-    'tests_require': ['nose', 'mock'],
+    'tests_require': ['nose'],
     'test_suite': 'nose.collector',
     'packages': find_packages(),
     'include_package_data': True,

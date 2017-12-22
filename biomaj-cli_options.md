@@ -129,6 +129,14 @@ global.properties file is mandatory. If not specified, 'global.properties' will 
 
 --maintenance on/off/status: (un)set biomaj in maintenance mode to prevent updates/removal
 
+--schedule: Get bank scheduling (needs biomaj-release)
+    [MANDATORY]
+    --proxy http://x.y.z
+
+--stats: Get statistics
+
+--json: Get output in JSON format
+
 ```
 
 

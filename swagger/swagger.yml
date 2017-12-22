@@ -1,0 +1,823 @@
+swagger: "2.0"
+info:
+  description: "BioMAJ API"
+  version: "3.1.0"
+  title: "BioMAJ daemon API"
+  contact:
+    email: "support@genouest.org"
+  license:
+    name: "AGPLv3"
+    url: "https://www.gnu.org/licenses/agpl-3.0.html"
+host: "banks.genouest.org"
+basePath: "/api/daemon"
+tags:
+- name: "bank"
+  description: "Manage banks"
+  externalDocs:
+    description: "Find out more"
+    url: "http://genouest.github.io/biomaj/biomaj-cli_options"
+- name: "service"
+  description: "Service related"
+- name: "user"
+  description: "BioMAJ user info"
+schemes:
+- "https"
+paths:
+  /:
+    get:
+      tags:
+      - "service"
+      summary: "Get status of BioMAJ services"
+      description: "Return status of all services"
+      operationId: "getServicesStatus"
+      produces:
+      - "application/json"
+      responses:
+          200:
+              description: "service list"
+              schema:
+                  $ref: "#/definitions/Services"
+  /bank/{bank}/log:
+    get:
+      tags:
+      - "bank"
+      summary: "Get log of bank update"
+      description: "Return the log of the last update for the bank"
+      operationId: "getBankLog"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "bank"
+        in: "path"
+        description: "ID of the bank"
+        required: true
+        type: "string"
+      responses:
+          200:
+              description: "update log"
+              schema:
+                $ref: "#/definitions/TextApiResponse"
+      security:
+      - api_key: []
+  /bank/{bank}/log/{tail}:
+    get:
+      tags:
+      - "bank"
+      summary: "Get last lines of log of bank update"
+      description: "Return the <tail> last lines of log of the last update for the bank"
+      operationId: "getBankLogLast"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "bank"
+        in: "path"
+        description: "ID of the bank"
+        required: true
+        type: "string"
+      - name: "tail"
+        in: "path"
+        description: "Number of lines to return"
+        required: true
+        type: "integer"
+      responses:
+          200:
+              description: "update log"
+              schema:
+                $ref: "#/definitions/TextApiResponse"
+      security:
+      - api_key: []
+  /aboutme:
+    post:
+      tags:
+        - "user"
+      summary: "Get user info and api key"
+      description: "Sends login info to get user info"
+      operationId: "getUserInfo"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "login"
+        in: "body"
+        schema:
+            $ref: "#/definitions/UserLogin"
+        description: "user login"
+        required: true
+      responses:
+        200:
+          description: "update log"
+          schema:
+            $ref: "#/definitions/UserInfo"
+  /maintenance:
+      get:
+          tags:
+             - "service"
+          summary: "Get maintenance mode"
+          operationId: "getMaintenance"
+          responses:
+            200:
+              description: "maintenance status"
+              schema:
+                $ref: "#/definitions/TextApiResponse"
+      post:
+          tags:
+             - "service"
+          summary: "Put in maintenance mode"
+          operationId: "setMaintenance"
+          responses:
+            200:
+              description: "maintenance started"
+              schema:
+                $ref: "#/definitions/TextApiResponse"
+          security:
+              - api_key: []
+      delete:
+          tags:
+             - "service"
+          summary: "Stop maintenance mode"
+          operationId: "deleteMaintenance"
+          responses:
+            200:
+              description: "maintenance stopped"
+              schema:
+                $ref: "#/definitions/TextApiResponse"
+          security:
+              - api_key: []
+  /whatsup:
+      get:
+          tags:
+             - "service"
+          summary: "Check banks waiting for operation (queue)"
+          operationId: "getWhatsUp"
+          responses:
+            200:
+              description: "queue status"
+              schema:
+                $ref: "#/definitions/WhatsUp"
+  /stats:
+      get:
+          tags:
+             - "service"
+          summary: "Get disk usage per bank and release"
+          operationId: "getStats"
+          responses:
+            200:
+              description: "biomaj disk usage"
+              schema:
+                $ref: "#/definitions/Stats"
+  /version:
+      get:
+          tags:
+             - "service"
+          summary: "Get used biomaj module versions"
+          operationId: "getVersion"
+          responses:
+            200:
+              description: "biomaj modules"
+              schema:
+                $ref: "#/definitions/Versions"
+
+  /bank:
+      get:
+          tags:
+             - "bank"
+          summary: "Get banks info"
+          operationId: "getBanks"
+          responses:
+            200:
+              description: "banks info"
+              schema:
+                $ref: "#/definitions/Banks"
+  /bank/{bank}:
+      get:
+          tags:
+             - "bank"
+          summary: "Get bank info"
+          operationId: "getBank"
+          parameters:
+          - name: "bank"
+            in: "path"
+            description: "ID of the bank"
+            required: true
+            type: "string"
+          responses:
+            200:
+              description: "bank info"
+              schema:
+                $ref: "#/definitions/Bank"
+      post:
+          tags:
+             - "bank"
+          summary: "Launch bank update"
+          operationId: "updateBank"
+          parameters:
+          - name: "bank"
+            in: "path"
+            description: "ID of the bank"
+            required: true
+            type: "string"
+          - name: "options"
+            in: "body"
+            description: "Update options"
+            schema:
+                $ref: "#/definitions/UpdateOptions"
+          responses:
+            200:
+              description: "update started"
+              schema:
+                $ref: "#/definitions/TextApiResponse"
+          security:
+              - api_key: []
+      delete:
+          tags:
+             - "bank"
+          summary: "Delete bank release"
+          operationId: "deleteBank"
+          parameters:
+          - name: "bank"
+            in: "path"
+            description: "ID of the bank"
+            required: true
+            type: "string"
+          - name: "options"
+            in: "body"
+            description: "Update options"
+            schema:
+                $ref: "#/definitions/RemoveOptions"
+          responses:
+            200:
+              description: "deletion started"
+              schema:
+                $ref: "#/definitions/TextApiResponse"
+          security:
+              - api_key: []
+  /bank/{bank}/check:
+    get:
+      tags:
+      - "bank"
+      summary: "Check properties file"
+      description: "Checks bank properties"
+      operationId: "bankCheck"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "bank"
+        in: "path"
+        description: "ID of the bank"
+        required: true
+        type: "string"
+      responses:
+          200:
+              description: "check status"
+              schema:
+                $ref: "#/definitions/TextApiResponse"
+      security:
+      - api_key: []
+  /bank/{bank}/status:
+    get:
+      tags:
+      - "bank"
+      summary: "Get update progress"
+      description: "Checks bank update current status"
+      operationId: "bankUpdateStatus"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "bank"
+        in: "path"
+        description: "ID of the bank"
+        required: true
+        type: "string"
+      responses:
+          200:
+              description: "check status"
+              schema:
+                  type: "object"
+                  properties:
+                      pending:
+                          type: "object"
+                      status:
+                          type: "object"
+      security:
+      - api_key: []
+  /bank/{bank}/ko:
+    get:
+      tags:
+      - "bank"
+      summary: "Get failed banks"
+      description: "Get bank list in error"
+      operationId: "getBankKoStatus"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "bank"
+        in: "path"
+        description: "ID of the bank"
+        required: true
+        type: "string"
+      responses:
+          200:
+              description: "errored banks"
+              schema:
+                  $ref: "#/definitions/Banks"
+      security:
+      - api_key: []
+  /bank/{bank}/cancel:
+    put:
+      tags:
+      - "bank"
+      summary: "Cancel bank update"
+      description: "Cancel a bank update, update will stop once running operations are over, or removed from queue"
+      operationId: "bankCancel"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "bank"
+        in: "path"
+        description: "ID of the bank"
+        required: true
+        type: "string"
+      responses:
+          200:
+              description: "operation status"
+              schema:
+                $ref: "#/definitions/TextApiResponse"
+      security:
+      - api_key: []
+  /bank/{bank}/owner/{owner}:
+    put:
+      tags:
+      - "bank"
+      summary: "Change owner of a bank"
+      description: "Modify bank ownership"
+      operationId: "bankUpdateOwner"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "bank"
+        in: "path"
+        description: "ID of the bank"
+        required: true
+        type: "string"
+      - name: "owner"
+        in: "path"
+        description: "ID of the new owner"
+        required: true
+        type: "string"
+      responses:
+          200:
+              description: "operation status"
+              schema:
+                $ref: "#/definitions/TextApiResponse"
+      security:
+      - api_key: []
+  /bank/{bank}/visibility/{visibility}:
+    put:
+      tags:
+      - "bank"
+      summary: "Change visibility"
+      description: "Modify bank visibility"
+      operationId: "bankUpdateVisibility"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "bank"
+        in: "path"
+        description: "ID of the bank"
+        required: true
+        type: "string"
+      - name: "visibility"
+        in: "path"
+        description: "[public|private]"
+        required: true
+        type: "string"
+      responses:
+          200:
+              description: "operation status"
+              schema:
+                $ref: "#/definitions/TextApiResponse"
+      security:
+      - api_key: []
+  /bank/{bank}/name/{name}:
+    put:
+      tags:
+      - "bank"
+      summary: "Change visibility"
+      description: "Modify bank name"
+      operationId: "bankUpdateName"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "bank"
+        in: "path"
+        description: "ID of the bank"
+        required: true
+        type: "string"
+      - name: "name"
+        in: "path"
+        description: "new name of the bank"
+        required: true
+        type: "string"
+      responses:
+          200:
+              description: "operation status"
+              schema:
+                $ref: "#/definitions/TextApiResponse"
+      security:
+      - api_key: []
+  /bank/{bank}/move:
+    put:
+      tags:
+      - "bank"
+      summary: "Change visibility"
+      description: "Modify bank name"
+      operationId: "bankUpdateMove"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "bank"
+        in: "path"
+        description: "ID of the bank"
+        required: true
+        type: "string"
+      - name: "options"
+        in: "body"
+        description: "move options"
+        required: true
+        schema:
+            $ref: "#/definitions/MoveOptions"
+      responses:
+          200:
+              description: "operation status"
+              schema:
+                $ref: "#/definitions/TextApiResponse"
+      security:
+      - api_key: []
+  /bank/{bank}/publish:
+    put:
+      tags:
+      - "bank"
+      summary: "publish bank"
+      description: "Publish latest release or specified release"
+      operationId: "bankPublish"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "bank"
+        in: "path"
+        description: "ID of the bank"
+        required: true
+        type: "string"
+      - name: "options"
+        in: "body"
+        description: "move options"
+        schema:
+            $ref: "#/definitions/PublishOptions"
+      responses:
+          200:
+              description: "operation status"
+              schema:
+                $ref: "#/definitions/TextApiResponse"
+      security:
+      - api_key: []
+    delete:
+      tags:
+      - "bank"
+      summary: "unpublish bank"
+      description: "Unpublish bank"
+      operationId: "bankUnpublish"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "bank"
+        in: "path"
+        description: "ID of the bank"
+        required: true
+        type: "string"
+      responses:
+          200:
+              description: "operation status"
+              schema:
+                $ref: "#/definitions/TextApiResponse"
+      security:
+      - api_key: []
+  /bank/{bank}/freeze/{release}:
+    put:
+      tags:
+      - "bank"
+      summary: "Freeze a release"
+      description: "Freeze i.e. forbid removal of a release"
+      operationId: "bankFreeze"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "bank"
+        in: "path"
+        description: "ID of the bank"
+        required: true
+        type: "string"
+      - name: "release"
+        in: "path"
+        description: "release to freeze"
+        required: true
+        type: "string"
+      responses:
+          200:
+              description: "operation status"
+              schema:
+                $ref: "#/definitions/TextApiResponse"
+      security:
+      - api_key: []
+    delete:
+      tags:
+      - "bank"
+      summary: "Unfreeze a release"
+      description: "Unfreeze i.e. allow removal of a release"
+      operationId: "bankUnfreeze"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "bank"
+        in: "path"
+        description: "ID of the bank"
+        required: true
+        type: "string"
+      - name: "release"
+        in: "path"
+        description: "release to unfreeze"
+        required: true
+        type: "string"
+      responses:
+          200:
+              description: "operation status"
+              schema:
+                $ref: "#/definitions/TextApiResponse"
+      security:
+      - api_key: []
+  /bank/{bank}/search:
+    get:
+      tags:
+      - "bank"
+      summary: "Search banks"
+      description: "Query banks according to options"
+      operationId: "queryBanks"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "bank"
+        in: "path"
+        description: "ID of the bank"
+        required: true
+        type: "string"
+      - name: "options"
+        in: "body"
+        required: true
+        schema:
+            $ref: "#/definitions/QueryOptions"
+      responses:
+          200:
+              description: "search result"
+              schema:
+                  $ref: "#/definitions/Banks"
+      security:
+      - api_key: []
+  /bank/{bank}/show:
+    get:
+      tags:
+      - "bank"
+      summary: "Show banks"
+      description: "show bank"
+      operationId: "showBank"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "bank"
+        in: "path"
+        description: "ID of the bank"
+        required: true
+        type: "string"
+      - name: "options"
+        in: "body"
+        required: true
+        schema:
+            $ref: "#/definitions/ShowOptions"
+      responses:
+          200:
+              description: "bank info"
+              schema:
+                  $ref: "#/definitions/BankInfo"
+      security:
+      - api_key: []
+securityDefinitions:
+  api_key:
+    type: "apiKey"
+    name: "api_key"
+    in: "header"
+definitions:
+  QueryOptions:
+      type: "object"
+      properties:
+          query:
+              type: "string"
+              description: "strign query"
+          types:
+              type: "array"
+              items:
+                  type: "string"
+          formats:
+              type: "array"
+              items:
+                  type: "string"
+  ShowOptions:
+      type: "object"
+      properties:
+          release:
+              type: "string"
+              description: "release name"
+  MoveOptions:
+      type: "object"
+      properties:
+          path:
+              type: "string"
+              description: "full directory path"
+  PublishOptions:
+      type: "object"
+      properties:
+          release:
+              type: "string"
+              description: "release name"
+  UpdateOptions:
+      type: "object"
+      properties:
+          publish:
+              type: "boolean"
+              description: "publish bank after update"
+          fromscratch:
+              type: "boolean"
+              description: "restart from scratch"
+          stop_before:
+              type: "string"
+          stop_after:
+              type: "string"
+          "from_task":
+              type: "string"
+          "process":
+              type: "string"
+          "release":
+              type: "string"
+  RemoveOptions:
+      type: "object"
+      properties:
+          all:
+              type: "boolean"
+              description: "delete all releases"
+          force:
+              type: "boolean"
+              description: "force deletion"
+          pending:
+              type: "boolean"
+              description: "delete pending releases"
+          release:
+              type: "string"
+              description: "delete specified release"
+  Service:
+    type: "object"
+    properties:
+        id:
+            type: "string"
+            description: "name of the service"
+        host:
+            type: "string"
+            description: "host where is the service"
+        status:
+            type: "boolean"
+            description: "service current status "
+  ServiceStatus:
+      type: "object"
+      properties:
+          service:
+              type: "string"
+              description: "name of the service"
+          count:
+              type: "integer"
+              description: "Number of service instance running"
+          status:
+              type: "integer"
+              description: "Global status of the service"
+  Services:
+    type: "object"
+    properties:
+      biomaj_services:
+        type: "array"
+        items:
+            $ref: "#/definitions/Service"
+      status:
+        type: "array"
+        items:
+            $ref: "#/definitions/ServiceStatus"
+  TextApiResponse:
+    type: "object"
+    properties:
+        msg:
+            type: "string"
+            description: "message"
+  UserInfo:
+    type: "object"
+    properties:
+        user:
+            type: "string"
+            description: "user identifier"
+        email:
+            type: "string"
+        apikey:
+            type: "string"
+            description: "API Key for authentication"
+  UserLogin:
+      type: "object"
+      properties:
+          login:
+              description: "user login"
+              type: "string"
+          password:
+              description: "user password"
+              type: "string"
+
+  Items:
+      type: "array"
+      items:
+          type: "string"
+
+  BankInfo:
+      type: "object"
+      properties:
+          details:
+              type: "array"
+              items:
+                  $ref: "#/definitions/Items"
+          headers:
+              type: "array"
+              items:
+                  $ref: "#/definitions/Items"
+
+  Banks:
+      type: "object"
+      properties:
+          banks:
+              type: "array"
+              items:
+                  $ref: "#/definitions/Items"
+          headers:
+              type: "array"
+              items:
+                  $ref: "#/definitions/Items"
+  Bank:
+      type: "object"
+      properties:
+          info:
+              description: "informations about the bank release"
+              $ref: "#/definitions/BankInfo"
+          production:
+              description: "list of production releases"
+              $ref: "#/definitions/BankInfo"
+          pending:
+              type: "array"
+              items:
+                  type: "object"
+
+  Stats:
+      type: "object"
+      properties:
+          stats:
+              type: "array"
+              description: "bank,release and disk space used, release=All for global space used by a bank"
+              items:
+                  $ref: "#/definitions/Items"
+          headers:
+              type: "array"
+              description: "name of stats items"
+              items:
+                  type: "string"
+  Versions:
+      type: "object"
+      properties:
+          version:
+              type: "array"
+              description: "Get modules versions (name, version, latest available on pypi)"
+              items:
+                  $ref: "#/definitions/Items"
+          headers:
+              type: "array"
+              description: "name of version items"
+              items:
+                  type: "string"
+  WhatsUp:
+      type: "object"
+      properties:
+          services:
+              type: "array"
+              items:
+                  $ref: "#/definitions/Items"
+          headers:
+              type: "array"
+              description: "name of services items"
+              items:
+                  type: "string"

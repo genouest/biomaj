@@ -23,7 +23,7 @@ tags:
 schemes:
 - "https"
 paths:
-  /:
+  /status:
     get:
       tags:
       - "service"

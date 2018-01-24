@@ -772,6 +772,12 @@ definitions:
   Bank:
       type: "object"
       properties:
+          bank:
+             description: "bank information"
+             $ref: "#/definitions/BankDef"
+  BankDef:
+      type: "object"
+      properties:
           info:
               description: "informations about the bank release"
               $ref: "#/definitions/BankInfo"

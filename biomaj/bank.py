@@ -182,12 +182,15 @@ class Bank(object):
                                   release_dir,
                                   'yes' if 'freeze' in prod and prod['freeze'] else 'no'])
             # Bank pending info header
-            if 'pending' in _bank and len(_bank['pending']) > 0:
-                pend_info.append(["Pending release", "Last run"])
-                for pending in _bank['pending']:
-                    run = datetime.fromtimestamp(pending['id']).strftime('%Y-%m-%d %H:%M:%S')
-                    pend_info.append([pending['release'], run])
-
+            try:
+                if 'pending' in _bank and len(_bank['pending']) > 0:
+                    pend_info.append(["Pending release", "Last run"])
+                    for pending in _bank['pending']:
+                        run = datetime.fromtimestamp(pending['id']).strftime('%Y-%m-%d %H:%M:%S')
+                        pend_info.append([pending['release'], run])
+            except Exception as e:
+                logging.error('BANK:ERROR:invalid pending id: ' + str(pending['id']))
+                logging.error('BANK:ERROR:invalid pending id: ' + str(e))
             info['info'] = bank_info
             info['prod'] = prod_info
             info['pend'] = pend_info

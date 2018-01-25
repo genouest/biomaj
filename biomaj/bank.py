@@ -184,8 +184,8 @@ class Bank(object):
                                   prod['remoterelease'],
                                   prod['release'],
                                   release_dir,
-                                  'yes' if 'freeze' in prod and prod['freeze'] else 'no'],
-                                  formats)
+                                  'yes' if 'freeze' in prod and prod['freeze'] else 'no',
+                                  formats])
             # Bank pending info header
             if 'pending' in _bank and len(_bank['pending']) > 0:
                 pend_info.append(["Pending release", "Last run"])

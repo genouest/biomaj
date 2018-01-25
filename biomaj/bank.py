@@ -178,7 +178,7 @@ class Bank(object):
                 date = datetime.fromtimestamp(prod['session']).strftime('%Y-%m-%d %H:%M:%S')
                 formats = ""
                 # Check the value exist , is not empty, and a list.
-                if prod['formats'] and isinstance(prod['formats'], list):
+                if 'formats' in prod and prod['formats'] and isinstance(prod['formats'], list):
                     formats = str(','.join(prod['formats']))
                 prod_info.append([date,
                                   prod['remoterelease'],

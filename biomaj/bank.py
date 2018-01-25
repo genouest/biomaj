@@ -176,12 +176,16 @@ class Bank(object):
                                            dir_version,
                                            prod['prod_dir'])
                 date = datetime.fromtimestamp(prod['session']).strftime('%Y-%m-%d %H:%M:%S')
+                formats = ""
+                # Check the value exist , is not empty, and a list.
+                if prod['formats'] and isinstance(prod['formats'], list):
+                    formats = str(','.join(prod['formats']))
                 prod_info.append([date,
                                   prod['remoterelease'],
                                   prod['release'],
                                   release_dir,
                                   'yes' if 'freeze' in prod and prod['freeze'] else 'no'],
-                                  str(','.join(prod['formats'])))
+                                  formats)
             # Bank pending info header
             if 'pending' in _bank and len(_bank['pending']) > 0:
                 pend_info.append(["Pending release", "Last run"])

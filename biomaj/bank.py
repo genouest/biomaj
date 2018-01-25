@@ -185,6 +185,7 @@ class Bank(object):
             if 'pending' in _bank and len(_bank['pending']) > 0:
                 pend_info.append(["Pending release", "Last run"])
                 for pending in _bank['pending']:
+                    run=""
                     try:
                         run = datetime.fromtimestamp(pending['id']).strftime('%Y-%m-%d %H:%M:%S')
                     except Exception as e:

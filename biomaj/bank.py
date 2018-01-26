@@ -171,6 +171,8 @@ class Bank(object):
                     data_dir = prod['data.dir']
                 if 'dir.version' in prod:
                     dir_version = prod['dir.version']
+                if not prod['prod_dir'] or not dir_version or not data_dir:
+                    continue
                 release_dir = os.path.join(data_dir,
                                            dir_version,
                                            prod['prod_dir'])

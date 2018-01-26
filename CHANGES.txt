@@ -1,5 +1,7 @@
 3.1.4:
   Fix #88 Unset 'last_update_session' when found in pending sessions using --remove-pending
+  Add formats in bank info request
+  Add checks for some production fields before display
 
 3.1.3:
   Remove post-install step for automatic upgrades, not supported by wheel package

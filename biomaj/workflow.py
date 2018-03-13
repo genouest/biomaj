@@ -590,13 +590,6 @@ class UpdateWorkflow(Workflow):
 
             params = None
             keys = cf.get('url.params')
-            if keys is not None:
-                params = {}
-                keys = keys.split(',')
-                for key in keys:
-                    param = cf.get(key.strip() + '.value')
-                    params[key.strip()] = param.strip()
-
             credentials = cf.get('server.credentials')
             if cf.get('release.credentials') is not None:
                 credentials = cf.get('release.credentials')
@@ -604,12 +597,32 @@ class UpdateWorkflow(Workflow):
             save_as = None
             method = 'GET'
             if protocol == 'directhttp' or protocol == 'directhttps' or protocol == 'directftp':
+                keys = cf.get('url.params')
+                if keys is not None:
+                    params = {}
+                    keys = keys.split(',')
+                    for key in keys:
+                        param = cf.get(key.strip() + '.value')
+                        params[key.strip()] = param.strip()
+
                 save_as = cf.get('release.file')
                 remotes = [remote_dir]
                 remote_dir = '/'
                 method = cf.get('url.method')
                 if cf.get('release.url.method') is not None:
                     method = cf.get('release.url.method')
+            # add params for irods to get port, password, user, zone
+            if protocol == 'irods':
+                keys = None
+                keys = str(str(cf.get('irods.user')) + ',' + str(cf.get('irods.password')) + ',' + str(cf.get('irods.port')) + ',' + str(cf.get('irods.protocol')))
+                if keys is not None:
+                    params = {}
+                    keys = str(keys).split(',')
+                    params['user'] = str(cf.get('irods.user')).strip()
+                    params['password'] = str(cf.get('irods.password')).strip()
+                    params['port'] = str(cf.get('irods.port')).strip()
+                    params['protocol'] = str(cf.get('irods.protocol')).strip()
+                    params['zone'] = str(cf.get('irods.zone')).strip()
 
             release_downloader = dserv.get_handler(
                 protocol,
@@ -1062,14 +1075,6 @@ class UpdateWorkflow(Workflow):
             server = cf.get('server')
 
             params = None
-            keys = cf.get('url.params')
-            if keys is not None:
-                params = {}
-                keys = keys.split(',')
-                for key in keys:
-                    param = cf.get(key.strip() + '.value')
-                    params[key.strip()] = param.strip()
-
             method = cf.get('url.method')
             if method is None:
                 method = 'GET'
@@ -1078,8 +1083,28 @@ class UpdateWorkflow(Workflow):
 
             remote_dir = cf.get('remote.dir')
             if protocol == 'directhttp' or protocol == 'directhttps' or protocol == 'directftp':
+                keys = cf.get('url.params')
+                if keys is not None:
+                    params = {}
+                    keys = keys.split(',')
+                    for key in keys:
+                        param = cf.get(key.strip() + '.value')
+                        params[key.strip()] = param.strip()
+
                 remotes = [cf.get('remote.dir')[:-1]]
                 remote_dir = '/'
+            # add params for irods to get port, password, user, zone
+            if protocol == 'irods':
+                keys = None
+                keys = str(str(cf.get('irods.user')) + ',' + str(cf.get('irods.password')) + ',' + str(cf.get('irods.port')) + ',' + str(cf.get('irods.protocol')))
+                if keys is not None:
+                    params = {}
+                    keys = str(keys).split(',')
+                    params['user'] = str(cf.get('irods.user')).strip()
+                    params['password'] = str(cf.get('irods.password')).strip()
+                    params['port'] = str(cf.get('irods.port')).strip()
+                    params['protocol'] = str(cf.get('irods.protocol')).strip()
+                    params['zone'] = str(cf.get('irods.zone')).strip()
 
             save_as = cf.get('target.name')
 

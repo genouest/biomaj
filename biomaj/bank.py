@@ -8,7 +8,6 @@ import json
 from datetime import datetime
 
 import redis
-from influxdb import InfluxDBClient
 
 from biomaj.mongo_connector import MongoConnector
 from biomaj.session import Session
@@ -164,7 +163,7 @@ class Bank(object):
                               str(last_update),
                               str(release)])
             # Bank production info header
-            prod_info.append(["Session", "Remote release", "Release", "Directory", "Freeze"])
+            prod_info.append(["Session", "Remote release", "Release", "Directory", "Freeze", "Format(s)"])
             for prod in _bank['production']:
                 data_dir = self.config.get('data.dir')
                 dir_version = self.config.get('dir.version')
@@ -172,20 +171,32 @@ class Bank(object):
                     data_dir = prod['data.dir']
                 if 'dir.version' in prod:
                     dir_version = prod['dir.version']
+                if not prod['prod_dir'] or not dir_version or not data_dir:
+                    continue
                 release_dir = os.path.join(data_dir,
                                            dir_version,
                                            prod['prod_dir'])
                 date = datetime.fromtimestamp(prod['session']).strftime('%Y-%m-%d %H:%M:%S')
+                formats = ""
+                # Check the value exist , is not empty, and a list.
+                if 'formats' in prod and prod['formats'] and isinstance(prod['formats'], list):
+                    formats = str(','.join(prod['formats']))
                 prod_info.append([date,
                                   prod['remoterelease'],
                                   prod['release'],
                                   release_dir,
-                                  'yes' if 'freeze' in prod and prod['freeze'] else 'no'])
+                                  'yes' if 'freeze' in prod and prod['freeze'] else 'no',
+                                  formats])
             # Bank pending info header
             if 'pending' in _bank and len(_bank['pending']) > 0:
                 pend_info.append(["Pending release", "Last run"])
                 for pending in _bank['pending']:
-                    run = datetime.fromtimestamp(pending['id']).strftime('%Y-%m-%d %H:%M:%S')
+                    run = ""
+                    try:
+                        run = datetime.fromtimestamp(pending['id']).strftime('%Y-%m-%d %H:%M:%S')
+                    except Exception as e:
+                        logging.error('BANK:ERROR:invalid pending id: ' + str(pending['id']))
+                        logging.error('BANK:ERROR:invalid pending id: ' + str(e))
                     pend_info.append([pending['release'], run])
 
             info['info'] = bank_info
@@ -959,6 +970,9 @@ class Bank(object):
         if 'pending' not in self.bank:
             return True
         pendings = self.bank['pending']
+        last_update = None
+        if 'last_update_session' in self.bank:
+            last_update = self.bank['last_update_session']
 
         for pending in pendings:
             # Only work with pending for argument release
@@ -979,6 +993,10 @@ class Bank(object):
                 logging.debug("Remove:Pending:Dir:" + session.get_full_release_directory())
                 shutil.rmtree(session.get_full_release_directory())
             self.remove_session(pending['id'])
+            if last_update and last_update == pending_session_id:
+                self.banks.update({'name': self.name},
+                                  {'$unset': {'last_update_session': ''}})
+
         # If no release ask for deletion, remove all pending
         if not release:
             self.banks.update({'name': self.name}, {'$set': {'pending': []}})
@@ -1097,6 +1115,11 @@ class Bank(object):
         '''
         Send stats to Influxdb if enabled
         '''
+        try:
+            from influxdb import InfluxDBClient
+        except Exception as e:
+            logging.error('Cannot load influxdb library' + str(e))
+            return
         db_host = self.config.get('influxdb.host', default=None)
         if not db_host:
             return

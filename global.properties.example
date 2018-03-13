@@ -52,6 +52,9 @@ influxdb.db=biomaj
 #micro.biomaj.service.user=1
 #micro.biomaj.service.daemon=1
 
+## Optional
+# micro.biomaj.proxy.[user,cron,release,daemon,download,process]=http://127.0.0.1:5000
+
 auto_publish=1
 
 ########################

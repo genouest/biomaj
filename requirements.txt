@@ -1,6 +1,6 @@
 biomaj_core
 biomaj_user
-biomaj_download>=3.0.15
+biomaj_download>=3.0.16
 biomaj_process
 biomaj_cli
 mock

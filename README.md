@@ -1,7 +1,7 @@
 BioMAJ3
 =====
 
-This project is a complete rewrite of BioMAJ (http://biomaj.genouest.org).
+This project is a complete rewrite of BioMAJ and the documentation is available here : http://biomaj.genouest.org.
 
 BioMAJ (BIOlogie Mise A Jour) is a workflow engine dedicated to data
 synchronization and processing. The Software automates the update cycle and the

@@ -561,10 +561,18 @@ class Bank(object):
                           'freeze': False}
             self.bank['production'].append(production)
             self.banks.update({'name': self.name},
-                              {'$push': {'production': production},
-                               '$pull': {'pending': {'release': self.session.get('release'),
-                                                     'id': self.session._session['id']}}
-                               })
+                              {
+                              '$push': {'production': production}
+                              })
+            self.banks.update({'name': self.name},
+                              {
+                              '$pull': {
+                                  'pending': {
+                                      'release': self.session.get('release'),
+                                      'id': self.session._session['id']
+                                  }
+                              }
+                              })
 
         self.bank = self.banks.find_one({'name': self.name})
 

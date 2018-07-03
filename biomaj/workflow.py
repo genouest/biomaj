@@ -1082,6 +1082,7 @@ class UpdateWorkflow(Workflow):
             credentials = cf.get('server.credentials')
 
             remote_dir = cf.get('remote.dir')
+
             if protocol == 'directhttp' or protocol == 'directhttps' or protocol == 'directftp':
                 keys = cf.get('url.params')
                 if keys is not None:
@@ -1240,12 +1241,18 @@ class UpdateWorkflow(Workflow):
             keep_files = []
             nb_expected_files += len(downloader.files_to_download)
             if os.path.exists(offline_dir):
+                logging.debug('Workflow:wf_download:offline_check_dir:' + offline_dir)
                 for file_to_download in downloader.files_to_download:
                     # If file is in offline dir and has same date and size, do not download again
-                    if os.path.exists(offline_dir + '/' + file_to_download['name']):
+                    offline_file = file_to_download['name']
+                    if file_to_download.get('save_as', None):
+                        offline_file = file_to_download['save_as']
+                    logging.debug('Workflow:wf_download:offline_check_file:' + offline_file)
+                    if os.path.exists(offline_dir + '/' + offline_file):
+                        logging.debug('Workflow:wf_download:offline_check_file_identical:' + offline_file)
                         try:
-                            file_stat = os.stat(offline_dir + '/' + file_to_download['name'])
-                            f_stat = datetime.datetime.fromtimestamp(os.path.getmtime(offline_dir + '/' + file_to_download['name']))
+                            file_stat = os.stat(offline_dir + '/' + offline_file)
+                            f_stat = datetime.datetime.fromtimestamp(os.path.getmtime(offline_dir + '/' + offline_file))
                             year = str(f_stat.year)
                             month = str(f_stat.month)
                             day = str(f_stat.day)
@@ -1253,16 +1260,16 @@ class UpdateWorkflow(Workflow):
                                str(year) != str(file_to_download['year']) or \
                                str(month) != str(file_to_download['month']) or \
                                str(day) != str(file_to_download['day']):
-                                logging.debug('Workflow:wf_download:different_from_offline:' + file_to_download['name'])
+                                logging.debug('Workflow:wf_download:different_from_offline:' + offline_file)
                                 keep_files.append(file_to_download)
                             else:
-                                logging.debug('Workflow:wf_download:offline:' + file_to_download['name'])
+                                logging.debug('Workflow:wf_download:same_as_offline:' + offline_file)
                                 files_in_offline += 1
                                 copied_files.append(file_to_download)
                         except Exception as e:
                             # Could not get stats on file
                             logging.debug('Workflow:wf_download:offline:failed to stat file: ' + str(e))
-                            os.remove(offline_dir + '/' + file_to_download['name'])
+                            os.remove(offline_dir + '/' + offline_file)
                             keep_files.append(file_to_download)
                     else:
                         keep_files.append(file_to_download)

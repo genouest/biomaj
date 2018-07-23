@@ -176,7 +176,7 @@ Execute unit tests but disable ones needing network access
 Monitoring
 ==========
 
-InfluxDB can be used to monitor biomaj. Following series are available:
+InfluxDB (optional) can be used to monitor biomaj. Following series are available:
 
 * biomaj.banks.quantity (number of banks)
 * biomaj.production.size.total (size of all production directories)
@@ -184,6 +184,8 @@ InfluxDB can be used to monitor biomaj. Following series are available:
 * biomaj.production.size.latest (size of latest update)
 * biomaj.bank.update.downloaded_files (number of downloaded files)
 * biomaj.bank.update.new (track updates)
+
+*WARNING* Influxdb database must be created, biomaj does not create the database (see https://docs.influxdata.com/influxdb/v1.6/query_language/database_management/#create-database)
 
 License
 =======

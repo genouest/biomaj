@@ -1147,7 +1147,8 @@ class Bank(object):
             else:
                 influxdb = InfluxDBClient(host=db_host, port=db_port, database=db_name)
         except Exception as e:
-            logging.error('InfluxDB connection error: ' + str(e))
+            logging.error('Failed to connect to InfluxDB, database may not be created, skipping the record of statistics')
+            logging.exception('InfluxDB connection error: ' + str(e))
             return
         metrics = []
 
@@ -1238,7 +1239,14 @@ class Bank(object):
             }
             metrics.append(influx_metric)
 
-        res = influxdb.write_points(metrics, time_precision="s")
+        res = None
+        try:
+            res = influxdb.write_points(metrics, time_precision="s")
+        except Exception as e:
+            logging.error('Failed to connect to InfluxDB, database may not be created, skipping the record of statistics')
+            logging.exception('InfluxDB connection error: ' + str(e))
+            return
+
         if not res:
             logging.error('Failed to send metrics to database')
 

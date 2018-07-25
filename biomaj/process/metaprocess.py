@@ -58,7 +58,7 @@ class MetaProcess(threading.Thread):
             self.bmaj_env[conf] = self.bank.config.config_bank.get('GENERAL', conf)
             if self.bmaj_env[conf] is None:
                 self.bmaj_env[conf] = ''
-                self.bmaj_only_env[conf] = self.bmaj_env[conf]
+            self.bmaj_only_env[conf] = self.bmaj_env[conf]
 
         self.bmaj_env['dbname'] = self.bank.name
         self.bmaj_only_env['dbname'] = self.bmaj_env['dbname']

@@ -74,6 +74,7 @@ class Bank(object):
                            BiomajConfig.global_config.get('GENERAL', 'db.name'))
 
         self.banks = MongoConnector.banks
+        self.history = MongoConnector.history
         self.bank = self.banks.find_one({'name': self.name})
 
         if self.bank is None:
@@ -106,6 +107,22 @@ class Bank(object):
             return True
         else:
             return False
+
+    @staticmethod
+    def get_history(limit=100):
+        """
+        Get list of bank update/remove operations
+        """
+        if MongoConnector.db is None:
+            MongoConnector(BiomajConfig.global_config.get('GENERAL', 'db.url'),
+                           BiomajConfig.global_config.get('GENERAL', 'db.name'))
+
+        hist_list = []
+        hist = MongoConnector.history.find({}).sort("start", -1).limit(limit)
+        for h in hist:
+            del h['_id']
+            hist_list.append(h)
+        return hist_list
 
     @staticmethod
     def get_banks_disk_usage():
@@ -925,6 +942,8 @@ class Bank(object):
         :type force: bool
         :return: bool
         """
+        start_time = datetime.now()
+        start_time = time.mktime(start_time.timetuple())
         if not force:
             has_freeze = False
             for prod in self.bank['production']:
@@ -947,6 +966,16 @@ class Bank(object):
         bank_log_dir = os.path.join(self.config.get('log.dir'), self.name)
         if os.path.exists(bank_log_dir) and self.no_log:
             shutil.rmtree(bank_log_dir)
+        end_time = datetime.now()
+        end_time = time.mktime(end_time.timetuple())
+        self.history.insert({
+            'bank': self.name,
+            'error': False,
+            'start': start_time,
+            'end': end_time,
+            'action': 'remove',
+            'updated': None
+        })
         return True
 
     def get_status(self):
@@ -1020,6 +1049,8 @@ class Bank(object):
         """
         release = str(release)
         logging.warning('Bank:' + self.name + ':Remove')
+        start_time = datetime.now()
+        start_time = time.mktime(start_time.timetuple())
 
         if not self.is_owner():
             logging.error('Not authorized, bank owned by ' + self.bank['properties']['owner'])
@@ -1055,8 +1086,17 @@ class Bank(object):
         # Reset status, we take an update session
         res = self.start_remove(session)
         self.session.set('workflow_status', res)
-
         self.save_session()
+        end_time = datetime.now()
+        end_time = time.mktime(end_time.timetuple())
+        self.history.insert({
+            'bank': self.name,
+            'error': not res,
+            'start': start_time,
+            'end': end_time,
+            'action': 'remove',
+            'updated': None
+        })
 
         return res
 
@@ -1069,6 +1109,8 @@ class Bank(object):
         :return: bool
         """
         logging.warning('Bank:' + self.name + ':Update')
+        start_time = datetime.now()
+        start_time = time.mktime(start_time.timetuple())
 
         if not self.is_owner():
             logging.error('Not authorized, bank owned by ' + self.bank['properties']['owner'])
@@ -1117,6 +1159,16 @@ class Bank(object):
         self.session.set('workflow_status', res)
         self.save_session()
         self.__stats()
+        end_time = datetime.now()
+        end_time = time.mktime(end_time.timetuple())
+        self.history.insert({
+            'bank': self.name,
+            'error': not res,
+            'start': start_time,
+            'end': end_time,
+            'action': 'update',
+            'updated': self.session.get('update')
+        })
         return res
 
     def __stats(self):

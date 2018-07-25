@@ -18,3 +18,4 @@ class MongoConnector(object):
         MongoConnector.banks = MongoConnector.db.banks
         MongoConnector.users = MongoConnector.db.users
         MongoConnector.db_schema = MongoConnector.db.db_schema
+        MongoConnector.history = MongoConnector.db.history

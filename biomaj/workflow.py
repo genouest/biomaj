@@ -287,7 +287,12 @@ class RemoveWorkflow(Workflow):
             return False
 
         if os.path.exists(self.session.get_full_release_directory()):
-            shutil.rmtree(self.session.get_full_release_directory())
+            logging.info('Workflow:wf_remove:delete:' + self.session.get_full_release_directory())
+            try:
+                shutil.rmtree(self.session.get_full_release_directory())
+            except Exception:
+                logging.exception('Failed to delete bank release directory: ' + self.session.get_full_release_directory())
+                logging.error('Bank will be deleted but some files/dirs may still be present on system, you can safely manually delete them')
         return self.bank.remove_session(self.session.get('update_session_id'))
 
     def wf_removeprocess(self):

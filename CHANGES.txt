@@ -1,6 +1,7 @@
 3.1.6:
   Fix #100 Catch error and log error if biomaj fails to connect to InfluxDB
   Add history to update/remove operations
+  Add log in case of file deletion error during bank removal
 
 3.1.5:
   Fix #97 Wrong offline dir checks

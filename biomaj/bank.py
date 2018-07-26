@@ -959,13 +959,25 @@ class Bank(object):
         bank_data_dir = self.get_data_dir()
         logging.warn('DELETE ' + bank_data_dir)
         if os.path.exists(bank_data_dir):
-            shutil.rmtree(bank_data_dir)
+            try:
+                shutil.rmtree(bank_data_dir)
+            except Exception:
+                logging.exception('Failed to delete bank directory: ' + bank_data_dir)
+                logging.error('Bank will be deleted but some files/dirs may still be present on system, you can safely manually delete them')
         bank_offline_dir = os.path.join(self.config.get('data.dir'), self.config.get('offline.dir.name'))
         if os.path.exists(bank_offline_dir):
-            shutil.rmtree(bank_offline_dir)
+            try:
+                shutil.rmtree(bank_offline_dir)
+            except Exception:
+                logging.exception('Failed to delete bank offline directory: ' + bank_offline_dir)
+                logging.error('Bank will be deleted but some files/dirs may still be present on system, you can safely manually delete them')
         bank_log_dir = os.path.join(self.config.get('log.dir'), self.name)
         if os.path.exists(bank_log_dir) and self.no_log:
-            shutil.rmtree(bank_log_dir)
+            try:
+                shutil.rmtree(bank_log_dir)
+            except Exception:
+                logging.exception('Failed to delete bank log directory: ' + bank_log_dir)
+                logging.error('Bank will be deleted but some files/dirs may still be present on system, you can safely manually delete them')
         end_time = datetime.now()
         end_time = time.mktime(end_time.timetuple())
         self.history.insert({

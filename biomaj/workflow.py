@@ -251,7 +251,8 @@ class Workflow(object):
         data_dir = self.session.config.get('data.dir')
         lock_dir = self.session.config.get('lock.dir', default=data_dir)
         lock_file = os.path.join(lock_dir, self.name + '.lock')
-        os.remove(lock_file)
+        if os.path.exists(lock_file):
+            os.remove(lock_file)
         return True
 
 

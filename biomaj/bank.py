@@ -1170,7 +1170,10 @@ class Bank(object):
         res = self.start_update()
         self.session.set('workflow_status', res)
         self.save_session()
-        self.__stats()
+        try:
+            self.__stats()
+        except Exception:
+            logging.exception('Failed to send stats')
         end_time = datetime.now()
         end_time = time.mktime(end_time.timetuple())
         self.history.insert({

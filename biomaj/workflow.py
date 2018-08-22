@@ -14,7 +14,7 @@ import hashlib
 
 from biomaj_core.utils import Utils
 from biomaj_download.downloadclient import DownloadClient
-from biomaj_download.message import message_pb2
+from biomaj_download.message import downmessage_pb2
 from biomaj_download.download.http import HTTPParse
 from biomaj_download.download.localcopy import LocalDownload
 
@@ -1365,15 +1365,15 @@ class UpdateWorkflow(Workflow):
 
         for downloader in downloaders:
             for file_to_download in downloader.files_to_download:
-                operation = message_pb2.Operation()
+                operation = downmessage_pb2.Operation()
                 operation.type = 1
-                message = message_pb2.DownloadFile()
+                message = downmessage_pb2.DownloadFile()
                 message.bank = self.name
                 message.session = session
                 message.local_dir = offline_dir
-                remote_file = message_pb2.DownloadFile.RemoteFile()
+                remote_file = downmessage_pb2.DownloadFile.RemoteFile()
                 protocol = downloader.protocol
-                remote_file.protocol = message_pb2.DownloadFile.Protocol.Value(protocol.upper())
+                remote_file.protocol = downmessage_pb2.DownloadFile.Protocol.Value(protocol.upper())
 
                 if downloader.credentials:
                     remote_file.credentials = downloader.credentials
@@ -1385,7 +1385,7 @@ class UpdateWorkflow(Workflow):
                     remote_file.remote_dir = ''
 
                 if http_parse:
-                    msg_http_parse = message_pb2.DownloadFile.HttpParse()
+                    msg_http_parse = downmessage_pb2.DownloadFile.HttpParse()
                     msg_http_parse.dir_line = http_parse.dir_line
                     msg_http_parse.file_line = http_parse.file_line
                     msg_http_parse.dir_name = http_parse.dir_name
@@ -1425,7 +1425,7 @@ class UpdateWorkflow(Workflow):
                 if 'md5' in file_to_download and file_to_download['md5']:
                     biomaj_file.metadata.md5 = file_to_download['md5']
 
-                message.http_method = message_pb2.DownloadFile.HTTP_METHOD.Value(downloader.method.upper())
+                message.http_method = downmessage_pb2.DownloadFile.HTTP_METHOD.Value(downloader.method.upper())
 
                 timeout_download = cf.get('timeout.download', default=None)
                 if timeout_download:
@@ -1435,7 +1435,7 @@ class UpdateWorkflow(Workflow):
                         logging.error('Wrong timeout type for timeout.download: ' + str(e))
 
                 if self.span:
-                    trace = message_pb2.Operation.Trace()
+                    trace = downmessage_pb2.Operation.Trace()
                     trace.trace_id = self.span.get_trace_id()
                     trace.span_id = self.span.get_span_id()
                     operation.trace.MergeFrom(trace)

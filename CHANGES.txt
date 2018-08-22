@@ -3,6 +3,7 @@
   Add history to update/remove operations
   Add log in case of file deletion error during bank removal
   check lock file exists when removing it
+  Update protobuf to work with biomaj.download 3.0.18
 
 3.1.5:
   Fix #97 Wrong offline dir checks

@@ -11,6 +11,7 @@ import re
 import traceback
 import json
 import hashlib
+import sys
 
 from biomaj_core.utils import Utils
 from biomaj_download.downloadclient import DownloadClient
@@ -682,7 +683,11 @@ class UpdateWorkflow(Workflow):
                 # Download and extract
                 tmp_dir = tempfile.mkdtemp('biomaj')
                 rel_files = release_downloader.download(tmp_dir)
-                rel_file = open(tmp_dir + '/' + rel_files[0]['name'])
+                rel_file = None
+                if (sys.version_info > (3, 0)):
+                    rel_file = open(tmp_dir + '/' + rel_files[0]['name'], encoding='utf-8')
+                else:
+                    rel_file = open(tmp_dir + '/' + rel_files[0]['name'])
                 rel_content = rel_file.read()
                 rel_file.close()
                 shutil.rmtree(tmp_dir)

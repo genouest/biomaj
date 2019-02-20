@@ -29,7 +29,7 @@ before_script:
 #script: nosetests --with-coverage --cover-package=biomaj -a '!network'
 #script: nosetests --with-coverage --cover-package=biomaj
 script:
-  - python setup.py test
+  - nosetests -a '!network'
   - flake8 --ignore E501,E123 biomaj
 #after_success:
 #  - coveralls

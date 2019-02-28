@@ -139,7 +139,7 @@ class MetaProcess(threading.Thread):
 
     def set_progress(self, name, status=None):
         '''
-        Update progress on download
+        Update progress on execution
 
         :param name: name of process
         :type name: str

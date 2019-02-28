@@ -1485,13 +1485,40 @@ class UpdateWorkflow(Workflow):
             return True
         no_extract = self.session.config.get('no.extract')
         if no_extract is None or no_extract == 'false':
+            archives = []
             for file in self.downloaded_files:
                 if 'save_as' not in file:
                     file['save_as'] = file['name']
                 nb_try = 1
+                origFile = self.session.get_offline_directory() + '/' + file['save_as']
+                tmpCompressedFile = self.session.get_offline_directory() + '/tmp_' + file['save_as']
+                is_archive = False
+                if origFile.endswith('.tar.gz'):
+                    is_archive = True
+                elif origFile.endswith('.tar'):
+                    is_archive = True
+                elif origFile.endswith('.bz2'):
+                    is_archive = True
+                elif origFile.endswith('.gz'):
+                    is_archive = True
+                elif origFile.endswith('.zip'):
+                    is_archive = True
+
+                logging.info('Workflow:wf_uncompress:Uncompress:' + origFile)
+                if not os.path.exists(origFile):
+                    logging.warn('Workflow:wf_uncompress:NotExists:' + origFile)
+                    continue
+
+                if is_archive:
+                    archives.append({'from': origFile, 'to': tmpCompressedFile})
+                else:
+                    continue
+
+                shutil.copy(origFile, tmpCompressedFile)
+
                 not_ok = True
                 while nb_try < 3 and not_ok:
-                    status = Utils.uncompress(self.session.get_offline_directory() + '/' + file['save_as'])
+                    status = Utils.uncompress(origFile)
                     if status:
                         not_ok = False
                     else:
@@ -1499,7 +1526,17 @@ class UpdateWorkflow(Workflow):
                         nb_try += 1
                 if not_ok:
                     logging.error('Workflow:wf_uncompress:Failure:' + file['name'])
+                    # Revert archive files
+                    for archive in archives:
+                        if os.path.exists(archive['to']):
+                            logging.info("Workflow:wf_uncompress:RevertArchive:" + archive['from'])
+                            shutil.move(archive['to'], archive['from'])
                     return False
+            for archive in archives:
+                if os.path.exists(archive['to']):
+                    logging.info("Workflow:wf_uncompress:RemoveAfterExtract:" + archive['to'])
+                    os.remove(archive['to'])
+
         else:
             logging.info("Workflow:wf_uncompress:NoExtract")
         return True

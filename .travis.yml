@@ -1,36 +1,33 @@
 language: python
 sudo: false
 python:
-  - "2.7"
-  - "3.4"
-  - "3.5"
-  - "3.6"
+- '2.7'
+- '3.4'
+- '3.5'
+- '3.6'
 services:
-  - mongodb
-  - elasticsearch
-# Apply only on main branches
+- mongodb
+- elasticsearch
 branches:
   except:
-    - /^feature.*$/
-# command to install dependencies
-#before_install:
-#  - "sudo apt-get update -qq"
-#  - "sudo apt-get install -qq libldap2-dev libsasl2-dev"
+  - "/^feature.*$/"
 install:
-  - "pip install flake8"
-  - "pip install -r requirements.txt"
-  - "pip install coverage"
-  - "pip install python-coveralls"
-  - "python setup.py -q install"
-#  - "echo data_file=$TRAVIS_BUILD_DIR/.coverage >> .coveragerc"
-# command to run tests
+- pip install flake8
+- pip install -r requirements.txt
+- pip install coverage
+- pip install python-coveralls
+- python setup.py -q install
 before_script:
-  - sleep 10
-#script: nosetests --with-coverage --cover-package=biomaj -a '!network'
-#script: nosetests --with-coverage --cover-package=biomaj
+- sleep 10
 script:
-  - nosetests -a '!network'
-  - flake8 --ignore E501,E123 biomaj
-#after_success:
-#  - coveralls
-
+- nosetests -a '!network'
+- flake8 --ignore E501,E123 biomaj
+deploy:
+  provider: pypi
+  skip_existing: true
+  user: osallou
+  password:
+    secure: UrZI37Ab+Zz4XtpcTIwuWorV+7iY26Mbfga7Rw5TK0OTJsiI3oZiy0CBFkSO0IGsh8nea6mPZ8KYqzHhLN1EK+mCT0uej09jMIVlI23wGQSigwinO+2nA664bbikcKhsAy5NNlqB73VGyw4eBUf2XXV+dPMXj8aaVM0LZ148Qag=
+  distributions: sdist bdist_wheel
+  on:
+    tags: true

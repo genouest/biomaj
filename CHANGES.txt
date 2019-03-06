@@ -1,3 +1,5 @@
+3.1.8:
+  Fix uncompress when saved files contains subdirectory
 3.1.7:
   Fix utf/ascii encoding issue with python3
   In case of uncompress failure, put back all compressed files to avoid redownload

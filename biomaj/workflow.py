@@ -1491,7 +1491,6 @@ class UpdateWorkflow(Workflow):
                     file['save_as'] = file['name']
                 nb_try = 1
                 origFile = self.session.get_offline_directory() + '/' + file['save_as']
-                tmpCompressedFile = self.session.get_offline_directory() + '/tmp_' + file['save_as']
                 is_archive = False
                 if origFile.endswith('.tar.gz'):
                     is_archive = True
@@ -1509,7 +1508,11 @@ class UpdateWorkflow(Workflow):
                     logging.warn('Workflow:wf_uncompress:NotExists:' + origFile)
                     continue
 
+                tmpCompressedFile = origFile
                 if is_archive:
+                    tmpFileNameElts = file['save_as'].split('/')
+                    tmpFileNameElts[len(tmpFileNameElts) - 1] = 'tmp_' + tmpFileNameElts[len(tmpFileNameElts) - 1]
+                    tmpCompressedFile = self.session.get_offline_directory() + '/' + '/'.join(tmpFileNameElts)
                     archives.append({'from': origFile, 'to': tmpCompressedFile})
                 else:
                     continue

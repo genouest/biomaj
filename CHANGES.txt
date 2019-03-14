@@ -1,3 +1,5 @@
+3.1.9:
+  Fix remote.files recursion
 3.1.8:
   Fix uncompress when saved files contains subdirectory
 3.1.7:

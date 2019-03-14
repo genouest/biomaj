@@ -1169,6 +1169,8 @@ class UpdateWorkflow(Workflow):
                 if 'save_as' not in f or not f['save_as']:
                     f['save_as'] = f['name']
                     for p in cf.get('remote.files', default='.*').split():
+                        if p == '.*' or p == '**/*':
+                            continue
                         if p.startswith('^'):
                             p = p.replace('^', '^/')
                         else:

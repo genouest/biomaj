@@ -431,6 +431,7 @@ class UpdateWorkflow(Workflow):
         """
         logging.info('Workflow:wf_copydepends')
         deps = self.bank.get_dependencies()
+        cf = self.session.config
         for dep in deps:
             if self.bank.config.get(dep + '.files.move'):
                 logging.info('Worflow:wf_depends:Files:Move:' + self.bank.config.get(dep + '.files.move'))
@@ -443,7 +444,10 @@ class UpdateWorkflow(Workflow):
                     logging.error('Could not find a session update for bank ' + dep)
                     return False
                 # b = self.bank.get_bank(dep, no_log=True)
-                locald = LocalDownload(bdir)
+                locald = LocalDownload(
+                    bdir,
+                    use_hardlinks=cf.get_bool("use_hardlinks", default=False)
+                )
                 (file_list, dir_list) = locald.list()
                 locald.match(self.bank.config.get(dep + '.files.move').split(), file_list, dir_list)
                 bankdepdir = self.bank.session.get_full_release_directory() + "/" + dep
@@ -1336,7 +1340,10 @@ class UpdateWorkflow(Workflow):
             logging.debug('Workflow:wf_download:Copy files from ' + last_production_dir)
             for downloader in downloaders:
                 copied_files += downloader.files_to_copy
-                Utils.copy_files(downloader.files_to_copy, offline_dir)
+                Utils.copy_files(
+                    downloader.files_to_copy, offline_dir,
+                    use_hardlinks=cf.get_bool('use_hardlinks', default=False)
+                )
 
         downloader.close()
 
@@ -1563,7 +1570,7 @@ class UpdateWorkflow(Workflow):
             self.session.get_release_directory(),
             'flat'
         )
-
+        # We use move=True so there is no need to try to use hardlinks here
         local_files = Utils.copy_files_with_regexp(from_dir, to_dir, regexp, True)
         self.session._session['files'] = local_files
         if len(self.session._session['files']) == 0:

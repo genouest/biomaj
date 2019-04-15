@@ -103,7 +103,11 @@ class UtilsForTest():
       os.chmod(to_file, stat.S_IRWXU)
 
     # Manage local bank test, use bank test subdir as remote
-    properties = ['multi.properties', 'computederror.properties', 'error.properties', 'local.properties', 'localprocess.properties', 'testhttp.properties', 'computed.properties', 'computed2.properties', 'sub1.properties', 'sub2.properties']
+    properties = ['multi.properties', 'computederror.properties',
+                  'error.properties', 'local.properties',
+                  'localprocess.properties', 'testhttp.properties',
+                  'computed.properties', 'computed2.properties',
+                  'sub1.properties', 'sub2.properties']
     for prop in properties:
       from_file = os.path.join(curdir, prop)
       to_file = os.path.join(self.conf_dir, prop)
@@ -421,6 +425,45 @@ class TestBiomajFunctional(unittest.TestCase):
     b.update()
     self.assertTrue(b.session.get('update'))
 
+  def test_update_hardlinks(self):
+    """
+    Try updating by forcing the use of hard links, at second time, 
+    modify one file (same date), bank should update by using hard links
+    """
+    b = Bank('local')
+    b.config.set('keep.old.version', '3')
+    b.config.set('use_hardlinks', '1')
+    # Check that new file doesn't remain from revious run
+    new_remote_file = os.path.join(b.config.get('remote.dir'),
+                                   'test3.fasta')
+    if os.path.exists(new_remote_file):
+        os.remove(new_remote_file)
+    # First update
+    b.update()
+    self.assertTrue(b.session.get('update'))
+    old_release = b.session.get_full_release_directory()
+    # Create new remote file in the future to force update (note that this not
+    # in the temporary dir)
+    open(new_remote_file, "w")
+    stat = os.stat(new_remote_file)
+    day = 3600 * 24
+    os.utime(new_remote_file, (stat.st_atime + day, stat.st_atime + day))
+    # Second update
+    b.update()
+    self.assertTrue(b.session.get('update'))
+    new_release = b.session.get_full_release_directory()
+    # Remove future file to clean up
+    os.remove(new_remote_file)
+    # Test that test2.fasta in both release are the same file (we can't use
+    # test.fasta because it is uncompressed and then not the same file)
+    file_old_release = os.path.join(old_release, 'flat', 'test2.fasta')
+    file_new_release = os.path.join(new_release, 'flat', 'test2.fasta')
+    try:
+        self.assertTrue(os.path.samefile(file_old_release, file_new_release))
+    except AssertionError:
+        msg = "In %s: copy worked but hardlinks were not used." % self.id()
+        logging.info(msg)
+    
   def test_fromscratch_update(self):
       """
       Try updating twice, at second time, bank should  be updated (force with fromscratc)

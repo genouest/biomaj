@@ -427,33 +427,26 @@ class TestBiomajFunctional(unittest.TestCase):
 
   def test_update_hardlinks(self):
     """
-    Try updating by forcing the use of hard links, at second time, 
-    modify one file (same date), bank should update by using hard links
+    Update a bank twice with hard links^. Files copied from previous release
+    must be links.
     """
     b = Bank('local')
     b.config.set('keep.old.version', '3')
     b.config.set('use_hardlinks', '1')
-    # Check that new file doesn't remain from revious run
-    new_remote_file = os.path.join(b.config.get('remote.dir'),
-                                   'test3.fasta')
-    if os.path.exists(new_remote_file):
-        os.remove(new_remote_file)
     # First update
     b.update()
     self.assertTrue(b.session.get('update'))
     old_release = b.session.get_full_release_directory()
-    # Create new remote file in the future to force update (note that this not
-    # in the temporary dir)
-    open(new_remote_file, "w")
-    stat = os.stat(new_remote_file)
-    day = 3600 * 24
-    os.utime(new_remote_file, (stat.st_atime + day, stat.st_atime + day))
+    # Update test.fasta to force update (not that this file is modified in the
+    # source tree)
+    remote_file = b.session.config.get('remote.dir') + 'test.fasta.gz'
+    stat = os.stat(remote_file)
+    one_day = 3600 * 24
+    os.utime(remote_file, (stat.st_atime + one_day, stat.st_atime + one_day))
     # Second update
     b.update()
     self.assertTrue(b.session.get('update'))
     new_release = b.session.get_full_release_directory()
-    # Remove future file to clean up
-    os.remove(new_remote_file)
     # Test that test2.fasta in both release are the same file (we can't use
     # test.fasta because it is uncompressed and then not the same file)
     file_old_release = os.path.join(old_release, 'flat', 'test2.fasta')
@@ -463,6 +456,8 @@ class TestBiomajFunctional(unittest.TestCase):
     except AssertionError:
         msg = "In %s: copy worked but hardlinks were not used." % self.id()
         logging.info(msg)
+    # Restore date (otherwise repeated tests fail)
+    os.utime(remote_file, (stat.st_atime, stat.st_atime))
     
   def test_fromscratch_update(self):
       """

@@ -136,6 +136,9 @@ ftp.active.mode=false
 # Bank default access
 visibility.default=public
 
+# use hard links instead of copy
+# use_hardlinks=0
+
 [loggers]
 keys = root, biomaj
 

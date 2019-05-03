@@ -147,6 +147,22 @@ No default bank property file or process are available in the container.
 
 Examples are available at https://github.com/genouest/biomaj-data
 
+
+Import bank templates
+=====================
+
+Once biomaj is installed, it is possible to import some bank examples with the biomaj client
+
+
+    # List available templates
+    biomaj-cli ... --data-list
+    # Import a bank template
+    biomaj-cli ... --data-import --bank alu
+    # then edit bank template in config directory if needed and launch bank update
+    biomaj-cli ... --update --bank alu
+
+
+
 API documentation
 =================
 

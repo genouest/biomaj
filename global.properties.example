@@ -102,6 +102,9 @@ bank.num.threads=4
 #Number of threads to use for downloading and processing
 files.num.threads=4
 
+#Timeout for a download, in seconds (applies for each file, not for the whole downloads)
+timeout.download=3600
+
 #to keep more than one release increase this value
 keep.old.version=0
 

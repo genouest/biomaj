@@ -1361,7 +1361,7 @@ class UpdateWorkflow(Workflow):
                 redis_prefix=self.redis_prefix
             )
             if pool_size:
-                logging.debug('Set rate limiting: %s' % (str(pool_size)))
+                logging.info('Set rate limiting: %s' % (str(pool_size)))
                 dserv.set_rate_limiting(int(pool_size))
 
         else:

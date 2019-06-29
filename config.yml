@@ -1,5 +1,5 @@
 biomaj:
-    global_properties: '/pasteur/services/policy01/banques/biomaj3/global.properties'
+    global_properties: '/etc/biomaj/global.properties'
 
 rabbitmq:
     host: '127.0.0.1'

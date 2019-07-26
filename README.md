@@ -49,7 +49,7 @@ Application Features
 ====================
 
 * Synchronisation:
- * Multiple remote protocols (ftp, sftp, http, local copy, etc.)
+ * Multiple remote protocols (ftp, ftps, http, local copy, etc.)
  * Data transfers integrity check
  * Release versioning using a incremental approach
  * Multi threading
@@ -194,8 +194,6 @@ A-GPL v3+
 
 Remarks
 =======
-
-Biomaj uses libcurl, for sftp libcurl must be compiled with sftp support
 
 To delete elasticsearch index:
 

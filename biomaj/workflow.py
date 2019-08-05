@@ -607,7 +607,7 @@ class UpdateWorkflow(Workflow):
 
             save_as = None
             method = 'GET'
-            if protocol == 'directhttp' or protocol == 'directhttps' or protocol == 'directftp':
+            if protocol in ['directftp', 'directftps', 'directhttp', 'directhttps']:
                 keys = cf.get('url.params')
                 if keys is not None:
                     params = {}
@@ -650,7 +650,7 @@ class UpdateWorkflow(Workflow):
                 offline_dir=self.session.get_offline_directory()
             )
 
-            if protocol == 'directhttp' or protocol == 'directhttps' or protocol == 'directftp':
+            if protocol in ['directftp', 'directftps', 'directhttp', 'directhttps']:
                 release_downloader.set_files_to_download(remotes)
             # """"""""""""""""""""""""
 
@@ -1098,7 +1098,7 @@ class UpdateWorkflow(Workflow):
 
             remote_dir = cf.get('remote.dir')
 
-            if protocol == 'directhttp' or protocol == 'directhttps' or protocol == 'directftp':
+            if protocol in ['directftp', 'directftps', 'directhttp', 'directhttps']:
                 keys = cf.get('url.params')
                 if keys is not None:
                     params = {}
@@ -1139,7 +1139,7 @@ class UpdateWorkflow(Workflow):
                 offline_dir=self.session.get_offline_directory()
             )
 
-            if protocol == 'directhttp' or protocol == 'directhttps' or protocol == 'directftp':
+            if protocol in ['directftp', 'directftps', 'directhttp', 'directhttps']:
                 downloader.set_files_to_download(remotes)
 
             remote_list = cf.get('remote.list', default=None)

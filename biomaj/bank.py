@@ -1165,7 +1165,9 @@ class Bank(object):
                         if not reset:
                             logging.info("Process %s not found in %s" % (str(proc), task['name']))
                             return False
-
+            if not set_to_false:
+                logging.error('No task found named %s' % (self.options.get_option('from_task')))
+                return False
         self.session.set('action', 'update')
         res = self.start_update()
         self.session.set('workflow_status', res)

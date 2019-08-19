@@ -1,5 +1,7 @@
-3.1.11:
+3.1.11: [unreleased]
   Increase one log level
+  #110 Allow ftps and directftps protocols (needs biomaj-download 3.0.26 and biomaj-core 3.0.19)
+  #111 locked bank after bad update command
 3.1.10:
   Allow to use hardlinks when reusing files from previous releases
 3.1.9:

@@ -13,6 +13,7 @@ from biomaj.mongo_connector import MongoConnector
 from biomaj.session import Session
 from biomaj.workflow import UpdateWorkflow
 from biomaj.workflow import RemoveWorkflow
+from biomaj.workflow import RepairWorkflow
 from biomaj.workflow import Workflow
 from biomaj.workflow import ReleaseCheckWorkflow
 from biomaj_core.config import BiomajConfig
@@ -502,8 +503,10 @@ class Bank(object):
         # Insert session
         if self.session.get('action') == 'update':
             action = 'last_update_session'
-        if self.session.get('action') == 'remove':
+        elif self.session.get('action') == 'remove':
             action = 'last_remove_session'
+        else:
+            action = 'last_update_session'
 
         cache_dir = self.config.get('cache.dir')
         download_files = self.session.get('download_files')
@@ -1111,6 +1114,74 @@ class Bank(object):
         })
 
         return res
+
+    def repair(self):
+        """
+        Launch a bank repair
+
+        :return: bool
+        """
+        logging.warning('Bank:' + self.name + ':Repair')
+        start_time = datetime.now()
+        start_time = time.mktime(start_time.timetuple())
+
+        if not self.is_owner():
+            logging.error('Not authorized, bank owned by ' + self.bank['properties']['owner'])
+            raise Exception('Not authorized, bank owned by ' + self.bank['properties']['owner'])
+
+        self.run_depends = False
+
+        self.controls()
+        if self.options.get_option('release'):
+            logging.info('Bank:' + self.name + ':Release:' + self.options.get_option('release'))
+            s = self.get_session_from_release(self.options.get_option('release'))
+            # No session in prod
+            if s is None:
+                logging.error('Release does not exists: ' + self.options.get_option('release'))
+                return False
+            self.load_session(UpdateWorkflow.FLOW, s)
+        else:
+            logging.info('Bank:' + self.name + ':Release:latest')
+            self.load_session(UpdateWorkflow.FLOW)
+        self.session.set('action', 'update')
+        res = self.start_repair()
+        self.session.set('workflow_status', res)
+        self.save_session()
+        try:
+            self.__stats()
+        except Exception:
+            logging.exception('Failed to send stats')
+        end_time = datetime.now()
+        end_time = time.mktime(end_time.timetuple())
+        self.history.insert({
+            'bank': self.name,
+            'error': not res,
+            'start': start_time,
+            'end': end_time,
+            'action': 'repair',
+            'updated': self.session.get('update')
+        })
+        return res
+
+    def start_repair(self):
+        """
+        Start an repair workflow
+        """
+        workflow = RepairWorkflow(self)
+        if self.options and self.options.get_option('redis_host'):
+            redis_client = redis.StrictRedis(
+                host=self.options.get_option('redis_host'),
+                port=self.options.get_option('redis_port'),
+                db=self.options.get_option('redis_db'),
+                decode_responses=True
+            )
+            workflow.redis_client = redis_client
+            workflow.redis_prefix = self.options.get_option('redis_prefix')
+            if redis_client.get(self.options.get_option('redis_prefix') + ':' + self.name + ':action:cancel'):
+                logging.warn('Cancel requested, stopping update')
+                redis_client.delete(self.options.get_option('redis_prefix') + ':' + self.name + ':action:cancel')
+                return False
+        return workflow.start()
 
     def update(self, depends=False):
         """

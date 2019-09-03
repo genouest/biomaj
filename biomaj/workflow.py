@@ -689,7 +689,7 @@ class UpdateWorkflow(Workflow):
                 rel_files = release_downloader.download(tmp_dir)
                 rel_file = None
                 if (sys.version_info > (3, 0)):
-                    rel_file = open(tmp_dir + '/' + rel_files[0]['name'], encoding='utf-8')
+                    rel_file = open(tmp_dir + '/' + rel_files[0]['name'], encoding='utf-8', errors='ignore')
                 else:
                     rel_file = open(tmp_dir + '/' + rel_files[0]['name'])
                 rel_content = rel_file.read()

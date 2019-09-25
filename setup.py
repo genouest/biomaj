@@ -72,7 +72,8 @@ config = {
                          'requests',
                          'redis',
                          'elasticsearch',
-                         'influxdb'
+                         'influxdb',
+                         'Yapsy==1.12.2'
                          ],
     'tests_require': ['nose', 'mock'],
     'test_suite': 'nose.collector',

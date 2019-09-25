@@ -24,7 +24,7 @@ from biomaj.options import Options
 from biomaj.process.processfactory import RemoveProcessFactory, PreProcessFactory, PostProcessFactory
 
 from biomaj_zipkin.zipkin import Zipkin
-
+from yapsy.PluginManager import PluginManager
 
 class Workflow(object):
     """
@@ -334,6 +334,28 @@ class UpdateWorkflow(Workflow):
         logging.debug('New workflow')
         self.session._session['update'] = True
 
+    def _get_plugin(self, name, plugin_args):
+        options = {}
+        plugins_dir = self.bank.config.get('plugins_dir')
+        if not plugins_dir:
+            return None
+        for plugin_arg in plugin_args.split(','):
+            arg = plugin_arg.split('=')
+            options[arg[0].strip()] = arg[1].strip()
+        requested_plugin = None
+        simplePluginManager = PluginManager()
+        simplePluginManager.setPluginPlaces([plugins_dir])
+        simplePluginManager.collectPlugins()
+        logging.error('Load plugins from %s' % (plugins_dir))
+        for pluginInfo in simplePluginManager.getAllPlugins():
+            if pluginInfo.plugin_object.name() == name:
+               requested_plugin = pluginInfo.plugin_object
+        if requested_plugin is None:
+            return None
+        requested_plugin.configure(options)
+        return requested_plugin
+
+
     def wf_init(self):
         err = super(UpdateWorkflow, self).wf_init()
         if not err:
@@ -535,6 +557,28 @@ class UpdateWorkflow(Workflow):
         self.session.previous_release = self.session.get('previous_release')
 
         logging.info('Workflow:wf_release:previous_session:' + str(self.session.previous_release))
+
+        if self.session.config.get('release.plugin'):
+            # Release already set from a previous run or an other bank
+            logging.info('Workflow:wf_release:plugin:' + str(self.session.config.get('release.plugin')))
+            plugin = self._get_plugin(self.session.config.get('release.plugin'), self.session.config.get('release.plugin_args'))
+            if plugin is None:
+                logging.error("Could not load plugin")
+                return False
+            try:
+                plugin_release = plugin.release()
+                logging.info('Workflow:wf_release:plugin:%s:%s' % (self.session.config.get('release.plugin'), plugin_release))
+                self.session.set('release', plugin_release)
+                self.session.set('remoterelease', plugin_release)
+                if self.session.previous_release == self.session.get('release') and not self.session.config.get_bool('release.control', default=False):
+                    logging.info('Workflow:wf_release:same_as_previous_session')
+                    return self.no_need_to_update()
+                else:
+                    return True
+            except Exception as e:
+                logging.exception("Plugin failed to get a release %s" % (str(e)))
+                return False
+
         if self.session.get('release'):
             # Release already set from a previous run or an other bank
             logging.info('Workflow:wf_release:session:' + str(self.session.get('release')))
@@ -978,6 +1022,7 @@ class UpdateWorkflow(Workflow):
         logging.info("Workflow:wf_download:DownloadSession:" + str(session))
 
         use_remote_list = False
+        user_plugin = False
 
         http_parse = HTTPParse(
             cf.get('http.parse.dir.line'),
@@ -1148,6 +1193,14 @@ class UpdateWorkflow(Workflow):
                 downloader.files_to_download = self._get_list_from_file(remote_list)
                 use_remote_list = True
 
+            remote_plugin = cf.get('remote.plugin', default=None)
+            if remote_plugin is not None:
+                logging.info("Use list from plugin %s" % (remote_plugin) )
+                plugin = self._get_plugin(self.session.config.get('remote.plugin'), self.session.config.get('remote.plugin_args'))
+                downloader.files_to_download = plugin.list(self.session.get('release'))
+                use_plugin = True
+                
+
             downloaders.append(downloader)
 
         self._close_download_service(dserv)
@@ -1164,6 +1217,10 @@ class UpdateWorkflow(Workflow):
                 if not downloader.files_to_download:
                     self.session.set('remoterelease', self.session.previous_release)
                     return self.no_need_to_update()
+            elif use_plugin:
+                if not downloader.files_to_download:
+                    self.session.set('remoterelease', self.session.previous_release)
+                    return self.no_need_to_update()                 
             else:
                 (file_list, dir_list) = downloader.list()
                 downloader.match(cf.get('remote.files', default='.*').split(), file_list, dir_list)
@@ -1189,7 +1246,6 @@ class UpdateWorkflow(Workflow):
         self.session.set('download_files', downloader.files_to_download)
         self.session._session['stats']['nb_downloaded_files'] = len(files_to_download)
         logging.info('Workflow:wf_download:nb_files_to_download:%d' % (len(files_to_download)))
-
         if self.session.get('release') and self.session.config.get_bool('release.control', default=False):
             if self.session.previous_release == self.session.get('remoterelease'):
                 if self.is_previous_release_content_identical():

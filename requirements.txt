@@ -15,3 +15,4 @@ elasticsearch
 requests
 redis
 influxdb
+Yapsy==1.12.2

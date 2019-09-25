@@ -340,9 +340,10 @@ class UpdateWorkflow(Workflow):
         plugins_dir = self.bank.config.get('plugins_dir')
         if not plugins_dir:
             return None
-        for plugin_arg in plugin_args.split(','):
-            arg = plugin_arg.split('=')
-            options[arg[0].strip()] = arg[1].strip()
+        if plugin_args:
+            for plugin_arg in plugin_args.split(','):
+                arg = plugin_arg.split('=', 1)
+                options[arg[0].strip()] = arg[1].strip()
         requested_plugin = None
         simplePluginManager = PluginManager()
         simplePluginManager.setPluginPlaces([plugins_dir])

@@ -26,6 +26,7 @@ from biomaj.process.processfactory import RemoveProcessFactory, PreProcessFactor
 from biomaj_zipkin.zipkin import Zipkin
 from yapsy.PluginManager import PluginManager
 
+
 class Workflow(object):
     """
     Bank update workflow
@@ -349,12 +350,11 @@ class UpdateWorkflow(Workflow):
         logging.error('Load plugins from %s' % (plugins_dir))
         for pluginInfo in simplePluginManager.getAllPlugins():
             if pluginInfo.plugin_object.name() == name:
-               requested_plugin = pluginInfo.plugin_object
+                requested_plugin = pluginInfo.plugin_object
         if requested_plugin is None:
             return None
         requested_plugin.configure(options)
         return requested_plugin
-
 
     def wf_init(self):
         err = super(UpdateWorkflow, self).wf_init()
@@ -1022,7 +1022,7 @@ class UpdateWorkflow(Workflow):
         logging.info("Workflow:wf_download:DownloadSession:" + str(session))
 
         use_remote_list = False
-        user_plugin = False
+        use_plugin = False
 
         http_parse = HTTPParse(
             cf.get('http.parse.dir.line'),
@@ -1195,11 +1195,10 @@ class UpdateWorkflow(Workflow):
 
             remote_plugin = cf.get('remote.plugin', default=None)
             if remote_plugin is not None:
-                logging.info("Use list from plugin %s" % (remote_plugin) )
+                logging.info("Use list from plugin %s" % (remote_plugin))
                 plugin = self._get_plugin(self.session.config.get('remote.plugin'), self.session.config.get('remote.plugin_args'))
                 downloader.files_to_download = plugin.list(self.session.get('release'))
                 use_plugin = True
-                
 
             downloaders.append(downloader)
 
@@ -1220,7 +1219,7 @@ class UpdateWorkflow(Workflow):
             elif use_plugin:
                 if not downloader.files_to_download:
                     self.session.set('remoterelease', self.session.previous_release)
-                    return self.no_need_to_update()                 
+                    return self.no_need_to_update()
             else:
                 (file_list, dir_list) = downloader.list()
                 downloader.match(cf.get('remote.files', default='.*').split(), file_list, dir_list)

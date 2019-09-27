@@ -1517,6 +1517,19 @@ class UpdateWorkflow(Workflow):
         logging.info("Workflow:wf_download:Download:Waiting")
         download_error = False
         try:
+            download_plugin = cf.get('download.plugin', default=None)
+            if download_plugin is not None:
+                self.downloaded_files = copied_files
+                logging.info("Use download from plugin %s" % (download_plugin))
+                plugin = self._get_plugin(self.session.config.get('download.plugin'), self.session.config.get('remote.plugin_args'))
+                if not hasattr(plugin, 'download'):
+                    logging.error('Workflow:wf_download:Plugin:%s:Error: plugin does not have a download method' % (download_plugin))
+                    return False
+                res = plugin.download(self.session.get('release'), downloader.files_to_download, offline_dir=offline_dir)
+                self._close_download_service(dserv)
+                self.downloaded_files += downloader.files_to_download
+                return res
+
             download_error = dserv.wait_for_download()
         except Exception as e:
             self._close_download_service(dserv)

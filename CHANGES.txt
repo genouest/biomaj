@@ -1,9 +1,10 @@
-3.1.11: [unreleased]
+3.1.11:
   Increase one log level
   #110 Allow ftps and directftps protocols (needs biomaj-download 3.0.26 and biomaj-core 3.0.19)
   #111 locked bank after bad update command
   Ignore UTF-8 errors in release file
   Add plugin support via biomaj-plugins repo (https://github.com/genouest/biomaj-plugins) to get release and list of files to download from a plugin script.
+  Add support for protocol options in global and bank properties (options.names=x,y   options.x=val options.y=val). Options may be ignored or used differently depending on used protocol.
 3.1.10:
   Allow to use hardlinks when reusing files from previous releases
 3.1.9:

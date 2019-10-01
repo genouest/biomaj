@@ -21,12 +21,6 @@ from biomaj.workflow import Workflow
 from biomaj.workflow import UpdateWorkflow
 from biomaj.workflow import ReleaseCheckWorkflow
 from biomaj_core.utils import Utils
-from biomaj_download.download.ftp import FTPDownload
-from biomaj_download.download.direct import DirectFTPDownload
-from biomaj_download.download.direct import DirectHttpDownload
-from biomaj_download.download.http import HTTPDownload
-from biomaj_download.download.localcopy  import LocalDownload
-from biomaj_download.download.downloadthreads import DownloadThread
 from biomaj_core.config import BiomajConfig
 from biomaj.process.processfactory import PostProcessFactory
 from biomaj.process.processfactory import PreProcessFactory

@@ -768,6 +768,7 @@ class TestBiomajFunctional(unittest.TestCase):
   def test_multi(self):
     b = Bank('multi')
     res = b.update()
+    self.assertTrue(res)
     with open(os.path.join(b.session.get_full_release_directory(),'flat/test1.json'), 'r') as content_file:
       content = content_file.read()
       my_json = json.loads(content)

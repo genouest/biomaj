@@ -421,7 +421,7 @@ class TestBiomajFunctional(unittest.TestCase):
 
   def test_update_hardlinks(self):
     """
-    Update a bank twice with hard links^. Files copied from previous release
+    Update a bank twice with hard links. Files copied from previous release
     must be links.
     """
     b = Bank('local')

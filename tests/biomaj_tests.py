@@ -431,27 +431,31 @@ class TestBiomajFunctional(unittest.TestCase):
     b.update()
     self.assertTrue(b.session.get('update'))
     old_release = b.session.get_full_release_directory()
-    # Update test.fasta to force update (not that this file is modified in the
-    # source tree)
+    # Touch test.fasta to force update (note that this file is modified in the
+    # source tree so we restore it after or if this test fails in between).
     remote_file = b.session.config.get('remote.dir') + 'test.fasta.gz'
     stat = os.stat(remote_file)
     one_day = 3600 * 24
-    os.utime(remote_file, (stat.st_atime + one_day, stat.st_atime + one_day))
+    os.utime(remote_file, (stat.st_atime + one_day, stat.st_mtime + one_day))
     # Second update
-    b.update()
-    self.assertTrue(b.session.get('update'))
-    new_release = b.session.get_full_release_directory()
-    # Test that test2.fasta in both release are the same file (we can't use
-    # test.fasta because it is uncompressed and then not the same file)
-    file_old_release = os.path.join(old_release, 'flat', 'test2.fasta')
-    file_new_release = os.path.join(new_release, 'flat', 'test2.fasta')
     try:
-        self.assertTrue(os.path.samefile(file_old_release, file_new_release))
-    except AssertionError:
-        msg = "In %s: copy worked but hardlinks were not used." % self.id()
-        logging.info(msg)
-    # Restore date (otherwise repeated tests fail)
-    os.utime(remote_file, (stat.st_atime, stat.st_atime))
+        b.update()
+        self.assertTrue(b.session.get('update'))
+        new_release = b.session.get_full_release_directory()
+        # Test that test2.fasta in both release are the same file (we can't use
+        # test.fasta because it is uncompressed and then not the same file)
+        file_old_release = os.path.join(old_release, 'flat', 'test2.fasta')
+        file_new_release = os.path.join(new_release, 'flat', 'test2.fasta')
+        try:
+            self.assertTrue(os.path.samefile(file_old_release, file_new_release))
+        except AssertionError:
+            msg = "In %s: copy worked but hardlinks were not used." % self.id()
+            logging.info(msg)
+    except Exception:
+        raise
+    finally:
+        # Restore date (otherwise repeated tests fail)
+        os.utime(remote_file, (stat.st_atime, stat.st_mtime))
     
   def test_fromscratch_update(self):
       """

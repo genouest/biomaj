@@ -774,10 +774,13 @@ class UpdateWorkflow(Workflow):
                 tmp_dir = tempfile.mkdtemp('biomaj')
                 rel_files = release_downloader.download(tmp_dir)
                 rel_file = None
+                rel_file_name = rel_files[0]['name']
+                if 'save_as' in rel_files[0] and rel_files[0]['save_as']:
+                    rel_file_name = rel_files[0]['save_as']
                 if (sys.version_info > (3, 0)):
-                    rel_file = open(tmp_dir + '/' + rel_files[0]['name'], encoding='utf-8', errors='ignore')
+                    rel_file = open(tmp_dir + '/' + rel_file_name, encoding='utf-8', errors='ignore')
                 else:
-                    rel_file = open(tmp_dir + '/' + rel_files[0]['name'])
+                    rel_file = open(tmp_dir + '/' + rel_file_name)
                 rel_content = rel_file.read()
                 rel_file.close()
                 shutil.rmtree(tmp_dir)

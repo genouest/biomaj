@@ -511,11 +511,38 @@ class UpdateWorkflow(Workflow):
             MongoConnector.banks.update({'name': self.bank.name},
                                         info)
 
+    def __findLastRelease(self, releases):
+        '''
+        Try to find most release from releases input array
+        '''
+        release = releases[0]
+        releaseElts = re.split(r'\.|-', release)
+        logging.debug('found a release %s' % (release))
+        for rel in releases:
+            if rel == release:
+                continue
+            logging.debug('compare next release %s' % (rel))
+            relElts = re.split(r'\.|-', rel)
+            index = 0
+            for relElt in relElts:
+                logging.debug("compare release major,minor,etc. : %s >? %s" % (relElt, releaseElts[index]))
+                try:
+                    if int(relElt) > int(releaseElts[index]):
+                        release = rel
+                        logging.debug("found newer release %s" % (rel))
+                        break
+                except ValueError:
+                    pass
+                finally:
+                    index += 1
+        return release
+
     def wf_release(self):
         """
         Find current release on remote
         """
         logging.info('Workflow:wf_release')
+        release = None
         cf = self.session.config
         if cf.get('ref.release') and self.bank.depends:
             # Bank is a computed bank and we ask to set release to the same
@@ -747,10 +774,13 @@ class UpdateWorkflow(Workflow):
                 tmp_dir = tempfile.mkdtemp('biomaj')
                 rel_files = release_downloader.download(tmp_dir)
                 rel_file = None
+                rel_file_name = rel_files[0]['name']
+                if 'save_as' in rel_files[0] and rel_files[0]['save_as']:
+                    rel_file_name = rel_files[0]['save_as']
                 if (sys.version_info > (3, 0)):
-                    rel_file = open(tmp_dir + '/' + rel_files[0]['save_as'], encoding='utf-8', errors='ignore')
+                    rel_file = open(tmp_dir + '/' + rel_file_name, encoding='utf-8', errors='ignore')
                 else:
-                    rel_file = open(tmp_dir + '/' + rel_files[0]['save_as'])
+                    rel_file = open(tmp_dir + '/' + rel_file_name)
                 rel_content = rel_file.read()
                 rel_file.close()
                 shutil.rmtree(tmp_dir)
@@ -759,11 +789,18 @@ class UpdateWorkflow(Workflow):
                     logging.error('release.regexp defined but does not match any file content')
                     self._close_download_service(dserv)
                     return False
+                rels = re.findall(cf.get('release.regexp'), rel_content)
+                if len(rels) == 1:
+                    release = rels[0]
+                else:
+                    release = self.__findLastRelease(rels)
+                '''
                 # If regexp contains matching group, else take whole match
                 if len(rel.groups()) > 0:
                     release = rel.group(1)
                 else:
                     release = rel.group(0)
+                '''
 
             release_downloader.close()
             self._close_download_service(dserv)

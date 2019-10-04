@@ -748,9 +748,9 @@ class UpdateWorkflow(Workflow):
                 rel_files = release_downloader.download(tmp_dir)
                 rel_file = None
                 if (sys.version_info > (3, 0)):
-                    rel_file = open(tmp_dir + '/' + rel_files[0]['name'], encoding='utf-8', errors='ignore')
+                    rel_file = open(tmp_dir + '/' + rel_files[0]['save_as'], encoding='utf-8', errors='ignore')
                 else:
-                    rel_file = open(tmp_dir + '/' + rel_files[0]['name'])
+                    rel_file = open(tmp_dir + '/' + rel_files[0]['save_as'])
                 rel_content = rel_file.read()
                 rel_file.close()
                 shutil.rmtree(tmp_dir)

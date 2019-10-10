@@ -31,6 +31,17 @@ redis.port=6379
 redis.db=0
 redis.prefix=biomaj
 
+# options to send to downloaders (protocol dependent)
+# options.names=option1,option2
+# options.option1=value1
+# options.option2=value2
+#
+# Example supported options for ftp/http
+# tcp_keepalive: number of seconds for curl keep alive (maps to curl option TCP_KEEPALIVE, TCP_KEEPINTVL and TCP_KEEPIDLE)
+# ssl_verifyhost: boolean, check or skips SSL host  (maps to curl option SSL_VERIFYHOST)
+# ssl_verifypeer: boolean, SSL checks (maps to curl option SSL_VERIFYPEER)
+# ssl_server_cert: path to certificate (maps to curl option CAINFO).
+
 
 # Influxdb configuration (optional)
 # User and db must be manually created in influxdb before use

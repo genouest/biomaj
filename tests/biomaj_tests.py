@@ -433,10 +433,12 @@ class TestBiomajFunctional(unittest.TestCase):
     old_release = b.session.get_full_release_directory()
     # Touch test.fasta to force update (note that this file is modified in the
     # source tree so we restore it after or if this test fails in between).
+    # We set the date to tomorrow so we are sure that a new release will be
+    # detected.
     remote_file = b.session.config.get('remote.dir') + 'test.fasta.gz'
     stat = os.stat(remote_file)
-    one_day = 3600 * 24
-    os.utime(remote_file, (stat.st_atime + one_day, stat.st_mtime + one_day))
+    tomorrow = time.time() + 3600 * 24
+    os.utime(remote_file, (tomorrow, tomorrow))
     # Second update
     try:
         b.update()

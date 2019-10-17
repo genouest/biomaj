@@ -427,25 +427,30 @@ class TestBiomajFunctional(unittest.TestCase):
     b = Bank('local')
     b.config.set('keep.old.version', '3')
     b.config.set('use_hardlinks', '1')
+    # Create a file in bank dir (which is the source dir) so we can manipulate
+    # it. The pattern is taken into account by the bank configuration.
+    # Note that this file is created in the source tree so we remove it after
+    # or if this test fails in between.
+    tmp_remote_file = b.config.get('remote.dir') + 'test.safe_to_del'
+    if os.path.exists(tmp_remote_file):
+        os.remove(tmp_remote_file)
+    open(tmp_remote_file, "w")
     # First update
     b.update()
     self.assertTrue(b.session.get('update'))
     old_release = b.session.get_full_release_directory()
-    # Touch test.fasta to force update (note that this file is modified in the
-    # source tree so we restore it after or if this test fails in between).
-    # We set the date to tomorrow so we are sure that a new release will be
-    # detected.
-    remote_file = b.session.config.get('remote.dir') + 'test.fasta.gz'
-    stat = os.stat(remote_file)
-    tomorrow = time.time() + 3600 * 24
-    os.utime(remote_file, (tomorrow, tomorrow))
+    # Touch tmp_remote_file to force update. We set the date to tomorrow so we
+    # are sure that a new release will be detected.
+    tomorrow = time.time() + 3660 * 24  # 3660s for safety (leap second, etc.)
+    os.utime(tmp_remote_file, (tomorrow, tomorrow))
     # Second update
     try:
         b.update()
         self.assertTrue(b.session.get('update'))
         new_release = b.session.get_full_release_directory()
         # Test that test2.fasta in both release are the same file (we can't use
-        # test.fasta because it is uncompressed and then not the same file)
+        # tmp_remote_file because it's the source of update and we can't use
+        # test.fasta because it is uncompressed and then not the same file).
         file_old_release = os.path.join(old_release, 'flat', 'test2.fasta')
         file_new_release = os.path.join(new_release, 'flat', 'test2.fasta')
         try:
@@ -456,8 +461,9 @@ class TestBiomajFunctional(unittest.TestCase):
     except Exception:
         raise
     finally:
-        # Restore date (otherwise repeated tests fail)
-        os.utime(remote_file, (stat.st_atime, stat.st_mtime))
+        # Remove file
+        if os.path.exists(tmp_remote_file):
+            os.remove(tmp_remote_file)
     
   def test_fromscratch_update(self):
       """

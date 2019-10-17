@@ -448,16 +448,22 @@ class TestBiomajFunctional(unittest.TestCase):
         b.update()
         self.assertTrue(b.session.get('update'))
         new_release = b.session.get_full_release_directory()
-        # Test that test2.fasta in both release are the same file (we can't use
-        # tmp_remote_file because it's the source of update and we can't use
-        # test.fasta because it is uncompressed and then not the same file).
-        file_old_release = os.path.join(old_release, 'flat', 'test2.fasta')
-        file_new_release = os.path.join(new_release, 'flat', 'test2.fasta')
-        try:
-            self.assertTrue(os.path.samefile(file_old_release, file_new_release))
-        except AssertionError:
-            msg = "In %s: copy worked but hardlinks were not used." % self.id()
-            logging.info(msg)
+        # Test that files in both releases are links to the the same file.
+        # We can't use tmp_remote_file because it's the source of update and we
+        # can't use test.fasta.gz because it is uncompressed and then not the
+        # same file.
+        for f in ['test2.fasta', 'test_100.txt']:
+             file_old_release = os.path.join(old_release, 'flat', f)
+             file_new_release = os.path.join(new_release, 'flat', f)
+             try:
+                 self.assertTrue(os.path.samefile(file_old_release, file_new_release))
+             except AssertionError:
+                 msg = "In %s: copy worked but hardlinks were not used." % self.id()
+                 logging.info(msg)
+        # Test that no links are done for tmp_remote_file
+        file_old_release = os.path.join(old_release, 'flat', 'test.safe_to_del')
+        file_new_release = os.path.join(new_release, 'flat', 'test.safe_to_del')
+        self.assertFalse(os.path.samefile(file_old_release, file_new_release))
     except Exception:
         raise
     finally:

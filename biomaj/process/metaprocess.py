@@ -262,8 +262,11 @@ class MetaProcess(threading.Thread):
                     processes_status[bprocess] = res
                     self.set_progress(bmaj_process.name, res)
                     if not res:
+                        logging.info("PROC:META:RUN:PROCESS:ERROR:" + bmaj_process.name)
                         self.global_status = False
                         break
+                    else:
+                        logging.info("PROC:META:RUN:PROCESS:OK:" + bmaj_process.name)
                     if not self.simulate:
                         if self._lock:
                             self._lock.acquire()

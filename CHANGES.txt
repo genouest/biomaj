@@ -1,5 +1,6 @@
-3.1.13 [unreleased]:
+3.1.13:
   Add process name and status in logs
+  PR #116 update to use download 3.1.0
 3.1.12:
   In case of multiple matches for release regexp, try to determine most recent one
   #115 Correctly use save_as for release file name

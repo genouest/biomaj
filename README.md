@@ -49,42 +49,41 @@ Application Features
 ====================
 
 * Synchronisation:
- * Multiple remote protocols (ftp, ftps, http, local copy, etc.)
- * Data transfers integrity check
- * Release versioning using a incremental approach
- * Multi threading
- * Data extraction (gzip, tar, bzip)
- * Data tree directory normalisation
-
+  * Multiple remote protocols (ftp, ftps, http, local copy, etc.)
+  * Data transfers integrity check
+  * Release versioning using a incremental approach
+  * Multi threading
+  * Data extraction (gzip, tar, bzip)
+  * Data tree directory normalisation
+  * Plugins support for custom downloads
 
 * Pre &Post processing :
- * Advanced workflow description (D.A.G)
- * Post-process indexation for various bioinformatics software (blast, srs, fastacmd, readseq, etc.)
- * Easy integration of personal scripts for bank post-processing automation
-
+  * Advanced workflow description (D.A.G)
+  * Post-process indexation for various bioinformatics software (blast, srs, fastacmd, readseq, etc.)
+  * Easy integration of personal scripts for bank post-processing automation
 
 * Supervision:
- * Optional Administration web interface (biomaj-watcher)
- * CLI management
- * Mail alerts for the update cycle supervision
- * Prometheus and Influxdb optional integration
- * Optional consul supervision of processes
+  * Optional Administration web interface (biomaj-watcher)
+  * CLI management
+  * Mail alerts for the update cycle supervision
+  * Prometheus and Influxdb optional integration
+  * Optional consul supervision of processes
 
 
 * Scalability:
- * Monolithic (local install) or microservice architecture (remote access to a BioMAJ server)
- * Microservice installation allows per process scalability and supervision (number of process in charge of download, execution, etc.)
-
+  * Monolithic (local install) or microservice architecture (remote access to a BioMAJ server)
+  * Microservice installation allows per process scalability and supervision (number of process in charge of download, execution, etc.)
 
 * Remote access:
- * Optional FTP server providing authenticated or anonymous data access
+  * Optional FTP server providing authenticated or anonymous data access
 
 Dependencies
 ============
 
 Packages:
- * Debian: libcurl-dev, gcc
- * CentOs: libcurl-devel, openldap-devel, gcc
+
+* Debian: libcurl-dev, gcc
+* CentOs: libcurl-devel, openldap-devel, gcc
 
  Linux tools: tar, unzip, gunzip, bunzip
 
@@ -115,7 +114,6 @@ From packages:
 
     pip install biomaj biomaj-cli biomaj-daemon
 
-
 You should consider using a Python virtual environment (virtualenv) to install BioMAJ.
 
 In tools/examples, copy the global.properties and update it to match your local
@@ -123,12 +121,10 @@ installation.
 
 The tools/process contains example process files (python and shell).
 
-
 Docker
 ======
 
 You can use BioMAJ with Docker (genouest/biomaj)
-
 
     docker pull genouest/biomaj
     docker pull mongo
@@ -161,7 +157,36 @@ Once biomaj is installed, it is possible to import some bank examples with the b
     # then edit bank template in config directory if needed and launch bank update
     biomaj-cli ... --update --bank alu
 
+Plugins
+=======
 
+BioMAJ support python plugins to manage custom downloads where supported protocols
+are not enough (http page with unformatted listing, access to protected pages, etc.).
+
+Example of plugins and how to configure them are available on [biomaj-plugins](https://github.com/genouest/biomaj-plugins) repository.
+
+Plugins can define a specific way to:
+
+* retreive release
+* list remote files to download
+* download remote files
+
+Plugin can define one or many of those features.
+
+Basically, one defined in bank property file:
+
+    # Location of plugins
+    plugins_dir=/opt/biomaj-plugins
+    # Use plugin to fetch release
+    release.plugin=github
+    # List of arguments of plugin function with key=value format, comma separated
+    release.plugin_args=repo=osallou/goterra-cli
+
+Plugins are used when related workflow step is used:
+
+* release.plugin <= returns remote release
+* remote.plugin <= returns list of files to download
+* download.plugin <= download files from list of files
 
 API documentation
 =================
@@ -188,7 +213,6 @@ Execute unit tests but disable ones needing network access
 
     nosetests -a '!network'
 
-
 Monitoring
 ==========
 
@@ -213,10 +237,10 @@ Remarks
 
 To delete elasticsearch index:
 
- curl -XDELETE 'http://localhost:9200/biomaj_test/'
+ curl -XDELETE '<http://localhost:9200/biomaj_test/'>
 
 Credits
-======
+=======
 
 Special thanks for tuco at Pasteur Institute for the intensive testing and new ideas.
 Thanks to the old BioMAJ team for the work they have done.

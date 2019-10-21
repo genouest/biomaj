@@ -21,12 +21,6 @@ from biomaj.workflow import Workflow
 from biomaj.workflow import UpdateWorkflow
 from biomaj.workflow import ReleaseCheckWorkflow
 from biomaj_core.utils import Utils
-from biomaj_download.download.ftp import FTPDownload
-from biomaj_download.download.direct import DirectFTPDownload
-from biomaj_download.download.direct import DirectHttpDownload
-from biomaj_download.download.http import HTTPDownload
-from biomaj_download.download.localcopy  import LocalDownload
-from biomaj_download.download.downloadthreads import DownloadThread
 from biomaj_core.config import BiomajConfig
 from biomaj.process.processfactory import PostProcessFactory
 from biomaj.process.processfactory import PreProcessFactory
@@ -427,37 +421,55 @@ class TestBiomajFunctional(unittest.TestCase):
 
   def test_update_hardlinks(self):
     """
-    Update a bank twice with hard links^. Files copied from previous release
+    Update a bank twice with hard links. Files copied from previous release
     must be links.
     """
     b = Bank('local')
     b.config.set('keep.old.version', '3')
     b.config.set('use_hardlinks', '1')
+    # Create a file in bank dir (which is the source dir) so we can manipulate
+    # it. The pattern is taken into account by the bank configuration.
+    # Note that this file is created in the source tree so we remove it after
+    # or if this test fails in between.
+    tmp_remote_file = b.config.get('remote.dir') + 'test.safe_to_del'
+    if os.path.exists(tmp_remote_file):
+        os.remove(tmp_remote_file)
+    open(tmp_remote_file, "w")
     # First update
     b.update()
     self.assertTrue(b.session.get('update'))
     old_release = b.session.get_full_release_directory()
-    # Update test.fasta to force update (not that this file is modified in the
-    # source tree)
-    remote_file = b.session.config.get('remote.dir') + 'test.fasta.gz'
-    stat = os.stat(remote_file)
-    one_day = 3600 * 24
-    os.utime(remote_file, (stat.st_atime + one_day, stat.st_atime + one_day))
+    # Touch tmp_remote_file to force update. We set the date to tomorrow so we
+    # are sure that a new release will be detected.
+    tomorrow = time.time() + 3660 * 24  # 3660s for safety (leap second, etc.)
+    os.utime(tmp_remote_file, (tomorrow, tomorrow))
     # Second update
-    b.update()
-    self.assertTrue(b.session.get('update'))
-    new_release = b.session.get_full_release_directory()
-    # Test that test2.fasta in both release are the same file (we can't use
-    # test.fasta because it is uncompressed and then not the same file)
-    file_old_release = os.path.join(old_release, 'flat', 'test2.fasta')
-    file_new_release = os.path.join(new_release, 'flat', 'test2.fasta')
     try:
-        self.assertTrue(os.path.samefile(file_old_release, file_new_release))
-    except AssertionError:
-        msg = "In %s: copy worked but hardlinks were not used." % self.id()
-        logging.info(msg)
-    # Restore date (otherwise repeated tests fail)
-    os.utime(remote_file, (stat.st_atime, stat.st_atime))
+        b.update()
+        self.assertTrue(b.session.get('update'))
+        new_release = b.session.get_full_release_directory()
+        # Test that files in both releases are links to the the same file.
+        # We can't use tmp_remote_file because it's the source of update and we
+        # can't use test.fasta.gz because it is uncompressed and then not the
+        # same file.
+        for f in ['test2.fasta', 'test_100.txt']:
+             file_old_release = os.path.join(old_release, 'flat', f)
+             file_new_release = os.path.join(new_release, 'flat', f)
+             try:
+                 self.assertTrue(os.path.samefile(file_old_release, file_new_release))
+             except AssertionError:
+                 msg = "In %s: copy worked but hardlinks were not used." % self.id()
+                 logging.info(msg)
+        # Test that no links are done for tmp_remote_file
+        file_old_release = os.path.join(old_release, 'flat', 'test.safe_to_del')
+        file_new_release = os.path.join(new_release, 'flat', 'test.safe_to_del')
+        self.assertFalse(os.path.samefile(file_old_release, file_new_release))
+    except Exception:
+        raise
+    finally:
+        # Remove file
+        if os.path.exists(tmp_remote_file):
+            os.remove(tmp_remote_file)
     
   def test_fromscratch_update(self):
       """
@@ -774,6 +786,7 @@ class TestBiomajFunctional(unittest.TestCase):
   def test_multi(self):
     b = Bank('multi')
     res = b.update()
+    self.assertTrue(res)
     with open(os.path.join(b.session.get_full_release_directory(),'flat/test1.json'), 'r') as content_file:
       content = content_file.read()
       my_json = json.loads(content)

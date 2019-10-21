@@ -16,7 +16,7 @@ import sys
 from biomaj_core.utils import Utils
 from biomaj_download.downloadclient import DownloadClient
 from biomaj_download.message import downmessage_pb2
-from biomaj_download.download.http import HTTPParse
+from biomaj_download.download.curl import HTTPParse
 from biomaj_download.download.localcopy import LocalDownload
 
 from biomaj.mongo_connector import MongoConnector

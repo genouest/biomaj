@@ -256,7 +256,7 @@ class Workflow(object):
         if os.path.exists(lock_file):
             os.remove(lock_file)
         return True
- 
+
 
 class RemoveWorkflow(Workflow):
     """

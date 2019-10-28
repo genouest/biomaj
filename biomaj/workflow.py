@@ -256,7 +256,7 @@ class Workflow(object):
         if os.path.exists(lock_file):
             os.remove(lock_file)
         return True
-
+    
 
 class RemoveWorkflow(Workflow):
     """
@@ -1987,3 +1987,43 @@ class ReleaseCheckWorkflow(UpdateWorkflow):
 
     def wf_progress(self, task, status):
         return
+
+
+class RepairWorkflow(UpdateWorkflow):
+    """
+    Workflow to repaire a bank i.e. unlock bank and set all steps to OK (after a manual repair for example)
+    """
+
+    def __init__(self, bank):
+        """
+        Instantiate a new workflow
+
+        :param bank: bank on which to apply the workflow
+        :type bank: Bank
+        :param session: session to remove
+        :type session: :class:`biomaj.session.Session`
+        """
+        self.wf_unlock(bank)
+        UpdateWorkflow.__init__(self, bank)
+        self.skip_all = True
+
+    def wf_unlock(self, bank):
+        logging.info('Workflow:wf_unlock')
+        data_dir = bank.session.config.get('data.dir')
+        lock_dir = bank.session.config.get('lock.dir', default=data_dir)
+        lock_file = os.path.join(lock_dir, bank.name + '.lock')
+        maintenance_lock_file = os.path.join(lock_dir, 'biomaj.lock')
+        if os.path.exists(maintenance_lock_file):
+            logging.error('Biomaj is in maintenance')
+            return False
+        if os.path.exists(lock_file):
+            os.remove(lock_file)
+        return True
+
+    def start(self):
+        if self.session.get('release') is None:
+            logging.warn('cannot repair bank, no known release')
+            return True
+        Workflow.start(self)
+        self.wf_over()
+        return True

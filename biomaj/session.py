@@ -130,8 +130,13 @@ class Session(object):
                 self._session['process']['postprocess'] = self.reload_postprocess_in_order(self._session['process']['postprocess'])
                 self.reset_meta(self._session['process']['postprocess'][proc])
             else:
+                isInMeta = False
                 for elt in list(self._session['process']['postprocess'].keys()):
-                    self.reset_meta(self._session['process']['postprocess'][elt], proc)
+                    #isInMeta = self.reset_meta(self._session['process']['postprocess'][elt], proc)
+                    if isInMeta:
+                        self.reset_meta(self._session['process']['postprocess'][elt], None)
+                    else:
+                        isInMeta = self.reset_meta(self._session['process']['postprocess'][elt], proc)
         elif type_proc == Workflow.FLOW_PREPROCESS:
             self._session['process']['preprocess'] = self.reload_in_order('db.pre.process', self._session['process']['preprocess'])
             self.reset_meta(self._session['process']['preprocess'])
@@ -147,9 +152,12 @@ class Session(object):
         if proc in metas:
             for metaproc in list(metas[proc].keys()):
                 self.reset_process(metas[proc], metaproc)
+                return True
         else:
             for meta in list(metas.keys()):
                 self.reset_process(metas[meta], proc)
+                return True
+        return False
 
     def reset_process(self, processes, proc=None):
         """

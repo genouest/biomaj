@@ -132,7 +132,6 @@ class Session(object):
             else:
                 isInMeta = False
                 for elt in list(self._session['process']['postprocess'].keys()):
-                    #isInMeta = self.reset_meta(self._session['process']['postprocess'][elt], proc)
                     if isInMeta:
                         self.reset_meta(self._session['process']['postprocess'][elt], None)
                     else:

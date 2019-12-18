@@ -707,18 +707,18 @@ class UpdateWorkflow(Workflow):
                     params['protocol'] = str(cf.get('irods.protocol')).strip()
                     params['zone'] = str(cf.get('irods.zone')).strip()
 
-            # Protocol options: as for params, a field contains the name
+            # Options: as for params, a field contains the name
             # of the options (options.names) and the values are in another
             # field named options.<option_name>.
-            protocol_options = {}
+            options = {}
             option_names = cf.get('options.names')
             if option_names is not None:
                 option_names = option_names.split(',')
                 for option_name in option_names:
                     option_name = option_name.strip()
                     param = cf.get('options.' + option_name)
-                    protocol_options[option_name] = param.strip()
-                logging.debug("Protocol options: " + str(protocol_options))
+                    options[option_name] = param.strip()
+                logging.debug("Options: " + str(options))
 
             release_downloader = dserv.get_handler(
                 protocol,
@@ -733,7 +733,7 @@ class UpdateWorkflow(Workflow):
                 save_as=save_as,
                 timeout_download=cf.get('timeout.download'),
                 offline_dir=self.session.get_offline_directory(),
-                protocol_options=protocol_options
+                options=options
             )
 
             if protocol in ['directftp', 'directftps', 'directhttp', 'directhttps']:
@@ -1159,18 +1159,18 @@ class UpdateWorkflow(Workflow):
                 if cf.get('remote.file.' + str(i) + '.name'):
                     save_as = cf.get('remote.file.' + str(i) + '.name')
 
-                # Protocol options: as for params, a field contains the name
+                # Options: as for params, a field contains the name
                 # of the options (options.names) and the values are in another
                 # field named options.<option_name>.
-                protocol_options = {}
+                options = {}
                 option_names = cf.get('remote.file.' + str(i) + '.options.names')
                 if option_names is not None:
                     option_names = option_names.split(',')
                     for option_name in option_names:
                         option_name = option_name.strip()
                         param = cf.get('remote.file.' + str(i) + '.options.' + option_name)
-                        protocol_options[option_name] = param.strip()
-                    logging.debug("Protocol options: " + str(protocol_options))
+                        options[option_name] = param.strip()
+                    logging.debug("Options: " + str(options))
 
                 subdownloader = dserv.get_handler(
                     protocol,
@@ -1185,7 +1185,7 @@ class UpdateWorkflow(Workflow):
                     save_as=save_as,
                     timeout_download=cf.get('timeout.download'),
                     offline_dir=self.session.get_offline_directory(),
-                    protocol_options=protocol_options
+                    options=options
                 )
                 subdownloader.set_files_to_download(remotes)
 
@@ -1235,18 +1235,18 @@ class UpdateWorkflow(Workflow):
 
             save_as = cf.get('target.name')
 
-            # Protocol options: as for params, a field contains the name
+            # Options: as for params, a field contains the name
             # of the options (options.names) and the values are in another
             # field named options.<option_name>.
-            protocol_options = {}
+            options = {}
             option_names = cf.get('options.names')
             if option_names is not None:
                 option_names = option_names.split(',')
                 for option_name in option_names:
                     option_name = option_name.strip()
                     param = cf.get('options.' + option_name)
-                    protocol_options[option_name] = param.strip()
-                logging.debug("Protocol options: " + str(protocol_options))
+                    options[option_name] = param.strip()
+                logging.debug("Options: " + str(options))
 
             downloader = dserv.get_handler(
                 protocol,
@@ -1261,7 +1261,7 @@ class UpdateWorkflow(Workflow):
                 save_as=save_as,
                 timeout_download=cf.get('timeout.download'),
                 offline_dir=self.session.get_offline_directory(),
-                protocol_options=protocol_options
+                options=options
             )
 
             if protocol in ['directftp', 'directftps', 'directhttp', 'directhttps']:
@@ -1520,7 +1520,7 @@ class UpdateWorkflow(Workflow):
                 message.bank = self.name
                 message.session = session
                 message.local_dir = offline_dir
-                message.protocol_options.update(downloader.protocol_options)
+                message.options.update(downloader.options)
                 remote_file = downmessage_pb2.DownloadFile.RemoteFile()
                 protocol = downloader.protocol
                 remote_file.protocol = downmessage_pb2.DownloadFile.Protocol.Value(protocol.upper())

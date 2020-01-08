@@ -1479,7 +1479,7 @@ class UpdateWorkflow(Workflow):
             logging.debug('Workflow:wf_download:Copy files from ' + last_production_dir)
             for downloader in downloaders:
                 copied_files += downloader.files_to_copy
-                logging.info('Workflow:wf_download:Copying %d files from %s'  % (len(downloader.files_to_copy), last_production_dir))
+                logging.info('Workflow:wf_download:Copying %d files from %s' % (len(downloader.files_to_copy), last_production_dir))
                 Utils.copy_files(
                     downloader.files_to_copy, offline_dir,
                     use_hardlinks=cf.get_bool('use_hardlinks', default=False)

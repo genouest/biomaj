@@ -1,6 +1,7 @@
-3.1.16 [UNRELEASED]:
+3.1.16:
   Fix status check of process for --from-task postprocess
   #118 Rename protocol options to options
+  Add more debug logging
 3.1.15:
   #117 Fix incorrect behavior with --post-process
 3.1.14:

@@ -879,14 +879,16 @@ class UpdateWorkflow(Workflow):
 
     def _load_local_files_from_session(self, session_id):
         """
-        Load lccal files for sessions from cache directory
+        Load local files for sessions from cache directory
         """
         cache_dir = self.bank.config.get('cache.dir')
         f_local_files = None
         file_path = os.path.join(cache_dir, 'local_files_' + str(session_id))
         if not os.path.exists(file_path):
+            logging.info("Workflow:wf_download:Cache:No cache file found for session, skipping" % (session_id))
             return f_local_files
 
+        logging.info("Workflow:wf_download:Cache:using %s" % (file_path))
         with open(file_path) as data_file:
             f_local_files = json.load(data_file)
 
@@ -1458,6 +1460,8 @@ class UpdateWorkflow(Workflow):
             last_production_files = None
             if len(last_production_session['sessions']) > 0:
                 last_production_files = self._load_local_files_from_session(last_production_session['sessions'][0]['id'])
+            else:
+                logging.warn('Workflow:wf_download:no session found for last production id %s' % (last_production['session']))
 
             if not cf.get_bool('copy.skip', default=False):
                 for downloader in downloaders:
@@ -1475,6 +1479,7 @@ class UpdateWorkflow(Workflow):
             logging.debug('Workflow:wf_download:Copy files from ' + last_production_dir)
             for downloader in downloaders:
                 copied_files += downloader.files_to_copy
+                logging.info('Workflow:wf_download:Copying %d files from %s'  % (len(downloader.files_to_copy), last_production_dir))
                 Utils.copy_files(
                     downloader.files_to_copy, offline_dir,
                     use_hardlinks=cf.get_bool('use_hardlinks', default=False)

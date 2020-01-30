@@ -885,7 +885,7 @@ class UpdateWorkflow(Workflow):
         f_local_files = None
         file_path = os.path.join(cache_dir, 'local_files_' + str(session_id))
         if not os.path.exists(file_path):
-            logging.info("Workflow:wf_download:Cache:No cache file found for session, skipping" % (session_id))
+            logging.info("Workflow:wf_download:Cache:No cache file found for session %s, skipping" % (session_id))
             return f_local_files
 
         logging.info("Workflow:wf_download:Cache:using %s" % (file_path))

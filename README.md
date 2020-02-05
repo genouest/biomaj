@@ -124,9 +124,9 @@ The tools/process contains example process files (python and shell).
 Docker
 ======
 
-You can use BioMAJ with Docker (genouest/biomaj)
+You can use BioMAJ with Docker (osallou/biomaj-docker)
 
-    docker pull genouest/biomaj
+    docker pull osallou/biomaj-docker
     docker pull mongo
     docker run --name biomaj-mongodb -d mongo
     # Wait ~10 seconds for mongo to initialize

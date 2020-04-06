@@ -16,6 +16,7 @@ from biomaj.workflow import RemoveWorkflow
 from biomaj.workflow import RepairWorkflow
 from biomaj.workflow import Workflow
 from biomaj.workflow import ReleaseCheckWorkflow
+from biomaj.notify import Notify
 from biomaj_core.config import BiomajConfig
 from biomaj.options import Options
 from biomaj.process.processfactory import ProcessFactory
@@ -957,6 +958,8 @@ class Bank(object):
                 logging.error('Cannot remove bank, some production directories are freezed, use force if needed')
                 return False
 
+        self.load_session()
+
         self.banks.remove({'name': self.name})
         BmajIndex.delete_all_bank(self.name)
         bank_data_dir = self.get_data_dir()
@@ -991,6 +994,12 @@ class Bank(object):
             'action': 'remove',
             'updated': None
         })
+        
+        self.session._session['release'] = 'all'
+        self.session._session['status'][Workflow.FLOW_OVER] = True
+        self.session._session['update'] = False
+        self.session._session['remove'] = True
+        Notify.notifyBankAction(self, with_log=False)
         return True
 
     def get_status(self):

@@ -1,4 +1,5 @@
 3.1.17 [UNRELEASED]:
+  Send removal mail for --remove-all option
   #119 add support for custom notification emails with templates and log tail/attach options
     New optional fields in global.properties (or per bank properties):
       mail.body.tail=0

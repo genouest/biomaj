@@ -24,7 +24,7 @@ class Notify(object):
     """
 
     @staticmethod
-    def notifyBankAction(bank):
+    def notifyBankAction(bank, with_log=True):
         if not bank.config.get('mail.smtp.host') or bank.session is None:
             logging.info('Notify:none')
             return
@@ -43,7 +43,7 @@ class Notify(object):
         #msg = MIMEText('')
         log_tail = ''
         log_file_size = 0
-        if log_file:
+        if log_file and with_log and os.path.exists(log_file):
             log_file_size = os.path.getsize(log_file)
             max_tail = bank.config.get('mail.body.tail', default=None)
             if max_tail:
@@ -62,7 +62,7 @@ class Notify(object):
                     fp.close()
 
         log_attach = bank.config.get('mail.body.attach', default=None)
-        if log_attach:
+        if log_attach and with_log and os.path.exists(log_file):
             log_attach_max = 0
             try:
                 log_attach_max = int(log_attach)

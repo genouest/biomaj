@@ -998,7 +998,7 @@ class Bank(object):
             'action': 'remove',
             'updated': None
         })
-        
+
         self.session._session['release'] = 'all'
         self.session._session['status'][Workflow.FLOW_OVER] = True
         self.session._session['update'] = False

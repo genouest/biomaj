@@ -134,7 +134,6 @@ You can use BioMAJ with Docker (osallou/biomaj-docker)
     # *local_path*
     docker run --rm -v local_path:/var/lib/biomaj --link biomaj-mongodb:biomaj-mongodb osallou/biomaj-docker --help
 
-
 Copy your bank properties in directory *local_path*/conf and post-processes (if any) in *local_path*/process
 
 You can override global.properties in /etc/biomaj/global.properties (-v xx/global.properties:/etc/biomaj/global.properties)

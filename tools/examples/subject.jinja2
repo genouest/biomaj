@@ -1,0 +1,1 @@
+[BioMAJ]{% if modified %} Bank {{ bank }} - Version {{ release }}{% if status %}{% if update %}updated {% endif %}{% if remove %} removed {% endif %}successfully{% else %}{% if update %}Update{% endif %}{% if remove %}Remove{% endif %}failed for bank {{ bank }} version {{ release }}{% endif %}{% else %} {{bank }} does not need update{% endif %}

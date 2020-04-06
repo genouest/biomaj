@@ -78,8 +78,17 @@ historic.logfile.level=DEBUG
 
 #Uncomment thes lines if you want receive mail when the workflow is finished
 mail.smtp.host=
+#mail.smtp.port=25
 mail.admin=
 mail.from=
+# tail last X bytes of log in mail body , 0 = no tail
+# mail.body.tail=2000000
+# attach log file if size < X bytes, 0 for no attach
+#mail.body.attach=4000000
+# path to jinja template for subject, leave empty for defaults
+#mail.template.subject=
+# path to jinja template for body, leave empty for default
+#mail.template.body=
 
 # Number of thread during the processes management
 bank.num.threads=4

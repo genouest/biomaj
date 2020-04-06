@@ -964,26 +964,30 @@ class Bank(object):
         BmajIndex.delete_all_bank(self.name)
         bank_data_dir = self.get_data_dir()
         logging.warn('DELETE ' + bank_data_dir)
+        err_msg = ''
         if os.path.exists(bank_data_dir):
             try:
                 shutil.rmtree(bank_data_dir)
             except Exception:
                 logging.exception('Failed to delete bank directory: ' + bank_data_dir)
-                logging.error('Bank will be deleted but some files/dirs may still be present on system, you can safely manually delete them')
+                logging.error('Bank will be deleted but some files/dirs may still be present on %s, you can safely manually delete them' % bank_data_dir)
+                err_msg = 'Bank will be deleted but some files/dirs may still be present on %s, you can safely manually delete them' % bank_data_dir
         bank_offline_dir = os.path.join(self.config.get('data.dir'), self.config.get('offline.dir.name'))
         if os.path.exists(bank_offline_dir):
             try:
                 shutil.rmtree(bank_offline_dir)
             except Exception:
                 logging.exception('Failed to delete bank offline directory: ' + bank_offline_dir)
-                logging.error('Bank will be deleted but some files/dirs may still be present on system, you can safely manually delete them')
+                logging.error('Bank will be deleted but some files/dirs may still be present on %s, you can safely manually delete them' % bank_offline_dir)
+                err_msg = 'Bank will be deleted but some files/dirs may still be present on %s, you can safely manually delete them' % bank_offline_dir
         bank_log_dir = os.path.join(self.config.get('log.dir'), self.name)
         if os.path.exists(bank_log_dir) and self.no_log:
             try:
                 shutil.rmtree(bank_log_dir)
             except Exception:
                 logging.exception('Failed to delete bank log directory: ' + bank_log_dir)
-                logging.error('Bank will be deleted but some files/dirs may still be present on system, you can safely manually delete them')
+                logging.error('Bank will be deleted but some files/dirs may still be present on %s, you can safely manually delete them' % bank_log_dir)
+                err_msg = 'Bank will be deleted but some files/dirs may still be present on %s, you can safely manually delete them' % bank_log_dir
         end_time = datetime.now()
         end_time = time.mktime(end_time.timetuple())
         self.history.insert({
@@ -999,7 +1003,7 @@ class Bank(object):
         self.session._session['status'][Workflow.FLOW_OVER] = True
         self.session._session['update'] = False
         self.session._session['remove'] = True
-        Notify.notifyBankAction(self, with_log=False)
+        Notify.notifyBankAction(self, with_log=False, with_msg=err_msg)
         return True
 
     def get_status(self):

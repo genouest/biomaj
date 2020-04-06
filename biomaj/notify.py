@@ -24,7 +24,7 @@ class Notify(object):
     """
 
     @staticmethod
-    def notifyBankAction(bank, with_log=True):
+    def notifyBankAction(bank, with_log=True, with_msg=''):
         if not bank.config.get('mail.smtp.host') or bank.session is None:
             logging.info('Notify:none')
             return
@@ -87,6 +87,7 @@ class Notify(object):
                     msg.attach(part)
 
         template_info = {
+            'message': with_msg,
             'log_file': log_file,
             'log_tail': log_tail,
             'bank': bank.name,

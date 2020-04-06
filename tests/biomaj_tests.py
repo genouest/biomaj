@@ -244,6 +244,7 @@ class TestBiomajSetup(unittest.TestCase):
     self.assertTrue(res)
     self.assertTrue(b.session._session['release'] is not None)
 
+  @attr('network')
   def test_remove_session(self):
     b = Bank('alu')
     for i in range(1,5):
@@ -774,6 +775,7 @@ class TestBiomajFunctional(unittest.TestCase):
 
 
   @attr('directrelease')
+  @attr('network')
   def test_directhttp_release(self):
       b = Bank('directhttp')
       res = b.update()

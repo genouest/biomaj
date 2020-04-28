@@ -1321,7 +1321,7 @@ class UpdateWorkflow(Workflow):
                     if res is not None and res.groups() is not None and len(res.groups()) >= 1:
                         f['save_as'] = '/'.join(res.groups())
                         break
-        
+
             files_to_download += downloader.files_to_download
 
         self.session.set('download_files', downloader.files_to_download)

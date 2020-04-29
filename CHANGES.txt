@@ -1,4 +1,4 @@
-3.1.17 [UNRELEASED]:
+3.1.17:
   Fix regression when saving file with a differe,t structure such as xxx/(FASTA)/(file.txt) to save under FASTA/file.txt
   Send removal mail for --remove-all option
   #119 add support for custom notification emails with templates and log tail/attach options

@@ -1,4 +1,4 @@
-biomaj_core>=3.0.19
+biomaj_core>=3.0.24
 biomaj_user
 biomaj_download>=3.2.1
 biomaj_process>=3.0.12

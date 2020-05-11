@@ -757,19 +757,26 @@ class UpdateWorkflow(Workflow):
                 logging.error('release.file defined but does not match any file')
                 self._close_download_service(dserv)
                 return False
-            if len(release_downloader.files_to_download) > 1:
-                logging.error('release.file defined but matches multiple files')
-                self._close_download_service(dserv)
-                return False
+
             if cf.get('release.regexp') is None or not cf.get('release.regexp'):
                 # Try to get from regexp in file name
-                rel = re.search(cf.get('release.file'), release_downloader.files_to_download[0]['name'])
+                rel = None
+                # if multiple files match release, get most recent file
+                if len(release_downloader.files_to_download) > 1:
+                    most_recent = Utils.get_more_recent_file(release_downloader.files_to_download)
+                    rel = re.search(cf.get('release.file'), most_recent['file']['name'])
+                else:
+                    rel = re.search(cf.get('release.file'), release_downloader.files_to_download[0]['name'])
                 if rel is None:
                     logging.error('release.file defined but does not match any file')
                     self._close_download_service(dserv)
                     return False
                 release = rel.group(1)
             else:
+                if len(release_downloader.files_to_download) > 1:
+                    logging.error('release.file defined but matches multiple files')
+                    self._close_download_service(dserv)
+                    return False
                 # Download and extract
                 tmp_dir = tempfile.mkdtemp('biomaj')
                 rel_files = release_downloader.download(tmp_dir)

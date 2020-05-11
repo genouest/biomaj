@@ -88,6 +88,9 @@ mail.user=
 mail.password=
 mail.tls=true
 
+mail.body.tail=2000000
+mail.body.attach=9000000
+
 #---------------------
 #Proxy authentification
 #---------------------

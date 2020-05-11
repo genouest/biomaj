@@ -16,7 +16,8 @@ downloaded again only if a change is detected.
 
 More documentation is available in wiki page.
 
-BioMAJ is python 2 and 3 compatible.
+BioMAJ is python 2 and 3 compatible until release 3.1.17.
+After 3.1.17, only python 3 is supported.
 
 Getting started
 ===============

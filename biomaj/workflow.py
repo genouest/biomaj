@@ -753,6 +753,7 @@ class UpdateWorkflow(Workflow):
                 return False
 
             release_downloader.match([cf.get('release.file')], file_list, dir_list)
+
             if len(release_downloader.files_to_download) == 0:
                 logging.error('release.file defined but does not match any file')
                 self._close_download_service(dserv)
@@ -768,7 +769,7 @@ class UpdateWorkflow(Workflow):
                 else:
                     rel = re.search(cf.get('release.file'), release_downloader.files_to_download[0]['name'])
                 if rel is None:
-                    logging.error('release.file defined but does not match any file')
+                    logging.error('release.file defined but could not match any file')
                     self._close_download_service(dserv)
                     return False
                 release = rel.group(1)

@@ -95,8 +95,11 @@ class Notify(object):
             'remove': bank.session.get('remove')
         }
 
-        if bank.config.get('mail.template.subject', default=None):
-            template_file = bank.config.get('mail.template.subject')
+        template_file = bank.config.get('mail.template.subject', default=None)
+        if template_file and not os.path.exists(template_file):
+                logging.error('Template file not found: %s' % template_file)
+                template_file = None
+        if template_file:
             template = None
             with open(template_file) as file_:
                 template = Template(file_.read())
@@ -108,8 +111,11 @@ class Notify(object):
         else:
             msg['Subject'] = 'BANK[' + bank.name + '] - STATUS[' + str(bank.session.get_status(Workflow.FLOW_OVER)) + '] - UPDATE[' + str(bank.session.get('update')) + '] - REMOVE[' + str(bank.session.get('remove')) + ']' + ' - RELEASE[' + str(bank.session.get('release')) + ']'
 
-        if bank.config.get('mail.template.body', default=None):
-            template_file = bank.config.get('mail.template.body')
+        template_file = bank.config.get('mail.template.body', None)
+        if template_file and not os.path.exists(template_file):
+                logging.error('Template file not found: %s' % template_file)
+                template_file = None
+        if template_file:
             template = None
             with open(template_file) as file_:
                 template = Template(file_.read())

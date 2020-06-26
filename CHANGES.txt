@@ -1,5 +1,6 @@
-3.1.18 [UNRELEASED]:
+3.1.18:
   If multiple files match release.file, take most recent one
+  If mail template not found, log and use default
 3.1.17:
   Fix regression when saving file with a differe,t structure such as xxx/(FASTA)/(file.txt) to save under FASTA/file.txt
   Send removal mail for --remove-all option

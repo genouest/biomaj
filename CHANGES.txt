@@ -1,4 +1,5 @@
 3.1.18:
+  Python 3 support only
   If multiple files match release.file, take most recent one
   If mail template not found, log and use default
 3.1.17:

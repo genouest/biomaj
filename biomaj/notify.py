@@ -97,8 +97,8 @@ class Notify(object):
 
         template_file = bank.config.get('mail.template.subject', default=None)
         if template_file and not os.path.exists(template_file):
-                logging.error('Template file not found: %s' % template_file)
-                template_file = None
+            logging.error('Template file not found: %s' % template_file)
+            template_file = None
         if template_file:
             template = None
             with open(template_file) as file_:
@@ -113,8 +113,8 @@ class Notify(object):
 
         template_file = bank.config.get('mail.template.body', None)
         if template_file and not os.path.exists(template_file):
-                logging.error('Template file not found: %s' % template_file)
-                template_file = None
+            logging.error('Template file not found: %s' % template_file)
+            template_file = None
         if template_file:
             template = None
             with open(template_file) as file_:

@@ -80,7 +80,8 @@ class UtilsForTest():
   def __copy_test_bank_properties(self):
     if self.bank_properties is not None:
       return
-    self.bank_properties = ['alu', 'local', 'testhttp','directhttp']
+    self.bank_properties = ['alu', 'local', 'testhttp','directhttp',
+                            'local_list_error']
     curdir = os.path.dirname(os.path.realpath(__file__))
     for b in self.bank_properties:
         from_file = os.path.join(curdir, b+'.properties')
@@ -858,3 +859,8 @@ class TestBiomajFunctional(unittest.TestCase):
       self.fail('not owner, should not be allowed')
     except Exception as e:
       pass
+
+  def test_bank_list_error(self):
+    b = Bank('local_list_error')
+    res = b.update()
+    self.assertFalse(res)

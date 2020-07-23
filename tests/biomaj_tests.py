@@ -471,7 +471,7 @@ class TestBiomajFunctional(unittest.TestCase):
         # Remove file
         if os.path.exists(tmp_remote_file):
             os.remove(tmp_remote_file)
-    
+
   def test_fromscratch_update(self):
       """
       Try updating twice, at second time, bank should  be updated (force with fromscratc)

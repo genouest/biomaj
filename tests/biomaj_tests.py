@@ -81,7 +81,7 @@ class UtilsForTest():
     if self.bank_properties is not None:
       return
     self.bank_properties = ['alu', 'local', 'testhttp','directhttp',
-                            'local_list_error']
+                            'alu_list_error']
     curdir = os.path.dirname(os.path.realpath(__file__))
     for b in self.bank_properties:
         from_file = os.path.join(curdir, b+'.properties')
@@ -861,6 +861,6 @@ class TestBiomajFunctional(unittest.TestCase):
       pass
 
   def test_bank_list_error(self):
-    b = Bank('local_list_error')
+    b = Bank('alu_list_error')
     res = b.update()
     self.assertFalse(res)

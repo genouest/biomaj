@@ -860,6 +860,7 @@ class TestBiomajFunctional(unittest.TestCase):
     except Exception as e:
       pass
 
+  @attr('network')
   def test_bank_list_error(self):
     b = Bank('alu_list_error')
     res = b.update()

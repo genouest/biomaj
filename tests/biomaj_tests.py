@@ -303,26 +303,33 @@ class TestBiomajSetup(unittest.TestCase):
 
 class TestBiomajFunctional(unittest.TestCase):
 
+  # Banks used in tests
+  BANKS = ['local', 'alu_list_error']
+
   def setUp(self):
     self.utils = UtilsForTest()
-    curdir = os.path.dirname(os.path.realpath(__file__))
     BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
 
-    #Delete all banks
-    b = Bank('local')
-    b.banks.remove({})
-
-    self.config = BiomajConfig('local')
-    data_dir = self.config.get('data.dir')
-    lock_file = os.path.join(data_dir,'local.lock')
-    if os.path.exists(lock_file):
-      os.remove(lock_file)
+    # Clean banks used in tests
+    for bank_name in self.BANKS:
+      # Delete all releases
+      b = Bank(bank_name)
+      b.banks.remove({})
+      # Delete lock files
+      config = BiomajConfig(bank_name)
+      data_dir = config.get('data.dir')
+      lock_file = os.path.join(data_dir, 'local.lock')
+      if os.path.exists(lock_file):
+        os.remove(lock_file)
 
   def tearDown(self):
-    data_dir = self.config.get('data.dir')
-    lock_file = os.path.join(data_dir,'local.lock')
-    if os.path.exists(lock_file):
-      os.remove(lock_file)
+    # Delete lock files
+    for bank_name in self.BANKS:
+      config = BiomajConfig(bank_name)
+      data_dir = config.get('data.dir')
+      lock_file = os.path.join(data_dir,'local.lock')
+      if os.path.exists(lock_file):
+        os.remove(lock_file)
     self.utils.clean()
 
   def test_extract_release_from_file_name(self):

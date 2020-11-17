@@ -77,6 +77,7 @@ Application Features
 
 * Remote access:
   * Optional FTP server providing authenticated or anonymous data access
+  * HTTP access to bank files (/db endpoint, microservice setup only)
 
 Dependencies
 ============

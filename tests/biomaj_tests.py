@@ -80,7 +80,8 @@ class UtilsForTest():
   def __copy_test_bank_properties(self):
     if self.bank_properties is not None:
       return
-    self.bank_properties = ['alu', 'local', 'testhttp','directhttp']
+    self.bank_properties = ['alu', 'local', 'testhttp','directhttp',
+                            'alu_list_error']
     curdir = os.path.dirname(os.path.realpath(__file__))
     for b in self.bank_properties:
         from_file = os.path.join(curdir, b+'.properties')
@@ -302,26 +303,33 @@ class TestBiomajSetup(unittest.TestCase):
 
 class TestBiomajFunctional(unittest.TestCase):
 
+  # Banks used in tests
+  BANKS = ['local', 'alu_list_error']
+
   def setUp(self):
     self.utils = UtilsForTest()
-    curdir = os.path.dirname(os.path.realpath(__file__))
     BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
 
-    #Delete all banks
-    b = Bank('local')
-    b.banks.remove({})
-
-    self.config = BiomajConfig('local')
-    data_dir = self.config.get('data.dir')
-    lock_file = os.path.join(data_dir,'local.lock')
-    if os.path.exists(lock_file):
-      os.remove(lock_file)
+    # Clean banks used in tests
+    for bank_name in self.BANKS:
+      # Delete all releases
+      b = Bank(bank_name)
+      b.banks.remove({})
+      # Delete lock files
+      config = BiomajConfig(bank_name)
+      data_dir = config.get('data.dir')
+      lock_file = os.path.join(data_dir, 'local.lock')
+      if os.path.exists(lock_file):
+        os.remove(lock_file)
 
   def tearDown(self):
-    data_dir = self.config.get('data.dir')
-    lock_file = os.path.join(data_dir,'local.lock')
-    if os.path.exists(lock_file):
-      os.remove(lock_file)
+    # Delete lock files
+    for bank_name in self.BANKS:
+      config = BiomajConfig(bank_name)
+      data_dir = config.get('data.dir')
+      lock_file = os.path.join(data_dir,'local.lock')
+      if os.path.exists(lock_file):
+        os.remove(lock_file)
     self.utils.clean()
 
   def test_extract_release_from_file_name(self):
@@ -471,7 +479,7 @@ class TestBiomajFunctional(unittest.TestCase):
         # Remove file
         if os.path.exists(tmp_remote_file):
             os.remove(tmp_remote_file)
-    
+
   def test_fromscratch_update(self):
       """
       Try updating twice, at second time, bank should  be updated (force with fromscratc)
@@ -858,3 +866,9 @@ class TestBiomajFunctional(unittest.TestCase):
       self.fail('not owner, should not be allowed')
     except Exception as e:
       pass
+
+  @attr('network')
+  def test_bank_list_error(self):
+    b = Bank('alu_list_error')
+    res = b.update()
+    self.assertFalse(res)

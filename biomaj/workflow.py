@@ -1665,6 +1665,8 @@ class UpdateWorkflow(Workflow):
                 is_archive = False
                 if origFile.endswith('.tar.gz'):
                     is_archive = True
+                elif origFile.endswith('.tgz'):
+                    is_archive = True
                 elif origFile.endswith('.tar'):
                     is_archive = True
                 elif origFile.endswith('.bz2'):
@@ -1673,6 +1675,8 @@ class UpdateWorkflow(Workflow):
                     is_archive = True
                 elif origFile.endswith('.zip'):
                     is_archive = True
+                else : 
+                    logging.warn('Uncompress: Unknown file extension')
 
                 logging.info('Workflow:wf_uncompress:Uncompress:' + origFile)
                 if not os.path.exists(origFile):
@@ -1685,6 +1689,8 @@ class UpdateWorkflow(Workflow):
                     tmpFileNameElts[len(tmpFileNameElts) - 1] = 'tmp_' + tmpFileNameElts[len(tmpFileNameElts) - 1]
                     tmpCompressedFile = self.session.get_offline_directory() + '/' + '/'.join(tmpFileNameElts)
                     archives.append({'from': origFile, 'to': tmpCompressedFile})
+                    logging.debug('Workflow:wf_tmpCompressedFile' + tmpCompressedFile)
+                    logging.debug('Workflow:wf_tmpFileNameElts:' + str(tmpFileNameElts))
                 else:
                     continue
 
@@ -1692,7 +1698,10 @@ class UpdateWorkflow(Workflow):
 
                 not_ok = True
                 while nb_try < 3 and not_ok:
-                    status = Utils.uncompress(origFile)
+                    try:
+                        status = Utils.uncompress(origFile)
+                    except:
+                        logging.warn('Workflow:wf_uncompress:Failure:Utils')
                     if status:
                         not_ok = False
                     else:

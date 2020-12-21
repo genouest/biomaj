@@ -1700,8 +1700,8 @@ class UpdateWorkflow(Workflow):
                 while nb_try < 3 and not_ok:
                     try:
                         status = Utils.uncompress(origFile)
-                    except:
-                        logging.warn('Workflow:wf_uncompress:Failure:Utils')
+                    except Exception as e:
+                        logging.exception('Workflow:wf_uncompress:Exception:' + str(e))
                     if status:
                         not_ok = False
                     else:

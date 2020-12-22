@@ -1674,7 +1674,7 @@ class UpdateWorkflow(Workflow):
                 elif origFile.endswith('.zip'):
                     is_archive = True
                 else:
-                    raise Exception("Workflow:wf_uncompress: Unknown file extension in '" + str(archivefile) + "'")
+                    logging.warn("Workflow:wf_uncompress: file extension in '" + str(origFile) + "' is not treated as archive")
 
                 logging.info('Workflow:wf_uncompress:Uncompress:' + origFile)
                 if not os.path.exists(origFile):

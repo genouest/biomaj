@@ -1663,9 +1663,7 @@ class UpdateWorkflow(Workflow):
                 nb_try = 1
                 origFile = self.session.get_offline_directory() + '/' + file['save_as']
                 is_archive = False
-                if origFile.endswith('.tar.gz'):
-                    is_archive = True
-                elif origFile.endswith('.tgz'):
+                if origFile.endswith(('.tar.gz', '.tgz')):
                     is_archive = True
                 elif origFile.endswith('.tar'):
                     is_archive = True
@@ -1676,7 +1674,7 @@ class UpdateWorkflow(Workflow):
                 elif origFile.endswith('.zip'):
                     is_archive = True
                 else:
-                    logging.warn('Uncompress: Unknown file extension')
+                    raise Exception("Workflow:wf_uncompress: Unknown file extension in '" + str(archivefile) + "'")
 
                 logging.info('Workflow:wf_uncompress:Uncompress:' + origFile)
                 if not os.path.exists(origFile):
@@ -1689,8 +1687,6 @@ class UpdateWorkflow(Workflow):
                     tmpFileNameElts[len(tmpFileNameElts) - 1] = 'tmp_' + tmpFileNameElts[len(tmpFileNameElts) - 1]
                     tmpCompressedFile = self.session.get_offline_directory() + '/' + '/'.join(tmpFileNameElts)
                     archives.append({'from': origFile, 'to': tmpCompressedFile})
-                    logging.debug('Workflow:wf_tmpCompressedFile' + tmpCompressedFile)
-                    logging.debug('Workflow:wf_tmpFileNameElts:' + str(tmpFileNameElts))
                 else:
                     continue
 

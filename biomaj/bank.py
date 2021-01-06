@@ -182,7 +182,7 @@ class Bank(object):
                               str(last_update),
                               str(release)])
             # Bank production info header
-            prod_info.append(["Session", "Remote release", "Release", "Directory", "Freeze", "Format(s)"])
+            prod_info.append(["Session", "Remote release", "Release", "Directory", "Freeze", "Format(s)", "Log file"])
             for prod in _bank['production']:
                 data_dir = self.config.get('data.dir')
                 dir_version = self.config.get('dir.version')
@@ -205,7 +205,9 @@ class Bank(object):
                                   prod['release'],
                                   release_dir,
                                   'yes' if 'freeze' in prod and prod['freeze'] else 'no',
-                                  formats])
+                                  formats,
+                                  prod.get('log_file', '')
+                                  ])
             # Bank pending info header
             if 'pending' in _bank and len(_bank['pending']) > 0:
                 pend_info.append(["Pending release", "Last run"])
@@ -579,6 +581,7 @@ class Bank(object):
                           'data_dir': self.session._session['data_dir'],
                           'dir_version': self.session._session['dir_version'],
                           'prod_dir': prod_dir,
+                          'log_file': self.session._session['log_file'],
                           'freeze': False}
             self.bank['production'].append(production)
             self.banks.update({'name': self.name},

@@ -1663,9 +1663,7 @@ class UpdateWorkflow(Workflow):
                 nb_try = 1
                 origFile = self.session.get_offline_directory() + '/' + file['save_as']
                 is_archive = False
-                if origFile.endswith(('.tar.gz', '.tgz')):
-                    is_archive = True
-                elif origFile.endswith('.tar'):
+                if origFile.endswith(('.tar.gz', '.tar', '.tgz')):
                     is_archive = True
                 elif origFile.endswith('.bz2'):
                     is_archive = True
@@ -1692,10 +1690,7 @@ class UpdateWorkflow(Workflow):
 
                 not_ok = True
                 while nb_try < 3 and not_ok:
-                    try:
-                        status = Utils.uncompress(origFile)
-                    except Exception as e:
-                        logging.exception('Workflow:wf_uncompress:Exception:' + str(e))
+                    status = Utils.uncompress(origFile)
                     if status:
                         not_ok = False
                     else:

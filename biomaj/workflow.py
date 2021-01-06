@@ -1663,9 +1663,7 @@ class UpdateWorkflow(Workflow):
                 nb_try = 1
                 origFile = self.session.get_offline_directory() + '/' + file['save_as']
                 is_archive = False
-                if origFile.endswith('.tar.gz'):
-                    is_archive = True
-                elif origFile.endswith('.tar'):
+                if origFile.endswith(('.tar.gz', '.tar', '.tgz')):
                     is_archive = True
                 elif origFile.endswith('.bz2'):
                     is_archive = True

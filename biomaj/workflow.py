@@ -516,19 +516,20 @@ class UpdateWorkflow(Workflow):
         Try to find most release from releases input array
         '''
         release = releases[0]
-        releaseElts = re.split(r'\.|-', release)
+        release_elts = re.split(r'\.|-', release)
         logging.debug('found a release %s' % (release))
         for rel in releases:
             if rel == release:
                 continue
             logging.debug('compare next release %s' % (rel))
-            relElts = re.split(r'\.|-', rel)
+            rel_elts = re.split(r'\.|-', rel)
             index = 0
-            for relElt in relElts:
-                logging.debug("compare release major,minor,etc. : %s >? %s" % (relElt, releaseElts[index]))
+            for rel_elt in rel_elts:
+                logging.debug("compare release major,minor,etc. : %s >? %s" % (rel_elt, release_elts[index]))
                 try:
-                    if int(relElt) > int(releaseElts[index]):
+                    if int(rel_elt) > int(release_elts[index]):
                         release = rel
+                        release_elts = re.split(r'\.|-', release)
                         logging.debug("found newer release %s" % (rel))
                         break
                 except ValueError:

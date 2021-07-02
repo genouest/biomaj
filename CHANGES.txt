@@ -1,6 +1,7 @@
-3.1.19 [UNRELEASED]:
+3.1.19:
   Add tgz archive support
   Add log file info to production info
+  #126 Issue with getting last release in file
 3.1.18:
   Python 3 support only
   If multiple files match release.file, take most recent one

@@ -17,3 +17,4 @@ redis
 influxdb
 Yapsy==1.12.2
 Jinja2
+packaging

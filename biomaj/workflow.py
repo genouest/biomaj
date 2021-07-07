@@ -28,6 +28,7 @@ from yapsy.PluginManager import PluginManager
 
 from packaging.version import parse
 
+
 class Workflow(object):
     """
     Bank update workflow
@@ -517,17 +518,16 @@ class UpdateWorkflow(Workflow):
         Try to find most release from releases input array
         '''
         release = releases[0]
-        release_version=parse(release)
+        release_version = parse(release)
         logging.debug('found a release %s' % (release))
         for rel in releases:
             if rel == release:
                 continue
             logging.debug('compare next release %s' % (rel))
-            next_release=parse(rel)
-            index = 0
-            if next_release >release_version:
-               release=rel
-               release_version=next_release  
+            next_release = parse(rel)
+            if next_release > release_version:
+                release = rel
+                release_version = next_release
         return release
 
     def wf_release(self):

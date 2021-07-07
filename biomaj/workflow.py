@@ -26,6 +26,8 @@ from biomaj.process.processfactory import RemoveProcessFactory, PreProcessFactor
 from biomaj_zipkin.zipkin import Zipkin
 from yapsy.PluginManager import PluginManager
 
+from packaging.version import parse
+
 
 class Workflow(object):
     """
@@ -516,26 +518,16 @@ class UpdateWorkflow(Workflow):
         Try to find most release from releases input array
         '''
         release = releases[0]
-        release_elts = re.split(r'\.|-', release)
+        release_version = parse(release)
         logging.debug('found a release %s' % (release))
         for rel in releases:
             if rel == release:
                 continue
             logging.debug('compare next release %s' % (rel))
-            rel_elts = re.split(r'\.|-', rel)
-            index = 0
-            for rel_elt in rel_elts:
-                logging.debug("compare release major,minor,etc. : %s >? %s" % (rel_elt, release_elts[index]))
-                try:
-                    if int(rel_elt) > int(release_elts[index]):
-                        release = rel
-                        release_elts = re.split(r'\.|-', release)
-                        logging.debug("found newer release %s" % (rel))
-                        break
-                except ValueError:
-                    pass
-                finally:
-                    index += 1
+            next_release = parse(rel)
+            if next_release > release_version:
+                release = rel
+                release_version = next_release
         return release
 
     def wf_release(self):

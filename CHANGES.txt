@@ -1,3 +1,5 @@
+3.1.20:
+  Follow-up of #127 to get last release in file (refactor and bug fix)
 3.1.19:
   Add tgz archive support
   Add log file info to production info

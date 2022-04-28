@@ -36,7 +36,7 @@ config = {
     'url': 'http://biomaj.genouest.org',
     'download_url': 'http://biomaj.genouest.org',
     'author_email': 'olivier.sallou@irisa.fr',
-    'version': '3.1.20',
+    'version': '3.1.21',
      'classifiers': [
         # How mature is this project? Common values are
         #   3 - Alpha

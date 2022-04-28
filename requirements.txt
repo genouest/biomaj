@@ -5,7 +5,7 @@ biomaj_process>=3.0.12
 biomaj_cli
 mock
 nose
-pymongo>=3.2
+pymongo==3.12.3
 pycurl
 tabulate
 py-bcrypt

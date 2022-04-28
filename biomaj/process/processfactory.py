@@ -66,7 +66,7 @@ class ProcessFactory(object):
                     kill_received = True
                     for t in running_th:
                         t.kill_received = True
-                running_th = [t.join(1000) for t in running_th if t is not None and t.isAlive()]
+                running_th = [t.join(1000) for t in running_th if t is not None and t.is_alive()]
             except KeyboardInterrupt:
                 logging.warn("Ctrl-c received! Sending kill to threads...")
                 logging.warn("Running tasks will continue and process will stop.")

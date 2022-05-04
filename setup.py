@@ -36,7 +36,7 @@ config = {
     'url': 'http://biomaj.genouest.org',
     'download_url': 'http://biomaj.genouest.org',
     'author_email': 'olivier.sallou@irisa.fr',
-    'version': '3.1.21',
+    'version': '3.1.22',
      'classifiers': [
         # How mature is this project? Common values are
         #   3 - Alpha
@@ -62,7 +62,7 @@ config = {
                          'biomaj_user',
                          'biomaj_download',
                          'biomaj_process',
-                         'pymongo>=3.2',
+                         'pymongo >=3.2, <4',
                          'pycurl',
                          'py-bcrypt',
                          'drmaa',

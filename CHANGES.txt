@@ -1,3 +1,5 @@
+3.1.23:
+  Use pytest instead of nose
 3.1.21:
   Freeze pymongo to 3.12.3 (4.x breaks)
   Change isAlive() which is deprecated in python 3.9 to is_alive

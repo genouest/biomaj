@@ -1,6 +1,3 @@
-from nose.tools import *
-from nose.plugins.attrib import attr
-
 import json
 import shutil
 import os
@@ -9,6 +6,7 @@ import logging
 import copy
 import stat
 import time
+import pytest
 
 from mock import patch
 
@@ -28,7 +26,6 @@ from biomaj.process.processfactory import RemoveProcessFactory
 from biomaj_user.user import BmajUser
 from biomaj_core.bmajindex import BmajIndex
 
-import unittest
 
 class UtilsForTest():
   """
@@ -141,9 +138,9 @@ class UtilsForTest():
     fout.close()
 
 
-class TestBiomajSetup(unittest.TestCase):
+class TestBiomajSetup():
 
-  def setUp(self):
+  def setup_method(self, m):
     self.utils = UtilsForTest()
     curdir = os.path.dirname(os.path.realpath(__file__))
     BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
@@ -158,7 +155,7 @@ class TestBiomajSetup(unittest.TestCase):
     if os.path.exists(lock_file):
       os.remove(lock_file)
 
-  def tearDown(self):
+  def teardown_method(self, m):
     data_dir = self.config.get('data.dir')
     lock_file = os.path.join(data_dir,'alu.lock')
     if os.path.exists(lock_file):
@@ -178,7 +175,7 @@ class TestBiomajSetup(unittest.TestCase):
     b = Bank('alu')
     b.load_session(UpdateWorkflow.FLOW)
     for key in b.session._session['status'].keys():
-      self.assertFalse(b.session.get_status(key))
+      assert not(b.session.get_status(key))
 
   def test_session_reload_notover(self):
     """
@@ -193,7 +190,7 @@ class TestBiomajSetup(unittest.TestCase):
 
     b = Bank('alu')
     b.load_session(UpdateWorkflow.FLOW)
-    self.assertTrue(b.session.get_status(Workflow.FLOW_INIT))
+    assert (b.session.get_status(Workflow.FLOW_INIT))
 
   def test_clean_old_sessions(self):
     """
@@ -208,7 +205,7 @@ class TestBiomajSetup(unittest.TestCase):
     b2 = Bank('local')
     b2.update()
     b2.clean_old_sessions()
-    self.assertTrue(len(b2.bank['sessions']) == 1)
+    assert (len(b2.bank['sessions']) == 1)
 
   def test_session_reload_over(self):
     """
@@ -224,16 +221,18 @@ class TestBiomajSetup(unittest.TestCase):
 
     b = Bank('alu')
     b.load_session(UpdateWorkflow.FLOW)
-    self.assertFalse(b.session.get_status(Workflow.FLOW_INIT))
+    assert not (b.session.get_status(Workflow.FLOW_INIT))
 
   def test_bank_list(self):
     b1 = Bank('alu')
     b2 = Bank('local')
     banks = Bank.list()
-    self.assertTrue(len(banks) == 2)
+    assert (len(banks) == 2)
 
-  @attr('test')
-  @attr('network')
+  @pytest.mark.skipif(
+  os.environ.get('NETWORK', 1) == '0',
+  reason='network tests disabled'
+  )
   def test_get_release(self):
     """
     Get release
@@ -241,11 +240,14 @@ class TestBiomajSetup(unittest.TestCase):
     b = Bank('alu')
     b.load_session(UpdateWorkflow.FLOW)
     res = b.update()
-    self.assertTrue(b.session.get('update'))
-    self.assertTrue(res)
-    self.assertTrue(b.session._session['release'] is not None)
+    assert (b.session.get('update'))
+    assert (res)
+    assert (b.session._session['release'] is not None)
 
-  @attr('network')
+  @pytest.mark.skipif(
+  os.environ.get('NETWORK', 1) == '0',
+  reason='network tests disabled'
+  )
   def test_remove_session(self):
     b = Bank('alu')
     for i in range(1,5):
@@ -253,19 +255,17 @@ class TestBiomajSetup(unittest.TestCase):
       s._session['status'][Workflow.FLOW_INIT] = True
       b.session = s
       b.save_session()
-    self.assertTrue(len(b.bank['sessions'])==4)
+    assert (len(b.bank['sessions'])==4)
     b.remove_session(b.session.get('id'))
-    self.assertTrue(len(b.bank['sessions'])==3)
+    assert (len(b.bank['sessions'])==3)
 
-  @attr('process')
   def test_postprocesses_setup(self):
     b = Bank('localprocess')
     pfactory = PostProcessFactory(b)
     pfactory.run(True)
-    self.assertTrue(len(pfactory.threads_tasks[0])==2)
-    self.assertTrue(len(pfactory.threads_tasks[1])==1)
+    assert (len(pfactory.threads_tasks[0])==2)
+    assert (len(pfactory.threads_tasks[1])==1)
 
-  @attr('process')
   def test_postprocesses_exec_again(self):
     """
     Execute once, set a status to false, check that False processes are executed
@@ -273,40 +273,38 @@ class TestBiomajSetup(unittest.TestCase):
     b = Bank('localprocess')
     pfactory = PostProcessFactory(b)
     pfactory.run()
-    self.assertTrue(pfactory.blocks['BLOCK1']['META0']['PROC0'])
-    self.assertTrue(pfactory.blocks['BLOCK2']['META1']['PROC1'])
-    self.assertTrue(pfactory.blocks['BLOCK2']['META1']['PROC2'])
+    assert (pfactory.blocks['BLOCK1']['META0']['PROC0'])
+    assert (pfactory.blocks['BLOCK2']['META1']['PROC1'])
+    assert (pfactory.blocks['BLOCK2']['META1']['PROC2'])
     blocks = copy.deepcopy(pfactory.blocks)
     blocks['BLOCK2']['META1']['PROC2'] = False
     pfactory2 = PostProcessFactory(b, blocks)
     pfactory2.run()
-    self.assertTrue(pfactory2.blocks['BLOCK2']['META1']['PROC2'])
+    assert (pfactory2.blocks['BLOCK2']['META1']['PROC2'])
 
-  @attr('process')
   def test_preprocesses(self):
     b = Bank('localprocess')
     pfactory = PreProcessFactory(b)
     pfactory.run()
-    self.assertTrue(pfactory.meta_status['META0']['PROC0'])
+    assert (pfactory.meta_status['META0']['PROC0'])
 
-  @attr('process')
   def test_removeprocesses(self):
     b = Bank('localprocess')
     pfactory = RemoveProcessFactory(b)
     pfactory.run()
-    self.assertTrue(pfactory.meta_status['META0']['PROC0'])
+    assert (pfactory.meta_status['META0']['PROC0'])
 
   def test_dependencies_list(self):
     b = Bank('computed')
     deps = b.get_dependencies()
-    self.assertTrue(len(deps)==2)
+    assert (len(deps)==2)
 
-class TestBiomajFunctional(unittest.TestCase):
+class TestBiomajFunctional():
 
   # Banks used in tests
   BANKS = ['local', 'alu_list_error']
 
-  def setUp(self):
+  def setup_method(self, m):
     self.utils = UtilsForTest()
     BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
 
@@ -322,7 +320,7 @@ class TestBiomajFunctional(unittest.TestCase):
       if os.path.exists(lock_file):
         os.remove(lock_file)
 
-  def tearDown(self):
+  def teardown_method(self, m):
     # Delete lock files
     for bank_name in self.BANKS:
       config = BiomajConfig(bank_name)
@@ -339,7 +337,7 @@ class TestBiomajFunctional(unittest.TestCase):
     b.session.config.set('release.regexp', '')
     w = UpdateWorkflow(b)
     w.wf_release()
-    self.assertTrue(b.session.get('release') == '100')
+    assert (b.session.get('release') == '100')
 
   def test_remoterelease_check(self):
       b = Bank('local')
@@ -349,7 +347,7 @@ class TestBiomajFunctional(unittest.TestCase):
       workflow = ReleaseCheckWorkflow(b)
       res = workflow.start()
       remoterelease = b.session.get('remoterelease')
-      self.assertTrue(remoterelease == '100')
+      assert (remoterelease == '100')
 
   def test_extract_release_from_file_content(self):
     b = Bank('local')
@@ -358,7 +356,7 @@ class TestBiomajFunctional(unittest.TestCase):
     b.session.config.set('release.regexp', 'Release\s*(\d+)')
     w = UpdateWorkflow(b)
     w.wf_release()
-    self.assertTrue(b.session.get('release') == '103')
+    assert (b.session.get('release') == '103')
 
   def test_publish(self):
     """
@@ -369,11 +367,11 @@ class TestBiomajFunctional(unittest.TestCase):
     current_link = os.path.join(b.config.get('data.dir'),
                                 b.config.get('dir.version'),
                                 'current')
-    self.assertFalse(os.path.exists(current_link))
-    self.assertTrue(b.bank['current'] is None)
+    assert not (os.path.exists(current_link))
+    assert (b.bank['current'] is None)
     b.publish()
-    self.assertTrue(os.path.exists(current_link))
-    self.assertTrue(b.bank['current'] == b.session._session['id'])
+    assert (os.path.exists(current_link))
+    assert (b.bank['current'] == b.session._session['id'])
 
   # Should test this on local downloader, changing 1 file to force update,
   # else we would get same bank and there would be no update
@@ -383,12 +381,11 @@ class TestBiomajFunctional(unittest.TestCase):
       """
       b = Bank('local')
       b.update()
-      self.assertTrue(b.session.get('update'))
+      assert (b.session.get('update'))
       b.update()
-      self.assertFalse(b.session.get('update'))
-      self.assertFalse(b.session.get_status(Workflow.FLOW_POSTPROCESS))
+      assert not (b.session.get('update'))
+      assert not (b.session.get_status(Workflow.FLOW_POSTPROCESS))
 
-  @attr('remotelist')
   def test_download_from_list(self):
       """
       Use remote.list to define a list of files to download
@@ -400,12 +397,11 @@ class TestBiomajFunctional(unittest.TestCase):
           with os.fdopen(fd, 'w') as tmp:
               tmp.write('[{"name": "test_100.txt", "root": "' + b.config.get('remote.dir') + '"}]')
           b.update()
-          self.assertTrue(b.session.get('update'))
+          assert (b.session.get('update'))
       finally:
           #os.remove(file_path)
           print(file_path)
 
-  @attr('release')
   def test_release_control(self):
     """
     Try updating twice, at second time, modify one file (same date),
@@ -414,19 +410,19 @@ class TestBiomajFunctional(unittest.TestCase):
     b = Bank('local')
     b.update()
     b.session.config.set('keep.old.version', '3')
-    self.assertTrue(b.session.get('update'))
+    assert (b.session.get('update'))
     remote_file = b.session.config.get('remote.dir') + 'test2.fasta'
     os.utime(remote_file, None)
     # Update test2.fasta and set release.control
     b.session.config.set('release.control', 'true')
     b.update()
-    self.assertTrue(b.session.get('update'))
+    assert (b.session.get('update'))
     b.update()
-    self.assertFalse(b.session.get('update'))
+    assert not (b.session.get('update'))
     b.session.config.set('copy.skip', '1')
     b.session.config.set('remote.files', '^test2.fasta')
     b.update()
-    self.assertTrue(b.session.get('update'))
+    assert (b.session.get('update'))
 
   def test_update_hardlinks(self):
     """
@@ -446,7 +442,7 @@ class TestBiomajFunctional(unittest.TestCase):
     open(tmp_remote_file, "w")
     # First update
     b.update()
-    self.assertTrue(b.session.get('update'))
+    assert (b.session.get('update'))
     old_release = b.session.get_full_release_directory()
     # Touch tmp_remote_file to force update. We set the date to tomorrow so we
     # are sure that a new release will be detected.
@@ -455,7 +451,7 @@ class TestBiomajFunctional(unittest.TestCase):
     # Second update
     try:
         b.update()
-        self.assertTrue(b.session.get('update'))
+        assert (b.session.get('update'))
         new_release = b.session.get_full_release_directory()
         # Test that files in both releases are links to the the same file.
         # We can't use tmp_remote_file because it's the source of update and we
@@ -465,14 +461,14 @@ class TestBiomajFunctional(unittest.TestCase):
              file_old_release = os.path.join(old_release, 'flat', f)
              file_new_release = os.path.join(new_release, 'flat', f)
              try:
-                 self.assertTrue(os.path.samefile(file_old_release, file_new_release))
+                 assert (os.path.samefile(file_old_release, file_new_release))
              except AssertionError:
                  msg = "In %s: copy worked but hardlinks were not used." % self.id()
                  logging.info(msg)
         # Test that no links are done for tmp_remote_file
         file_old_release = os.path.join(old_release, 'flat', 'test.safe_to_del')
         file_new_release = os.path.join(new_release, 'flat', 'test.safe_to_del')
-        self.assertFalse(os.path.samefile(file_old_release, file_new_release))
+        assert not (os.path.samefile(file_old_release, file_new_release))
     except Exception:
         raise
     finally:
@@ -486,12 +482,12 @@ class TestBiomajFunctional(unittest.TestCase):
       """
       b = Bank('local')
       b.update()
-      self.assertTrue(b.session.get('update'))
+      assert (b.session.get('update'))
       sess = b.session.get('release')
       b.options.fromscratch = True
       b.update()
-      self.assertTrue(b.session.get('update'))
-      self.assertEqual(b.session.get('release'), sess+'__1')
+      assert (b.session.get('update'))
+      assert (b.session.get('release') == sess+'__1')
 
 
   def test_fromscratch_update_with_release(self):
@@ -506,14 +502,14 @@ class TestBiomajFunctional(unittest.TestCase):
       b.session.config.set('release.regexp', '')
       w = UpdateWorkflow(b)
       w.wf_release()
-      self.assertTrue(b.session.get('release') == '100')
+      assert (b.session.get('release') == '100')
       os.makedirs(b.session.get_full_release_directory())
       w = UpdateWorkflow(b)
       # Reset release
       b.session.set('release', None)
       w.options.fromscratch = True
       w.wf_release()
-      self.assertTrue(b.session.get('release') == '100__1')
+      assert (b.session.get('release') == '100__1')
 
 
   def test_mix_stop_from_task(self):
@@ -527,11 +523,11 @@ class TestBiomajFunctional(unittest.TestCase):
       b2.options.stop_after = 'download'
       b2.options.fromscratch = True
       res = b2.update()
-      self.assertTrue(b2.session.get('release') == rel+'__1')
+      assert (b2.session.get('release') == rel+'__1')
       b3 = Bank('local')
       res = b3.update()
-      self.assertTrue(b3.session.get('release') == rel+'__1')
-      self.assertTrue(res)
+      assert (b3.session.get('release') == rel+'__1')
+      assert (res)
 
   def test_mix_stop_from_task2(self):
       """
@@ -544,12 +540,12 @@ class TestBiomajFunctional(unittest.TestCase):
       b2.options.stop_after = 'download'
       b2.options.fromscratch = True
       res = b2.update()
-      self.assertTrue(b2.session.get('release') == rel+'__1')
+      assert (b2.session.get('release') == rel+'__1')
       b3 = Bank('local')
       res = b3.update()
       b2.options.from_task = 'download'
-      self.assertTrue(b3.session.get('release') == rel+'__1')
-      self.assertTrue(res)
+      assert (b3.session.get('release') == rel+'__1')
+      assert (res)
 
   def test_mix_stop_from_task3(self):
       """
@@ -562,12 +558,12 @@ class TestBiomajFunctional(unittest.TestCase):
       b2.options.stop_after = 'download'
       b2.options.fromscratch = True
       res = b2.update()
-      self.assertTrue(b2.session.get('release') == rel+'__1')
+      assert (b2.session.get('release') == rel+'__1')
       b3 = Bank('local')
       res = b3.update()
       b2.options.from_task = 'postprocess'
-      self.assertTrue(b3.session.get('release') == rel+'__1')
-      self.assertTrue(res)
+      assert (b3.session.get('release') == rel+'__1')
+      assert (res)
 
   def test_mix_stop_from_task4(self):
       """
@@ -583,7 +579,7 @@ class TestBiomajFunctional(unittest.TestCase):
       b3 = Bank('local')
       b3.options.from_task = 'postprocess'
       res = b3.update()
-      self.assertFalse(res)
+      assert not (res)
 
   def test_delete_old_dirs(self):
       """
@@ -593,15 +589,15 @@ class TestBiomajFunctional(unittest.TestCase):
       b.removeAll(True)
       b = Bank('local')
       b.update()
-      self.assertTrue(b.session.get('update'))
+      assert (b.session.get('update'))
       b.options.fromscratch = True
       b.update()
-      self.assertTrue(b.session.get('update'))
-      self.assertTrue(len(b.bank['production']) == 2)
+      assert (b.session.get('update'))
+      assert (len(b.bank['production']) == 2)
       b.update()
-      self.assertTrue(b.session.get('update'))
+      assert (b.session.get('update'))
       # one new dir, but olders must be deleted
-      self.assertTrue(len(b.bank['production']) == 2)
+      assert (len(b.bank['production']) == 2)
 
   def test_delete_old_dirs_with_freeze(self):
       """
@@ -612,24 +608,24 @@ class TestBiomajFunctional(unittest.TestCase):
       b = Bank('local')
       b.update()
       b.freeze(b.session.get('release'))
-      self.assertTrue(b.session.get('update'))
+      assert (b.session.get('update'))
       b.options.fromscratch = True
       b.update()
       b.freeze(b.session.get('release'))
-      self.assertTrue(b.session.get('update'))
-      self.assertTrue(len(b.bank['production']) == 2)
+      assert (b.session.get('update'))
+      assert (len(b.bank['production']) == 2)
       b.update()
-      self.assertTrue(b.session.get('update'))
+      assert (b.session.get('update'))
       # one new dir, but olders must be deleted
-      self.assertTrue(len(b.bank['production']) == 3)
+      assert (len(b.bank['production']) == 3)
 
   def test_removeAll(self):
     b = Bank('local')
     b.update()
     b.removeAll()
-    self.assertFalse(os.path.exists(b.get_data_dir()))
+    assert not (os.path.exists(b.get_data_dir()))
     bdb = b.banks.find_one({'name': b.name})
-    self.assertTrue(bdb is None)
+    assert (bdb is None)
 
   def test_remove(self):
     """
@@ -637,69 +633,68 @@ class TestBiomajFunctional(unittest.TestCase):
     """
     b = Bank('local')
     b.update()
-    self.assertTrue(os.path.exists(b.session.get_full_release_directory()))
-    self.assertTrue(len(b.bank['production'])==1)
+    assert (os.path.exists(b.session.get_full_release_directory()))
+    assert (len(b.bank['production'])==1)
     b.remove(b.session.get('release'))
-    self.assertFalse(os.path.exists(b.session.get_full_release_directory()))
+    assert not (os.path.exists(b.session.get_full_release_directory()))
     b = Bank('local')
-    self.assertTrue(len(b.bank['production'])==0)
+    assert (len(b.bank['production'])==0)
 
   def test_update_stop_after(self):
     b = Bank('local')
     b.options.stop_after = 'download'
     b.update()
-    self.assertTrue(b.session.get_status('download'))
-    self.assertFalse(b.session.get_status('postprocess'))
+    assert (b.session.get_status('download'))
+    assert not (b.session.get_status('postprocess'))
 
   def test_update_stop_before(self):
     b = Bank('local')
     b.options.stop_before = 'postprocess'
     b.update()
-    self.assertTrue(b.session.get_status('download'))
-    self.assertFalse(b.session.get_status('postprocess'))
+    assert (b.session.get_status('download'))
+    assert not (b.session.get_status('postprocess'))
 
   def test_reupdate_from_task(self):
     b = Bank('local')
     b.options.stop_after = 'download'
     b.update()
-    self.assertFalse(b.session.get_status('postprocess'))
+    assert not (b.session.get_status('postprocess'))
     b2 = Bank('local')
     b2.options.from_task = 'postprocess'
     b2.options.release = b.session.get('release')
     b2.update()
-    self.assertTrue(b2.session.get_status('postprocess'))
-    self.assertEqual(b.session.get_full_release_directory(), b2.session.get_full_release_directory())
+    assert (b2.session.get_status('postprocess'))
+    assert (b.session.get_full_release_directory() == b2.session.get_full_release_directory())
 
   def test_reupdate_from_task_error(self):
     b = Bank('local')
     b.options.stop_after = 'check'
     b.update()
-    self.assertFalse(b.session.get_status('postprocess'))
+    assert not (b.session.get_status('postprocess'))
     b2 = Bank('local')
     b2.options.from_task = 'postprocess'
     b2.options.release = b.session.get('release')
     res = b2.update()
-    self.assertFalse(res)
+    assert not (res)
 
   def test_reupdate_from_task_wrong_release(self):
     b = Bank('local')
     b.options.stop_after = 'download'
     b.update()
-    self.assertFalse(b.session.get_status('postprocess'))
+    assert not (b.session.get_status('postprocess'))
     b2 = Bank('local')
     b2.options.from_task = 'postprocess'
     b2.options.release = 'wrongrelease'
     res = b2.update()
-    self.assertFalse(res)
+    assert not (res)
 
-  @attr('process')
   def test_postprocesses_restart_from_proc(self):
     b = Bank('localprocess')
     b.update()
     proc1file = os.path.join(b.session.get_full_release_directory(),'proc1.txt')
     proc2file = os.path.join(b.session.get_full_release_directory(),'proc2.txt')
-    self.assertTrue(os.path.exists(proc1file))
-    self.assertTrue(os.path.exists(proc2file))
+    assert (os.path.exists(proc1file))
+    assert (os.path.exists(proc2file))
     os.remove(proc1file)
     os.remove(proc2file)
     # Restart from postprocess, reexecute all processes
@@ -707,8 +702,8 @@ class TestBiomajFunctional(unittest.TestCase):
     b2.options.from_task = 'postprocess'
     b2.options.release = b.session.get('release')
     b2.update()
-    self.assertTrue(os.path.exists(proc1file))
-    self.assertTrue(os.path.exists(proc2file))
+    assert (os.path.exists(proc1file))
+    assert (os.path.exists(proc2file))
     os.remove(proc1file)
     os.remove(proc2file)
     # Restart from postprocess, but at process PROC2 and following
@@ -717,44 +712,42 @@ class TestBiomajFunctional(unittest.TestCase):
     b3.options.process = 'PROC2'
     b3.options.release = b.session.get('release')
     b3.update()
-    #self.assertFalse(os.path.exists(proc1file))
-    self.assertTrue(os.path.exists(proc2file))
+    #assert not (os.path.exists(proc1file))
+    assert (os.path.exists(proc2file))
 
-  @attr('process')
   def test_postprocess_wrong_process_name(self):
     """If a wrong process name is given, update returns False and prints an error message"""
     b = Bank('local')
     b.options.stop_after = 'download'
     b.update()
-    self.assertFalse(b.session.get_status('postprocess'))
+    assert not (b.session.get_status('postprocess'))
     b2 = Bank('local')
     b2.options.from_task = 'postprocess'
     b2.options.release = b.session.get('release')
     b2.options.process = 'fake'
-    self.assertFalse(b2.update())
-    self.assertFalse(b2.session.get_status('postprocess'))
-    self.assertEqual(b.session.get_full_release_directory(), b2.session.get_full_release_directory())
+    assert not (b2.update())
+    assert not (b2.session.get_status('postprocess'))
+    assert (b.session.get_full_release_directory() == b2.session.get_full_release_directory())
 
   def test_computed(self):
     b = Bank('computed')
     res = b.update(True)
-    self.assertTrue(res)
-    self.assertTrue(os.path.exists(b.session.get_full_release_directory()+'/sub1/flat/test_100.txt'))
-    self.assertTrue(b.session.get('update'))
+    assert (res)
+    assert (os.path.exists(b.session.get_full_release_directory()+'/sub1/flat/test_100.txt'))
+    assert (b.session.get('update'))
     # Check that, with depends non updated, bank is not updated itself
     nextb = Bank('computed')
     res = nextb.update(True)
-    self.assertFalse(nextb.session.get('update'))
+    assert not (nextb.session.get('update'))
 
-  @attr('nofile')
   def test_computed_nofile(self):
     b = Bank('computed2')
     b.load_session(UpdateWorkflow.FLOW)
     b.session.config.set('protocol', 'none')
     b.session.config.set('sub1.files.move', 'flat/test_.*')
     res = b.update(True)
-    self.assertTrue(res)
-    self.assertTrue(os.path.exists(b.session.get_full_release_directory()+'/sub1/flat/test_100.txt'))
+    assert (res)
+    assert (os.path.exists(b.session.get_full_release_directory()+'/sub1/flat/test_100.txt'))
 
   def test_computed_ref_release(self):
     b = Bank('computed2')
@@ -762,49 +755,52 @@ class TestBiomajFunctional(unittest.TestCase):
     b2 = Bank('sub1')
     b2release = b2.bank['production'][len(b2.bank['production'])-1]['release']
     brelease = b.bank['production'][len(b.bank['production'])-1]['release']
-    self.assertTrue(res)
-    self.assertTrue(brelease == b2release)
+    assert (res)
+    assert (brelease == b2release)
 
-  @attr('computed')
   def test_computed_ref_release(self):
     b = Bank('computed2')
     res = b.update(True)
-    self.assertTrue(b.session.get('update'))
+    assert (b.session.get('update'))
     b2 = Bank('computed2')
     res = b2.update(True)
-    self.assertFalse(b2.session.get('update'))
+    assert not (b2.session.get('update'))
 
   def test_computederror(self):
     b = Bank('computederror')
     res = b.update(True)
-    self.assertFalse(res)
-    self.assertTrue(b.session._session['depends']['sub2'])
-    self.assertFalse(b.session._session['depends']['error'])
+    assert not (res)
+    assert (b.session._session['depends']['sub2'])
+    assert not (b.session._session['depends']['error'])
 
-
-  @attr('directrelease')
-  @attr('network')
+  @pytest.mark.skipif(
+    os.environ.get('NETWORK', 1) == '0',
+    reason='network tests disabled'
+  )
   def test_directhttp_release(self):
       b = Bank('directhttp')
       res = b.update()
-      self.assertTrue(b.session.get('update'))
-      self.assertTrue(os.path.exists(b.session.get_full_release_directory()+'/flat/debian/README.html'))
+      assert (b.session.get('update'))
+      assert (os.path.exists(b.session.get_full_release_directory()+'/flat/debian/README.html'))
       # print str(b.session.get('release'))
       # print str(b.session.get('remoterelease'))
 
-  @attr('network')
+  @pytest.mark.skipif(
+  os.environ.get('NETWORK', 1) == '0',
+  reason='network tests disabled'
+  )
   def test_multi(self):
     b = Bank('multi')
     res = b.update()
-    self.assertTrue(res)
+    assert (res)
     with open(os.path.join(b.session.get_full_release_directory(),'flat/test1.json'), 'r') as content_file:
       content = content_file.read()
       my_json = json.loads(content)
-      self.assertTrue(my_json['args']['key1'] == 'value1')
+      assert (my_json['args']['key1'] == 'value1')
     with open(os.path.join(b.session.get_full_release_directory(),'flat/test2.json'), 'r') as content_file:
       content = content_file.read()
       my_json = json.loads(content)
-      self.assertTrue(my_json['form']['key1'] == 'value1')
+      assert (my_json['form']['key1'] == 'value1')
 
   def test_freeze(self):
     b = Bank('local')
@@ -812,45 +808,43 @@ class TestBiomajFunctional(unittest.TestCase):
     rel = b.session.get('release')
     b.freeze(rel)
     prod = b.get_production(rel)
-    self.assertTrue(prod['freeze'] == True)
+    assert (prod['freeze'] == True)
     res = b.remove(rel)
-    self.assertTrue(res == False)
+    assert (res == False)
     b.unfreeze(rel)
     prod = b.get_production(rel)
-    self.assertTrue(prod['freeze'] == False)
+    assert (prod['freeze'] == False)
     res = b.remove(rel)
-    self.assertTrue(res == True)
+    assert (res == True)
 
   def test_stats(self):
     b = Bank('local')
     b.update()
     rel = b.session.get('release')
     stats = Bank.get_banks_disk_usage()
-    self.assertTrue(stats[0]['size']>0)
+    assert (stats[0]['size']>0)
     for release in stats[0]['releases']:
       if release['name'] == rel:
-        self.assertTrue(release['size']>0)
+        assert (release['size']>0)
 
-  @attr('process')
   def test_processes_meta_data(self):
     b = Bank('localprocess')
     b.update()
     formats = b.session.get('formats')
-    self.assertTrue(len(formats['blast'])==2)
-    self.assertTrue(len(formats['test'][0]['files'])==3)
+    assert (len(formats['blast'])==2)
+    assert (len(formats['test'][0]['files'])==3)
 
-  @attr('process')
   def test_search(self):
     b = Bank('localprocess')
     b.update()
     search_res = Bank.search(['blast'],[])
-    self.assertTrue(len(search_res)==1)
+    assert (len(search_res)==1)
     search_res = Bank.search([],['nucleic'])
-    self.assertTrue(len(search_res)==1)
+    assert (len(search_res)==1)
     search_res = Bank.search(['blast'],['nucleic'])
-    self.assertTrue(len(search_res)==1)
+    assert (len(search_res)==1)
     search_res = Bank.search(['blast'],['proteic'])
-    self.assertTrue(len(search_res)==0)
+    assert (len(search_res)==0)
 
   def test_owner(self):
     """
@@ -858,7 +852,7 @@ class TestBiomajFunctional(unittest.TestCase):
     """
     b = Bank('local')
     res = b.update()
-    self.assertTrue(res)
+    assert (res)
     b.set_owner('sample')
     b2 = Bank('local')
     try:
@@ -867,8 +861,11 @@ class TestBiomajFunctional(unittest.TestCase):
     except Exception as e:
       pass
 
-  @attr('network')
+  @pytest.mark.skipif(
+  os.environ.get('NETWORK', 1) == '0',
+  reason='network tests disabled'
+  )
   def test_bank_list_error(self):
     b = Bank('alu_list_error')
     res = b.update()
-    self.assertFalse(res)
+    assert not (res)

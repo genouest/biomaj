@@ -36,7 +36,7 @@ config = {
     'url': 'http://biomaj.genouest.org',
     'download_url': 'http://biomaj.genouest.org',
     'author_email': 'olivier.sallou@irisa.fr',
-    'version': '3.1.22',
+    'version': '3.1.23',
      'classifiers': [
         # How mature is this project? Common values are
         #   3 - Alpha
@@ -75,8 +75,7 @@ config = {
                          'Yapsy==1.12.2',
                          'packaging'
                          ],
-    'tests_require': ['nose', 'mock'],
-    'test_suite': 'nose.collector',
+    'tests_require': ['pytest', 'mock'],
     'packages': find_packages(),
     'include_package_data': True,
     'scripts': ['scripts/biomaj_migrate_database.py'],

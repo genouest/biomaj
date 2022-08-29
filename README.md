@@ -208,11 +208,12 @@ Testing
 
 Execute unit tests
 
-    nosetests
+    python -m pytest -v tests/biomaj_tests.py
 
 Execute unit tests but disable ones needing network access
 
-    nosetests -a '!network'
+    NETWORK=0 python -m pytest -v tests/biomaj_tests.py
+
 
 Monitoring
 ==========

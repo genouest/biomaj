@@ -5,7 +5,6 @@ tabulate
 ldap3
 py-bcrypt
 drmaa
-future
 elasticsearch
 biomaj_core
 biomaj_user

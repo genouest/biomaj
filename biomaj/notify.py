@@ -1,5 +1,3 @@
-from builtins import str
-from builtins import object
 import smtplib
 import email.utils
 from biomaj.workflow import Workflow
@@ -8,16 +6,13 @@ import os
 import sys
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from email import encoders
+
 from jinja2 import Template
 
-if sys.version < '3':
-    from email.MIMEText import MIMEText
-else:
-    from email.mime.text import MIMEText
 
-
-class Notify(object):
+class Notify:
     """
     Send notifications
     """

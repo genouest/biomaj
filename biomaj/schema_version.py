@@ -1,4 +1,3 @@
-from __future__ import print_function
 import pkg_resources
 import string
 import random
@@ -12,7 +11,7 @@ from biomaj_core.utils import Utils
 import logging
 
 
-class SchemaVersion(object):
+class SchemaVersion:
 
     """
     BioMAJ database schema version. This package can be used to make some schema modification if needed during

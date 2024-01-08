@@ -5,7 +5,6 @@ import sys
 
 from biomaj.workflow import Workflow
 
-standard_library.install_aliases()
 
 
 class Session:

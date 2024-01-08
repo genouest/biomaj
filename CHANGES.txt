@@ -1,3 +1,7 @@
+3.1.24
+  Update documentation
+  Fix tests
+  Remove dependency on python3-future
 3.1.23:
   Use pytest instead of nose
 3.1.21:

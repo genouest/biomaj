@@ -110,7 +110,7 @@ From source:
 
 After dependencies installation, go in BioMAJ source directory:
 
-    python setup.py install
+    pip install .
 
 From packages:
 

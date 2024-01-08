@@ -77,7 +77,7 @@ class UtilsForTest():
   def __copy_test_bank_properties(self):
     if self.bank_properties is not None:
       return
-    self.bank_properties = ['alu', 'local', 'testhttp','directhttp',
+    self.bank_properties = ['pdbaa', 'local', 'testhttp','directhttp',
                             'alu_list_error']
     curdir = os.path.dirname(os.path.realpath(__file__))
     for b in self.bank_properties:
@@ -146,10 +146,10 @@ class TestBiomajSetup():
     BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
 
     # Delete all banks
-    b = Bank('alu')
+    b = Bank('pdbaa')
     b.banks.remove({})
 
-    self.config = BiomajConfig('alu')
+    self.config = BiomajConfig('pdbaa')
     data_dir = self.config.get('data.dir')
     lock_file = os.path.join(data_dir,'alu.lock')
     if os.path.exists(lock_file):
@@ -166,13 +166,13 @@ class TestBiomajSetup():
     """
     Checks bank init
     """
-    b = Bank('alu')
+    b = Bank('pdbaa')
 
   def test_new_session(self):
     """
     Checks an empty session is created
     """
-    b = Bank('alu')
+    b = Bank('pdbaa')
     b.load_session(UpdateWorkflow.FLOW)
     for key in b.session._session['status'].keys():
       assert not(b.session.get_status(key))
@@ -181,14 +181,14 @@ class TestBiomajSetup():
     """
     Checks a session is used if present
     """
-    b = Bank('alu')
+    b = Bank('pdbaa')
     for i in range(1, 5):
-      s = Session('alu', self.config, UpdateWorkflow.FLOW)
+      s = Session('pdbaa', self.config, UpdateWorkflow.FLOW)
       s._session['status'][Workflow.FLOW_INIT] = True
       b.session = s
       b.save_session()
 
-    b = Bank('alu')
+    b = Bank('pdbaa')
     b.load_session(UpdateWorkflow.FLOW)
     assert (b.session.get_status(Workflow.FLOW_INIT))
 
@@ -198,7 +198,7 @@ class TestBiomajSetup():
     """
     b = Bank('local')
     for i in range(1,5):
-      s = Session('alu', self.config, UpdateWorkflow.FLOW)
+      s = Session('pdbaa', self.config, UpdateWorkflow.FLOW)
       s._session['status'][Workflow.FLOW_INIT] = True
       b.session = s
       b.save_session()
@@ -211,20 +211,20 @@ class TestBiomajSetup():
     """
     Checks a session if is not over
     """
-    b = Bank('alu')
+    b = Bank('pdbaa')
     for i in range(1,5):
-      s = Session('alu', self.config, UpdateWorkflow.FLOW)
+      s = Session('pdbaa', self.config, UpdateWorkflow.FLOW)
       s._session['status'][Workflow.FLOW_INIT] = True
       s._session['status'][Workflow.FLOW_OVER] = True
       b.session = s
       b.save_session()
 
-    b = Bank('alu')
+    b = Bank('pdbaa')
     b.load_session(UpdateWorkflow.FLOW)
     assert not (b.session.get_status(Workflow.FLOW_INIT))
 
   def test_bank_list(self):
-    b1 = Bank('alu')
+    b1 = Bank('pdbaa')
     b2 = Bank('local')
     banks = Bank.list()
     assert (len(banks) == 2)
@@ -237,7 +237,7 @@ class TestBiomajSetup():
     """
     Get release
     """
-    b = Bank('alu')
+    b = Bank('pdbaa')
     b.load_session(UpdateWorkflow.FLOW)
     res = b.update()
     assert (b.session.get('update'))
@@ -249,9 +249,9 @@ class TestBiomajSetup():
   reason='network tests disabled'
   )
   def test_remove_session(self):
-    b = Bank('alu')
+    b = Bank('pdbaa')
     for i in range(1,5):
-      s = Session('alu', self.config, UpdateWorkflow.FLOW)
+      s = Session('pdbaa', self.config, UpdateWorkflow.FLOW)
       s._session['status'][Workflow.FLOW_INIT] = True
       b.session = s
       b.save_session()

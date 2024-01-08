@@ -66,7 +66,6 @@ config = {
                          'pycurl',
                          'py-bcrypt',
                          'drmaa',
-                         'future',
                          'tabulate',
                          'requests',
                          'redis',

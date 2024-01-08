@@ -1,5 +1,3 @@
-from builtins import str
-from builtins import object
 import os
 import logging
 import time
@@ -25,7 +23,7 @@ from biomaj_core.bmajindex import BmajIndex
 import getpass
 
 
-class Bank(object):
+class Bank:
     """
     BioMAJ bank
     """

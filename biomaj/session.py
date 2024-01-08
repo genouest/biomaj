@@ -1,6 +1,3 @@
-from future import standard_library
-from builtins import str
-from builtins import object
 import os
 import time
 import copy
@@ -8,10 +5,9 @@ import sys
 
 from biomaj.workflow import Workflow
 
-standard_library.install_aliases()
 
 
-class Session(object):
+class Session:
     """
     BioMAJ bank session
     """

@@ -10,7 +10,6 @@ pycurl
 tabulate
 py-bcrypt
 drmaa
-future
 elasticsearch
 requests
 redis

@@ -1,6 +1,3 @@
-from builtins import str
-from builtins import range
-from builtins import object
 import logging
 import datetime
 import time
@@ -29,7 +26,7 @@ from yapsy.PluginManager import PluginManager
 from packaging.version import parse
 
 
-class Workflow(object):
+class Workflow:
     """
     Bank update workflow
     """

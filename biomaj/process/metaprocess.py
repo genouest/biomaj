@@ -1,4 +1,3 @@
-from builtins import str
 import threading
 import logging
 import os

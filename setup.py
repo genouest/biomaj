@@ -62,7 +62,7 @@ config = {
                          'biomaj_user',
                          'biomaj_download',
                          'biomaj_process',
-                         'pymongo >=3.2, <4',
+                         'pymongo >=3.2, <5',
                          'pycurl',
                          'py-bcrypt',
                          'drmaa',

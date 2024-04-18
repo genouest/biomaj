@@ -28,6 +28,10 @@ except UnicodeDecodeError:
         CHANGES = f.read()
 
 
+with open('requirements.txt') as f:
+    requirements = f.read().splitlines()
+
+
 config = {
     'description': 'BioMAJ',
     'long_description': README + '\n\n' + CHANGES,
@@ -56,24 +60,7 @@ config = {
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6'
     ],
-    'install_requires': [
-                         'biomaj_cli',
-                         'biomaj_core',
-                         'biomaj_user',
-                         'biomaj_download',
-                         'biomaj_process',
-                         'pymongo >=3.2, <4',
-                         'pycurl',
-                         'py-bcrypt',
-                         'drmaa',
-                         'tabulate',
-                         'requests',
-                         'redis',
-                         'elasticsearch',
-                         'influxdb',
-                         'Yapsy==1.12.2',
-                         'packaging'
-                         ],
+    'install_requires': requirements,
     'tests_require': ['pytest', 'mock'],
     'packages': find_packages(),
     'include_package_data': True,

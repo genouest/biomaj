@@ -15,6 +15,5 @@ requests
 redis
 influxdb
 Yapsy==1.12.2
-python3-yapsy
 Jinja2
 packaging

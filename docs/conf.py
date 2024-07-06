@@ -15,7 +15,7 @@
 import sys
 import os
 
-from mock import Mock as MagicMock
+from unittest.mock import Mock as MagicMock
 
 class Mock(MagicMock):
     @classmethod
@@ -222,8 +222,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', 'BioMAJ.tex', u'BioMAJ Documentation',
-   u'Olivier Sallou', 'manual'),
+  ('index', 'BioMAJ.tex', 'BioMAJ Documentation',
+   'Olivier Sallou', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -252,8 +252,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'biomaj', u'BioMAJ Documentation',
-     [u'Olivier Sallou'], 1)
+    ('index', 'biomaj', 'BioMAJ Documentation',
+     ['Olivier Sallou'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -266,8 +266,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'BioMAJ', u'BioMAJ Documentation',
-   u'Olivier Sallou', 'BioMAJ', 'Biological databanks update.',
+  ('index', 'BioMAJ', 'BioMAJ Documentation',
+   'Olivier Sallou', 'BioMAJ', 'Biological databanks update.',
    'Miscellaneous'),
 ]
 

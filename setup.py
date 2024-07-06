@@ -74,7 +74,7 @@ config = {
                          'Yapsy==1.12.2',
                          'packaging'
                          ],
-    'tests_require': ['pytest', 'mock'],
+    'tests_require': ['pytest'],
     'packages': find_packages(),
     'include_package_data': True,
     'scripts': ['scripts/biomaj_migrate_database.py'],

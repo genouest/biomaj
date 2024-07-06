@@ -1,4 +1,3 @@
-mock
 nose
 pymongo==3.2
 tabulate

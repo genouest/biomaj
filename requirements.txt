@@ -3,7 +3,6 @@ biomaj_user
 biomaj_download>=3.2.1
 biomaj_process>=3.0.12
 biomaj_cli
-mock
 pytest
 pymongo==3.12.3
 pycurl

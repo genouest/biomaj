@@ -6,12 +6,10 @@ import logging
 import copy
 import stat
 import time
-import pytest
-
-from mock import patch
-
 from optparse import OptionParser
+from unittest.mock import patch
 
+import pytest
 
 from biomaj.bank import Bank
 from biomaj.session import Session

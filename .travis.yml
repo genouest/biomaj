@@ -24,7 +24,6 @@ install:
 before_script:
 - sleep 10
 script:
-- nosetests -a '!network'
 - flake8 --ignore E501,E123 biomaj
 deploy:
   provider: pypi

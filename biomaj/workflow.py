@@ -1435,7 +1435,7 @@ class UpdateWorkflow(Workflow):
                 everything_present = False
                 break
         if everything_present:
-            self.downloaded_files = []
+            self.downloaded_files = copied_files
             logging.info("Workflow:wf_download:all_files_in_offline:skip download")
             return True
 

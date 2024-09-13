@@ -1413,7 +1413,18 @@ class UpdateWorkflow(Workflow):
                                str(month) != str(file_to_download['month']) or \
                                str(day) != str(file_to_download['day']):
                                 logging.debug('Workflow:wf_download:different_from_offline:' + offline_file)
+                                if str(file_stat.st_size) != str(file_to_download['size']):
+                                    logging.debug('Workflow:wf_download: Size mismatch')
+                                    logging.debug('Workflow:wf_download: Remote size: ' + str(file_to_download['size']))
+                                    logging.debug('Workflow:wf_download: Local size: ' + str(file_stat.st_size))
+                                if str(year) != str(file_to_download['year']) or \
+                                   str(month) != str(file_to_download['month']) or \
+                                   str(day) != str(file_to_download['day']):
+                                    logging.debug('Workflow:wf_download: Date mismatch')
+                                    logging.debug('Workflow:wf_download: Remote date: ' + "{} {} {}".format(str(file_to_download['year']), str(file_to_download['month']),str(file_to_download['day'])))
+                                    logging.debug('Workflow:wf_download: Local date: ' + "{} {} {}".format(str(year), str(month), str(day)))
                                 keep_files.append(file_to_download)
+                                
                             else:
                                 logging.debug('Workflow:wf_download:same_as_offline:' + offline_file)
                                 files_in_offline += 1

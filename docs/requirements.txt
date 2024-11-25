@@ -1,5 +1,5 @@
 nose
-pymongo==3.2
+pymongo==4.6.3
 tabulate
 ldap3
 py-bcrypt
